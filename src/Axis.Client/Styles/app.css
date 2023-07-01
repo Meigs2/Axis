@@ -1,0 +1,12 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@tailwind variants;
+
+h1 {
+    @apply font-extrabold text-7xl tracking-wide mb-6;
+}
+
+p {
+    @apply text-xl mb-10;
+}
