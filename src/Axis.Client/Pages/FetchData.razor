@@ -9,7 +9,7 @@
 
         <p>This component demonstrates fetching data from the server.</p>
 
-        @if (forecasts == null)
+        @if (_forecasts == null)
         {
             <span>Loading...</span>
         }
@@ -26,7 +26,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var forecast in forecasts)
+                        @foreach (var forecast in _forecasts)
                         {
                             <tr class="hover:bg-purple-200 odd:bg-purple-100 dark:hover:bg-purple-400 dark:odd:bg-purple-500">
                                 <td class="p-3">@forecast.Date.ToShortDateString()</td>
@@ -43,11 +43,11 @@
 </div>
 
 @code {
-    private WeatherForecast[]? forecasts;
+    private WeatherForecast[]? _forecasts;
 
     protected override async Task OnInitializedAsync()
     {
-        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("sample-data/weather.json");
+        _forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("sample-data/weather.json");
     }
 
     public class WeatherForecast
