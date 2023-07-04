@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Device.Gpio;
 using System.Reflection;
+using Axis.Core.Peripherals;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Axis.Core;
@@ -135,6 +136,7 @@ public class AxisApplicationBuilder
         _services.AddSingleton<AxisApplication>();
         _services.AddSingleton<ScheduledTasks>();
         _services.AddSingleton(new GpioController(PinNumberingScheme.Board));
+        _services.AddSingleton<BoilerThermocouple>();
         _services.AddSingleton<List<AxisTask>>(s => s.GetServices<AxisTask>().ToList());
 
         return this;

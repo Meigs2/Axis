@@ -7,24 +7,33 @@ namespace Axis.Core.Peripherals;
 
 public class BoilerThermocouple
 {
+    private readonly GpioController _controller;
     private SpiDevice _spiDevice;
+
+    public BoilerThermocouple(GpioController controller)
+    {
+        _controller = controller;
+        Initialize();
+    }
 
     public void Initialize()
     {
-        var controller = new GpioController();
-        
-        _spiDevice = SpiDevice.Create(new SpiConnectionSettings(0, 0)
-        {
-            ClockFrequency = 1_000_000, Mode = SpiMode.Mode0, DataBitLength = 14,
-        });
+        _spiDevice = SpiDevice.Create(new SpiConnectionSettings(0, 0));
+        _controller.OpenPin(29, PinMode.Output);
     }
 
     public double Read()
     {
         var buffer = ArrayPool<byte>.Shared.Rent(4);
+        var newBuffer = new byte[4];
+        double result;
         try
         {
-            _spiDevice.Read(buffer[..4]);
+            Thread.Sleep(500);
+            _controller.Write(29, PinValue.Low);
+            _spiDevice.Read(newBuffer);
+            _controller.Write(29, PinValue.High);
+            result = ThermocoupleReading.Parse(newBuffer);
         }
         catch (Exception e)
         {
@@ -33,7 +42,7 @@ public class BoilerThermocouple
         }
         finally { ArrayPool<byte>.Shared.Return(buffer); }
 
-        return ThermocoupleReading.Parse(buffer);
+        return result;
     }
 }
 
@@ -49,23 +58,12 @@ public static class ThermocoupleReading
         if (bytes.Length != 4) { throw new ArgumentException("Input bytes length must be 4", nameof(bytes)); }
 
         // Combine the four bytes into a 32-bit value
-        int raw = bytes[3] << 24 | bytes[2] << 16 | bytes[1] << 8 | bytes[0];
+        uint raw = (uint)(bytes[3] << 24 | bytes[2] << 16 | bytes[1] << 8 | bytes[0]);
 
-        // Shift right to align the temperature data to the least significant bits
-        raw >>= 18;
-
-        // If the sign bit is set, it's a negative number
-        if ((raw & SignBitMask) != 0)
-        {
-            // Two's complement to get the absolute value
-            raw = -(~(raw - 1) & (SignBitMask - 1));
-        }
+        bool fault = (raw & 0x00010000) != 0;
 
         // Calculate the fractional part
-        int fractional = raw & ((1 << FractionalBits) - 1);
-        double fractionalValue = fractional * FractionalStep;
-
-        // Combine the integer and fractional parts
-        return (raw >> FractionalBits) + fractionalValue;
+        int rawTemp = (int)(raw>>18);
+        return rawTemp * 0.25;
     }
 }
