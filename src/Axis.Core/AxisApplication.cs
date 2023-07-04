@@ -136,19 +136,13 @@ public class AxisApplicationBuilder
         _services.AddSingleton<ScheduledTasks>();
         _services.AddSingleton(new GpioController(PinNumberingScheme.Board));
         _services.AddSingleton<List<AxisTask>>(s => s.GetServices<AxisTask>().ToList());
-        var provider = _services.BuildServiceProvider();
-        var scheduledTasks = provider.GetRequiredService<ScheduledTasks>();
-        foreach (var task in _tasks)
-        {
-            scheduledTasks.Add(task);
-        }
 
         return this;
     }
 
     public AxisApplicationBuilder AddTask<TTask>() where TTask : AxisTask
     {
-        _services.AddSingleton<TTask>();
+        _services.AddSingleton<AxisTask, TTask>();
         return this;
     }
 
