@@ -25,45 +25,57 @@ public class BoilerThermocouple
     public double Read()
     {
         var buffer = ArrayPool<byte>.Shared.Rent(4);
-        var newBuffer = new byte[4];
         double result;
         try
         {
             Thread.Sleep(500);
             _controller.Write(29, PinValue.Low);
-            _spiDevice.Read(newBuffer);
-            _controller.Write(29, PinValue.High);
-            result = ThermocoupleReading.Parse(newBuffer);
+            _spiDevice.Read(buffer);
+            result = Parse(buffer[..4]);
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
             throw;
         }
-        finally { ArrayPool<byte>.Shared.Return(buffer); }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+            _controller.Write(29, PinValue.High);
+        }
 
         return result;
     }
-}
-
-public static class ThermocoupleReading
-{
-    private const int FractionalBits = 2;
-    private const int TemperatureBits = 14;
-    private const int SignBitMask = 1 << (TemperatureBits - 1);
-    private const double FractionalStep = 0.25;
 
     public static double Parse(Span<byte> bytes)
     {
         if (bytes.Length != 4) { throw new ArgumentException("Input bytes length must be 4", nameof(bytes)); }
 
-        // Combine the four bytes into a 32-bit value
-        uint raw = (uint)(bytes[3] << 24 | bytes[2] << 16 | bytes[1] << 8 | bytes[0]);
-
-        bool fault = (raw & 0x00010000) != 0;
-
         // Calculate the fractional part
-        int rawTemp = (int)(raw>>18);
-        return rawTemp * 0.25;
+        int rawTemp = bytes[0] << 24 | (bytes[1] >> 2) << 16;
+        
+        var str = string.Format($"0b{BitConverter.ToString(bytes.ToArray())}");
+        
+        return CalculateTemperature(rawTemp);
     }
+
+    public static double CalculateTemperature(int rawData)
+    {
+        int maxBits = 14; // maximum bits for the temperature data
+        double precision = 100.0; // precision is 2 decimal points
+        int rawTemperature = rawData & ((1 << maxBits) - 1); // get the lower 14 bits of the raw data
+        // Check if the number is negative
+        if ((rawTemperature & (1 << (maxBits - 1))) != 0)
+        {
+            // If the number is negative, we apply a bitwise NOT operation, add 1 to result, then multiply by -1
+            rawTemperature = -((~rawTemperature & ((1 << maxBits) - 1)) + 1);
+        }
+
+        // Finally, we adjust for the decimal point and return the result
+        return rawTemperature / precision;
+    }
+}
+
+public static class ThermocoupleReading
+{
 }
