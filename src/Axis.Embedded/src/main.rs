@@ -173,7 +173,10 @@ async fn main(_s: embassy_executor::Spawner) {
     let cs = p.PIN_16;
     let rx_dma = p.DMA_CH0;
 
-    let spi: Spi<'static, SPI1, Async> = Spi::new_rxonly(p.SPI1, clk, miso, rx_dma, Config::default());
+    let mut config = Config::default();
+    config.frequency = 500_000;
+
+    let spi: Spi<'static, SPI1, Async> = Spi::new_rxonly(p.SPI1, clk, miso, rx_dma, config);
     let mut pin = Output::new(p.PIN_24, Level::Low);
 
     // High-priority executor: SWI_IRQ_1, priority level 2
