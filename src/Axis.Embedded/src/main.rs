@@ -4,12 +4,10 @@
 #![feature(type_alias_impl_trait)]
 #![feature(async_closure)]
 
-extern crate alloc;
-
+use crate::peripherals::{ThermocoupleError, ThermocoupleState, MAX31855};
 use crate::MessageError::InvalidMessageType;
-use crate::MessageType::{Ping, Pong};
-use alloc::boxed::Box;
-use byte_slice_cast::{AsByteSlice, AsMutByteSlice};
+use crate::MessageType::{Ping, Pong, ThermocoupleReading};
+use byte_slice_cast::{AsByteSlice, AsMutByteSlice, ToByteSlice};
 use core::fmt::{Debug, Display, Formatter};
 use core::future::Future;
 use core::pin::{pin, Pin};
@@ -22,6 +20,7 @@ use embassy_rp::pac::xosc::regs::Startup;
 use embassy_rp::peripherals::{PIN_0, PIN_16, PIN_24, PIN_26, PIN_28, SPI0, SPI1};
 use embassy_rp::spi::{Async, Config, Spi};
 use embassy_rp::watchdog::Watchdog;
+use embassy_sync::blocking_mutex::CriticalSectionMutex;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::Channel;
 use embassy_sync::signal::Signal;
@@ -31,7 +30,6 @@ use embassy_time::Timer;
 use futures::task::LocalFutureObj;
 use static_cell::{make_static, StaticCell};
 use {defmt_rtt as _, panic_probe as _};
-use crate::peripherals::MAX31855;
 
 mod peripherals;
 
@@ -44,8 +42,8 @@ pub struct AxisRuntime<'a> {
 
 impl<'a> AxisRuntime<'a> {
     pub fn new(
-        internal_to_external_channel: &'a Channel<CriticalSectionRawMutex, MessageDTO, 1>,
-        external_to_internal_channel: &'a Channel<CriticalSectionRawMutex, MessageDTO, 1>,
+        internal_to_external_channel: &'a Channel<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
+        external_to_internal_channel: &'a Channel<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
         watchdog: &'a mut Watchdog,
         client_spi: &'a mut Spi<'a, SPI0, Async>,
     ) -> Self {
@@ -106,10 +104,9 @@ impl<'a> AxisRuntime<'a> {
                         Duration::from_micros(1),
                         self.external_to_internal_channel.send(b),
                     )
-                        .await
+                    .await
                 })
             });
-
     }
     async fn process_internal_to_external(&mut self) {
         let task = self.internal_to_external_channel.recv();
@@ -120,9 +117,11 @@ impl<'a> AxisRuntime<'a> {
                 unsafe {
                     embassy_time::with_timeout(
                         Duration::from_millis(1),
-                        self.client_spi.write(m.to_bytes()))
-                        .await
-                }
+                        self.client_spi.write(core::slice::from_raw_parts(
+                          (&m as *const MessageDTO) as *const u8,
+                          1 + 2 + m.content.len()),
+                        ))
+                }.await
             });
     }
 }
@@ -244,6 +243,7 @@ pub enum MessageType {
     Acknowledge = 1,
     Ping = 2,
     Pong = 3,
+    ThermocoupleReading = 4,
 }
 
 impl MessageType {
@@ -275,7 +275,7 @@ pub struct Messenger<'a> {
 }
 
 impl<'a> Messenger<'a> {
-    pub fn new(channel: &'a Channel<CriticalSectionRawMutex, MessageDTO, 1>) -> Self {
+    pub fn new(channel: &'a Channel<embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex, MessageDTO<'a>, 1>) -> Self {
         Self { channel }
     }
 
@@ -298,10 +298,10 @@ static WATCHDOG: StaticCell<Watchdog> = StaticCell::new();
 static CLIENT_SPI: StaticCell<Spi<SPI0, Async>> = StaticCell::new();
 static THERMOCOUPLE_SPI: StaticCell<Spi<SPI1, Async>> = StaticCell::new();
 
-static INTERNAL_TO_EXTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, MessageDTO, 1>> =
-    StaticCell::new();
 static EXTERNAL_TO_INTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, MessageDTO, 1>> =
     StaticCell::new();
+
+static TEST: StaticCell<CriticalSectionMutex<Channel<CriticalSectionRawMutex, MessageDTO, 1>>> = StaticCell::new();
 
 static KILL_SIGNAL: Signal<CriticalSectionRawMutex, SignalFlag> = Signal::new();
 
@@ -346,9 +346,41 @@ pub async fn wait_with_timeout<F: Future>(millis: u64, fut: F) -> Result<F::Outp
 
 const SPI_CLOCK_FREQ: u32 = 500_000;
 
+static THERMOCOUPLE_BUFFER: &[u8] = [0u8; 4].as_slice();
+
+#[embassy_executor::task]
+pub async fn thermocouple_read(
+    mut thermocouple: MAX31855,
+    mut channel: &'static Channel<CriticalSectionRawMutex, MessageDTO<'static>, 1>,
+) {
+    static BUFFER: StaticCell<[u8; 4]> = StaticCell::new();
+    let mut c = BUFFER.init([0u8; 4]);
+        let a = embassy_time::with_timeout(Duration::from_millis(100), thermocouple.read()).await;
+        if let Ok(r) = a {
+            if let Ok(s) = r {
+                let u = s.temperature.to_le_bytes();
+                c.copy_from_slice(&u);
+                let _ = embassy_time::with_timeout(Duration::from_millis(100), async {
+                    channel
+                        .send(MessageDTO {
+                            message_type: ThermocoupleReading,
+                            content: c,
+                            content_len: 4,
+                        })
+                        .await
+                })
+                .await;
+            };
+        };
+}
+
 #[embassy_executor::task]
 pub async fn main_loop(runtime: &'static mut AxisRuntime<'static>) {
-    embassy_futures::join::join(runtime.run(), async { KILL_SIGNAL.wait().await; return  } ).await;
+    embassy_futures::join::join(runtime.run(), async {
+        KILL_SIGNAL.wait().await;
+        return;
+    })
+    .await;
     runtime.watchdog.trigger_reset();
 }
 
@@ -359,7 +391,10 @@ async fn main(_s: embassy_executor::Spawner) {
     let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);
 
     let external_to_internal_channel = EXTERNAL_TO_INTERNAL_CHANNEL.init(Channel::new());
-    let internal_to_external_channel = INTERNAL_TO_EXTERNAL_CHANNEL.init(Channel::new());
+
+    static INTERNAL_TO_EXTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, MessageDTO, 1>> = StaticCell::new();
+    let c = &*INTERNAL_TO_EXTERNAL_CHANNEL.init(Channel::new());
+
     let watchdog = WATCHDOG.init(Watchdog::new(p.WATCHDOG));
 
     let mut spi0_config = Config::default();
@@ -387,13 +422,8 @@ async fn main(_s: embassy_executor::Spawner) {
     let rx_dma = p.DMA_CH3;
     let mut config = Config::default();
     config.frequency = 500_000;
-    let mut thermocouple_spi: &mut Spi<'static, SPI1, Async> = THERMOCOUPLE_SPI.init(Spi::new_rxonly(
-        p.SPI1,
-        th_clk,
-        th_miso,
-        rx_dma,
-        config
-    ));
+    let mut thermocouple_spi: &mut Spi<'static, SPI1, Async> =
+        THERMOCOUPLE_SPI.init(Spi::new_rxonly(p.SPI1, th_clk, th_miso, rx_dma, config));
 
     let thermocouple_pinout = Output::new(p.PIN_11, Level::Low);
     let thermocouple = MAX31855::new(thermocouple_spi, thermocouple_pinout);
@@ -423,9 +453,9 @@ async fn main(_s: embassy_executor::Spawner) {
             },
         }
     }
-
+    let c2 = c;
     let runtime = RUNTIME.init(AxisRuntime::new(
-        internal_to_external_channel,
+        c2,
         external_to_internal_channel,
         watchdog,
         client_spi,
@@ -434,8 +464,10 @@ async fn main(_s: embassy_executor::Spawner) {
 
     // High-priority executor: SWI_IRQ_1, priority level 2
     interrupt::SWI_IRQ_1.set_priority(Priority::P1);
+    let a = spawner.spawn(main_loop(runtime));
 
-    let _ = spawner.spawn(main_loop(runtime));
+    let c2 = c;
+    unwrap!(spawner.spawn(thermocouple_read(thermocouple, c2)));
 
     KILL_SIGNAL.wait().await;
 }
