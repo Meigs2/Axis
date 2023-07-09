@@ -445,11 +445,8 @@ async fn main(_s: embassy_executor::Spawner) {
         .await;
         match message {
             None => {}
-            Some(m) => match m.message_type {
-                MessageType::Startup => {
-                    break;
-                }
-                _ => {}
+            Some(m) => if let MessageType::Startup = m.message_type {
+                break;
             },
         }
     }
