@@ -13,11 +13,12 @@ use core::future::Future;
 use core::pin::{pin, Pin};
 use defmt::unwrap;
 use embassy_executor::{Executor, InterruptExecutor};
+use embassy_futures::select::Either;
 use embassy_rp::gpio::{Input, Level, Output, Pull};
 use embassy_rp::interrupt;
 use embassy_rp::interrupt::{InterruptExt, Priority};
 use embassy_rp::pac::xosc::regs::Startup;
-use embassy_rp::peripherals::{PIN_0, PIN_16, PIN_24, PIN_26, PIN_28, SPI0, SPI1};
+use embassy_rp::peripherals::{PIN_0, PIN_16, PIN_24, PIN_26, PIN_28, PIN_7, SPI0, SPI1};
 use embassy_rp::spi::{Async, Config, Spi};
 use embassy_rp::watchdog::Watchdog;
 use embassy_sync::blocking_mutex::CriticalSectionMutex;
@@ -133,6 +134,7 @@ async fn read_message<'a>(
     content_buffer: &mut [u8; 1024],
     content: &'a [u8],
 ) -> Option<MessageDTO<'a>> {
+
     // get type byte.
     if let Err(_) = spi.read(type_buff).await {
         spi.flush().unwrap();
@@ -376,10 +378,12 @@ pub async fn thermocouple_read(
 
 #[embassy_executor::task]
 pub async fn main_loop(runtime: &'static mut AxisRuntime<'static>) {
-    embassy_futures::join::join(runtime.run(), async {
-        KILL_SIGNAL.wait().await;
-        return;
-    })
+    embassy_futures::join::join(
+        runtime.run(),
+        async {
+            KILL_SIGNAL.wait().await;
+        }
+    )
     .await;
     runtime.watchdog.trigger_reset();
 }
@@ -430,26 +434,55 @@ async fn main(_s: embassy_executor::Spawner) {
 
     let content = make_static!([0u8; 1024]);
 
-    loop {
-        let mut type_buff = [0u8; 1];
-        let mut len_buff = [0u8; 2];
-        let mut content_buffer = [0u8; 1024];
+    let mut type_buff = [0u8; 1];
+    let mut len_buff = [0u8; 2];
+    let mut content_buffer = [0u8; 1024];
 
-        let message = read_message(
-            &mut client_spi,
-            &mut type_buff,
-            &mut len_buff,
-            &mut content_buffer,
-            content,
-        )
-        .await;
-        match message {
-            None => {}
-            Some(m) => if let MessageType::Startup = m.message_type {
-                break;
-            },
+    let mut gpio = Output::new(p.PIN_7, Level::Low);
+    let mut inbound_flag = Input::new(p.PIN_4, Pull::None);
+
+    loop {
+        let blink_task = async {
+            gpio.set_high();
+            Timer::after(Duration::from_millis(500)).await;
+            gpio.set_low();
+            Timer::after(Duration::from_millis(500)).await;
+        };
+
+        let wait_for_startup = async {
+            inbound_flag.wait_for_high().await;
+            read_message(
+                &mut client_spi,
+                &mut type_buff,
+                &mut len_buff,
+                &mut content_buffer,
+                content,
+        ).await };
+
+        let res = embassy_futures::select::select(blink_task, wait_for_startup).await;
+        match res {
+            Either::First(_) => {}
+            Either::Second(message) => {
+                match message {
+                    None => {
+                        return;
+                    }
+                    Some(m) => if let MessageType::Startup = m.message_type {
+                        break;
+                    },
+                }
+            }
         }
     }
+    
+
+    loop {
+        gpio.set_high();
+        Timer::after(Duration::from_millis(100)).await;
+        gpio.set_low();
+        Timer::after(Duration::from_millis(100)).await;
+    }
+    
     let c2 = c;
     let runtime = RUNTIME.init(AxisRuntime::new(
         c2,
@@ -461,7 +494,7 @@ async fn main(_s: embassy_executor::Spawner) {
 
     // High-priority executor: SWI_IRQ_1, priority level 2
     interrupt::SWI_IRQ_1.set_priority(Priority::P1);
-    let a = spawner.spawn(main_loop(runtime));
+    unwrap!(spawner.spawn(main_loop(runtime)));
 
     let c2 = c;
     unwrap!(spawner.spawn(thermocouple_read(thermocouple, c2)));
