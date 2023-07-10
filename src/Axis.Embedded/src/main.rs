@@ -3,36 +3,36 @@
 #![feature(async_fn_in_trait)]
 #![feature(type_alias_impl_trait)]
 #![feature(async_closure)]
+#![feature(never_type)]
 
-use crate::peripherals::{ThermocoupleError, ThermocoupleState, MAX31855};
-use crate::MessageError::InvalidMessageType;
-use crate::MessageType::{Ping, Pong, ThermocoupleReading};
-use byte_slice_cast::{AsByteSlice, AsMutByteSlice, ToByteSlice};
-use core::fmt::{Debug, Display, Formatter};
 use core::future::Future;
-use core::pin::{pin, Pin};
-use defmt::unwrap;
-use embassy_executor::{Executor, InterruptExecutor};
+use defmt::*;
+use embassy_executor::{Executor, InterruptExecutor, Spawner};
 use embassy_futures::select::Either;
+use embassy_net::tcp::TcpSocket;
+use embassy_net::{Stack, StackResources};
+use embassy_rp::peripherals::{PIN_16, SPI0, SPI1, USB};
+use embassy_rp::usb::{Driver, Instance, InterruptHandler};
+use embassy_rp::{bind_interrupts, interrupt, peripherals};
 use embassy_rp::gpio::{Input, Level, Output, Pull};
-use embassy_rp::interrupt;
-use embassy_rp::interrupt::{InterruptExt, Priority};
-use embassy_rp::pac::xosc::regs::Startup;
-use embassy_rp::peripherals::{PIN_0, PIN_16, PIN_24, PIN_26, PIN_28, PIN_7, SPI0, SPI1};
-use embassy_rp::spi::{Async, Config, Spi};
+use embassy_rp::spi::{Async, Spi};
 use embassy_rp::watchdog::Watchdog;
 use embassy_sync::blocking_mutex::CriticalSectionMutex;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::Channel;
 use embassy_sync::signal::Signal;
-use embassy_time::Duration;
-use embassy_time::TimeoutError;
-use embassy_time::Timer;
-use futures::task::LocalFutureObj;
+use embassy_time::{Duration, Timer};
+use embassy_usb::class::cdc_ncm::embassy_net::{Device, Runner, State as NetState};
+use embassy_usb::class::cdc_ncm::{CdcNcmClass, State};
+use embassy_usb::{Builder, Config, UsbDevice};
+use embassy_usb::class::cdc_acm::CdcAcmClass;
+use embassy_usb::driver::EndpointError;
+use embedded_io::asynch::Write;
+use futures::SinkExt;
 use static_cell::{make_static, StaticCell};
 use {defmt_rtt as _, panic_probe as _};
-
-mod peripherals;
+use crate::MessageError::InvalidMessageType;
+use crate::MessageType::{Ping, Pong, ThermocoupleReading};
 
 pub struct AxisRuntime<'a> {
     internal_to_external_channel: &'a Channel<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
@@ -342,7 +342,7 @@ unsafe fn SWI_IRQ_0() {
 //     }
 // }
 
-pub async fn wait_with_timeout<F: Future>(millis: u64, fut: F) -> Result<F::Output, TimeoutError> {
+pub async fn wait_with_timeout<F: Future>(millis: u64, fut: F) -> Result<F::Output, embassy_time::TimeoutError> {
     embassy_time::with_timeout(Duration::from_millis(millis), fut).await
 }
 
@@ -388,11 +388,105 @@ pub async fn main_loop(runtime: &'static mut AxisRuntime<'static>) {
     runtime.watchdog.trigger_reset();
 }
 
+bind_interrupts!(struct Irqs {
+    USBCTRL_IRQ => InterruptHandler<USB>;
+});
+
+#[embassy_executor::task]
+async fn logger_task(driver: Driver<'static, USB>) {
+    embassy_usb_logger::run!(1024, log::LevelFilter::Info, driver);
+}
+
+type MyDriver = Driver<'static, embassy_rp::peripherals::USB>;
+
+#[embassy_executor::task]
+async fn usb_task(mut device: UsbDevice<'static, MyDriver>) -> ! {
+    device.run().await
+}
+
+#[embassy_executor::task]
+pub async fn usb_reader(mut class: &'static mut CdcAcmClass<'static, Driver<'static, USB>>) {
+    loop {
+        class.wait_connection().await;
+        info!("Connected");
+        let _ = echo(&mut class).await;
+        info!("Disconnected");
+    }
+}
+
+
+// Global static state
+static DRIVER: StaticCell<Driver<USB>> = StaticCell::new();
+static USB_CONFIG: StaticCell<embassy_usb::Config> = StaticCell::new();
+static DEVICE_DESCRIPTOR: StaticCell<[u8; 256]> = StaticCell::new();
+static CONFIG_DESCRIPTOR: StaticCell<[u8; 256]> = StaticCell::new();
+static BOS_DESCRIPTOR:StaticCell<[u8; 256]> = StaticCell::new();
+static CONTROL_BUF: StaticCell<[u8; 64]> = StaticCell::new();
+static USB_STATE: StaticCell<State> = StaticCell::new();
+static BUILDER: StaticCell<Builder<Driver<USB>>> = StaticCell::new();
+static CDC_ADM_CLASS: StaticCell<CdcAcmClass<Driver<USB>>> = StaticCell::new();
+static USB: StaticCell<UsbDevice<Driver<USB>>> = StaticCell::new();
+
 #[embassy_executor::main]
 async fn main(_s: embassy_executor::Spawner) {
     let p = embassy_rp::init(Default::default());
-
     let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);
+
+    // Create the driver, from the HAL.
+    let driver = Driver::new(p.USB, Irqs);
+
+    // Create embassy-usb Config
+    let mut config = embassy_usb::Config::new(0xc0de, 0xcafe);
+    config.manufacturer = Some("Embassy");
+    config.product = Some("USB-serial example");
+    config.serial_number = Some("12345678");
+    config.max_power = 100;
+    config.max_packet_size_0 = 64;
+
+    // Required for windows compatibility.
+    // https://developer.nordicsemi.com/nRF_Connect_SDK/doc/1.9.1/kconfig/CONFIG_CDC_ACM_IAD.html#help
+    config.device_class = 0xEF;
+    config.device_sub_class = 0x02;
+    config.device_protocol = 0x01;
+    config.composite_with_iads = true;
+
+    // Create embassy-usb DeviceBuilder using the driver and config.
+    // It needs some buffers for building the descriptors.
+    let mut device_descriptor = [0; 256];
+    let mut config_descriptor = [0; 256];
+    let mut bos_descriptor = [0; 256];
+    let mut control_buf = [0; 64];
+
+    // Create embassy-usb DeviceBuilder using the driver and config.
+    let mut builder = Builder::new(
+        driver,
+        config,
+        &mut make_static!([0; 256])[..],
+        &mut make_static!([0; 256])[..],
+        &mut make_static!([0; 256])[..],
+        &mut make_static!([0; 128])[..],
+    );
+
+    // Create classes on the builder.
+    let mut class = CdcAcmClass::new(&mut builder, make_static!(State::new()), 64);
+
+    // Build the builder.
+    let usb = builder.build();
+
+    unwrap!(spawner.spawn(usb_task(usb)));
+
+    // Run the USB device.
+    // let usb_fut = usb.run();
+
+    // Do stuff with the class!
+    let echo_fut = async {
+        loop {
+            class.wait_connection().await;
+            info!("Connected");
+            let _ = echo(&mut class).await;
+            info!("Disconnected");
+        }
+    };
 
     let external_to_internal_channel = EXTERNAL_TO_INTERNAL_CHANNEL.init(Channel::new());
 
@@ -401,7 +495,7 @@ async fn main(_s: embassy_executor::Spawner) {
 
     let watchdog = WATCHDOG.init(Watchdog::new(p.WATCHDOG));
 
-    let mut spi0_config = Config::default();
+    let mut spi0_config = embassy_rp::spi::Config::default();
     spi0_config.frequency = 1_000_000;
 
     let client_mosi = p.PIN_3;
@@ -424,7 +518,7 @@ async fn main(_s: embassy_executor::Spawner) {
     let th_clk = p.PIN_10;
     let th_miso = p.PIN_12;
     let rx_dma = p.DMA_CH3;
-    let mut config = Config::default();
+    let mut config = embassy_rp::spi::Config::default();
     config.frequency = 500_000;
     let mut thermocouple_spi: &mut Spi<'static, SPI1, Async> =
         THERMOCOUPLE_SPI.init(Spi::new_rxonly(p.SPI1, th_clk, th_miso, rx_dma, config));
@@ -474,7 +568,7 @@ async fn main(_s: embassy_executor::Spawner) {
             }
         }
     }
-    
+
 
     loop {
         gpio.set_high();
@@ -482,7 +576,7 @@ async fn main(_s: embassy_executor::Spawner) {
         gpio.set_low();
         Timer::after(Duration::from_millis(100)).await;
     }
-    
+
     let c2 = c;
     let runtime = RUNTIME.init(AxisRuntime::new(
         c2,
@@ -500,4 +594,29 @@ async fn main(_s: embassy_executor::Spawner) {
     unwrap!(spawner.spawn(thermocouple_read(thermocouple, c2)));
 
     KILL_SIGNAL.wait().await;
+}
+
+#[embassy_executor::task]
+async fn test(p0: &'static mut UsbDevice<'static, Driver<'static, USB>>, p1: CdcAcmClass<'static, Driver<'static, USB>>) {
+}
+
+struct Disconnected {}
+
+impl From<EndpointError> for Disconnected {
+    fn from(val: EndpointError) -> Self {
+        match val {
+            EndpointError::BufferOverflow => panic!("Buffer overflow"),
+            EndpointError::Disabled => Disconnected {},
+        }
+    }
+}
+
+async fn echo<'d, T: Instance + 'd>(class: &mut CdcAcmClass<'d, Driver<'d, T>>) -> Result<(), Disconnected> {
+    let mut buf = [0; 64];
+    loop {
+        let n = class.read_packet(&mut buf).await?;
+        let data = &buf[..n];
+        info!("data: {:x}", data);
+        class.write_packet(data).await?;
+    }
 }
