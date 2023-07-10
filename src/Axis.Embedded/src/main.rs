@@ -6,15 +6,16 @@
 #![feature(never_type)]
 
 use core::future::Future;
-use defmt::*;
+use defmt::{info, unwrap};
 use embassy_executor::{Executor, InterruptExecutor, Spawner};
 use embassy_futures::select::Either;
 use embassy_net::tcp::TcpSocket;
 use embassy_net::{Stack, StackResources};
 use embassy_rp::peripherals::{PIN_16, SPI0, SPI1, USB};
 use embassy_rp::usb::{Driver, Instance, InterruptHandler};
-use embassy_rp::{bind_interrupts, interrupt, peripherals};
+use embassy_rp::{bind_interrupts, interrupt};
 use embassy_rp::gpio::{Input, Level, Output, Pull};
+use embassy_rp::interrupt::{InterruptExt, Priority};
 use embassy_rp::spi::{Async, Spi};
 use embassy_rp::watchdog::Watchdog;
 use embassy_sync::blocking_mutex::CriticalSectionMutex;
@@ -33,6 +34,9 @@ use static_cell::{make_static, StaticCell};
 use {defmt_rtt as _, panic_probe as _};
 use crate::MessageError::InvalidMessageType;
 use crate::MessageType::{Ping, Pong, ThermocoupleReading};
+use crate::peripherals::MAX31855;
+
+mod peripherals;
 
 pub struct AxisRuntime<'a> {
     internal_to_external_channel: &'a Channel<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
@@ -408,9 +412,9 @@ async fn usb_task(mut device: UsbDevice<'static, MyDriver>) -> ! {
 pub async fn usb_reader(mut class: &'static mut CdcAcmClass<'static, Driver<'static, USB>>) {
     loop {
         class.wait_connection().await;
-        info!("Connected");
+        defmt::info!("Connected");
         let _ = echo(&mut class).await;
-        info!("Disconnected");
+        defmt::info!("Disconnected");
     }
 }
 
@@ -468,12 +472,16 @@ async fn main(_s: embassy_executor::Spawner) {
     );
 
     // Create classes on the builder.
-    let mut class = CdcAcmClass::new(&mut builder, make_static!(State::new()), 64);
+    let mut class = CdcAcmClass::new(&mut builder, make_static!(embassy_usb::class::cdc_acm::State::new()), 64);
 
     // Build the builder.
     let usb = builder.build();
 
-    unwrap!(spawner.spawn(usb_task(usb)));
+    // Low priority executor: runs in thread mode, using WFE/SEV
+    let executor = EXECUTOR_LOW.init(Executor::new());
+    executor.run(|spawner| {
+        unwrap!(spawner.spawn(usb_task(usb)));
+    });
 
     // Run the USB device.
     // let usb_fut = usb.run();
@@ -526,7 +534,7 @@ async fn main(_s: embassy_executor::Spawner) {
     let thermocouple_pinout = Output::new(p.PIN_11, Level::Low);
     let thermocouple = MAX31855::new(thermocouple_spi, thermocouple_pinout);
 
-    let content = make_static!([0u8; 1024]);
+    let content = [0u8; 1024];
 
     let mut type_buff = [0u8; 1];
     let mut len_buff = [0u8; 2];
@@ -550,7 +558,7 @@ async fn main(_s: embassy_executor::Spawner) {
                 &mut type_buff,
                 &mut len_buff,
                 &mut content_buffer,
-                content,
+                content.as_slice(),
         ).await };
 
         let res = embassy_futures::select::select(blink_task, wait_for_startup).await;
