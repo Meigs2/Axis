@@ -404,8 +404,8 @@ async fn logger_task(driver: Driver<'static, USB>) {
 type MyDriver = Driver<'static, embassy_rp::peripherals::USB>;
 
 #[embassy_executor::task]
-async fn usb_task(mut device: UsbDevice<'static, MyDriver>) -> ! {
-    device.run().await
+async fn usb_task(mut usb: UsbDevice<'static, MyDriver>) -> ! {
+    usb.run().await
 }
 
 #[embassy_executor::task]

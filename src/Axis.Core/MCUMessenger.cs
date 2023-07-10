@@ -3,6 +3,7 @@ using System.Device.Gpio;
 using System.Device.Spi;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using LibUsbDotNet.Main;
 
 namespace Axis.Core;
 
@@ -67,8 +68,7 @@ public class MicroController
     
     public void Initialize()
     {
-        _spiDevice = SpiDevice.Create(new SpiConnectionSettings(0, 0) { ClockFrequency = 1_000_000});
-        _controller.OpenPin(3, PinMode.Output);
+        var a = LibUsbDotNet.UsbDevice.OpenUsbDevice(new UsbDeviceFinder().SerialNumber = "123");
     }
 
     public void Send(Message message)
