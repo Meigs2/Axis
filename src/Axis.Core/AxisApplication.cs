@@ -66,9 +66,9 @@ public class AxisApplication
     CancellationTokenSource _cts = new();
     private SpinWait _spinWait;
     
-    public ServiceProvider Services { get; }
+    public IServiceProvider Services { get; }
     
-    public AxisApplication(List<AxisTask> tasks, ServiceProvider services)
+    public AxisApplication(List<AxisTask> tasks, IServiceProvider services)
     {
         _tasks = tasks;
         _eventQueue = new PriorityQueue<ScheduledTask, ExecuteAt>();
@@ -140,6 +140,7 @@ public class AxisApplicationBuilder
         _services.AddSingleton<ScheduledTasks>();
         _services.AddSingleton(new GpioController(PinNumberingScheme.Board));
         // _services.AddSingleton<BoilerThermocouple>();
+        _services.AddSingleton<MicroController>();
         _services.AddSingleton<List<AxisTask>>(s => s.GetServices<AxisTask>().ToList());
 
         return this;

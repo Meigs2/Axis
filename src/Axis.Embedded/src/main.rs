@@ -8,6 +8,7 @@
 use core::future::Future;
 use defmt::{info, unwrap};
 use embassy_executor::{Executor, InterruptExecutor, Spawner};
+use embassy_futures::join::join;
 use embassy_futures::select::Either;
 use embassy_net::tcp::TcpSocket;
 use embassy_net::{Stack, StackResources};
@@ -404,8 +405,18 @@ async fn logger_task(driver: Driver<'static, USB>) {
 type MyDriver = Driver<'static, embassy_rp::peripherals::USB>;
 
 #[embassy_executor::task]
-async fn usb_task(mut usb: UsbDevice<'static, MyDriver>) -> ! {
-    usb.run().await
+async fn usb_task(mut usb: UsbDevice<'static, MyDriver>, mut class: CdcAcmClass<'static, Driver<'static, USB>>) {
+    let usb_read = usb.run();
+    let loop_task = async {
+            loop {
+                class.wait_connection().await;
+                info!("Connected");
+                let _ = echo(&mut class).await;
+                info!("Disconnected");
+            }
+        };
+    
+    join(usb_read, loop_task).await;
 }
 
 #[embassy_executor::task]
@@ -455,46 +466,31 @@ async fn main(_s: embassy_executor::Spawner) {
     config.composite_with_iads = true;
 
     // Create embassy-usb DeviceBuilder using the driver and config.
-    // It needs some buffers for building the descriptors.
-    let mut device_descriptor = [0; 256];
-    let mut config_descriptor = [0; 256];
-    let mut bos_descriptor = [0; 256];
-    let mut control_buf = [0; 64];
-
-    // Create embassy-usb DeviceBuilder using the driver and config.
     let mut builder = Builder::new(
         driver,
         config,
         &mut make_static!([0; 256])[..],
         &mut make_static!([0; 256])[..],
         &mut make_static!([0; 256])[..],
-        &mut make_static!([0; 128])[..],
+        &mut make_static!([0; 64])[..],
     );
 
     // Create classes on the builder.
-    let mut class = CdcAcmClass::new(&mut builder, make_static!(embassy_usb::class::cdc_acm::State::new()), 64);
+    let class = CdcAcmClass::new(&mut builder, make_static!(embassy_usb::class::cdc_acm::State::new()), 64);
 
     // Build the builder.
     let usb = builder.build();
 
     // Low priority executor: runs in thread mode, using WFE/SEV
     let executor = EXECUTOR_LOW.init(Executor::new());
-    executor.run(|spawner| {
-        unwrap!(spawner.spawn(usb_task(usb)));
+    let executor = executor.run(|spawner| {
+        unwrap!(spawner.spawn(usb_task(usb, class)));
     });
 
     // Run the USB device.
     // let usb_fut = usb.run();
 
     // Do stuff with the class!
-    let echo_fut = async {
-        loop {
-            class.wait_connection().await;
-            info!("Connected");
-            let _ = echo(&mut class).await;
-            info!("Disconnected");
-        }
-    };
 
     let external_to_internal_channel = EXTERNAL_TO_INTERNAL_CHANNEL.init(Channel::new());
 

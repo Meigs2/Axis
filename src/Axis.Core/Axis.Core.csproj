@@ -7,9 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="LibUsbDotNet" Version="2.2.29" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
       <PackageReference Include="System.Device.Gpio" Version="2.2.0" />
+      <PackageReference Include="System.IO.Ports" Version="7.0.0" />
       <PackageReference Include="System.Reactive" Version="6.0.0" />
     </ItemGroup>
 
