@@ -61,9 +61,9 @@ impl<'a> AxisRuntime<'a> {
         }
     }
 
-    async fn handle(&mut self, m: MessageDTO<'a>) -> Result<(), MessageError> {
+    async fn handle(m: MessageDTO<'a>) -> Result<Option<MessageType>, MessageError> {
         match m.message_type {
-            Ping => self.SendPong().await,
+            Ping => Ok(Some(Pong)),
             _ => Err(InvalidMessageType),
         }
     }
@@ -92,28 +92,8 @@ impl<'a> AxisRuntime<'a> {
         let mut len_buff = [0u8; 2];
         let mut content_buffer = [0u8; 1024];
         let content = make_static!([0u8; 1024]);
-
-        // First, process inbound messages, if any, then outbound.
-        let task = read_message(
-            &mut self.client_spi,
-            &mut type_buff,
-            &mut len_buff,
-            &mut content_buffer,
-            content,
-        );
-
-        let _ = embassy_time::with_timeout(Duration::from_micros(1), task)
-            .await
-            .map(|m| {
-                m.map(|b| async {
-                    embassy_time::with_timeout(
-                        Duration::from_micros(1),
-                        self.external_to_internal_channel.send(b),
-                    )
-                    .await
-                })
-            });
     }
+
     async fn process_internal_to_external(&mut self) {
         let task = self.internal_to_external_channel.recv();
 
@@ -132,49 +112,6 @@ impl<'a> AxisRuntime<'a> {
     }
 }
 
-async fn read_message<'a>(
-    spi: &mut Spi<'a, SPI0, Async>,
-    type_buff: &mut [u8; 1],
-    len_buff: &mut [u8; 2],
-    content_buffer: &mut [u8; 1024],
-    content: &'a [u8],
-) -> Option<MessageDTO<'a>> {
-
-    // get type byte.
-    if let Err(_) = spi.read(type_buff).await {
-        spi.flush().unwrap();
-        return None;
-    }
-
-    let message_type = match MessageType::from_u8(type_buff[0]) {
-        Ok(t) => t,
-        Err(_) => return None,
-    };
-
-    // read length buffer
-    if let Err(_) = spi.read(len_buff).await {
-        spi.flush().unwrap();
-        return None;
-    }
-
-    let content_len = u16::from_le_bytes([len_buff[0], len_buff[1]]);
-    if content_len > 0 {
-        if let Err(_) = spi.read(&mut content_buffer[..content_len as usize]).await {
-            spi.flush().unwrap();
-            return None;
-        }
-    }
-
-    content_buffer[..content_len as usize].clone_from_slice(content);
-
-    let message = MessageDTO {
-        message_type,
-        content_len,
-        content: content[..content_len as usize].as_ref(),
-    };
-    Some(message)
-}
-
 #[embassy_executor::task]
 async fn read_thermocouple(mut pin: Output<'static, PIN_16>) {
     loop {
@@ -182,33 +119,6 @@ async fn read_thermocouple(mut pin: Output<'static, PIN_16>) {
         Timer::after(Duration::from_millis(500)).await;
         pin.set_low();
         Timer::after(Duration::from_millis(500)).await;
-    }
-}
-
-async fn publish_message<'a>(
-    spi: &mut Spi<'a, SPI0, Async>,
-    external_to_internal_channel: &Channel<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
-) {
-    let mut type_buff = [0u8; 1];
-    let mut len_buff = [0u8; 2];
-    let mut content_buffer = [0u8; 1024];
-    let content = make_static!([0u8; 1024]);
-
-    loop {
-        let message = match read_message(
-            spi,
-            &mut type_buff,
-            &mut len_buff,
-            &mut content_buffer,
-            content,
-        )
-        .await
-        {
-            Some(value) => value,
-            None => continue,
-        };
-
-        external_to_internal_channel.send(message).await;
     }
 }
 
@@ -254,7 +164,7 @@ pub enum MessageType {
 }
 
 impl MessageType {
-    pub fn from_u8(val: u8) -> Result<MessageType, MessageError> {
+    pub fn from_u8(val: &u8) -> Result<MessageType, MessageError> {
         match val {
             1 => Ok(Ping),
             2 => Ok(Pong),
@@ -263,17 +173,48 @@ impl MessageType {
     }
 }
 
+#[derive(Debug)]
 pub enum MessageError {
     InvalidMessageType,
     Unknown,
 }
 
 impl<'a> MessageDTO<'a> {
-    pub unsafe fn to_bytes(&self) -> &[u8] {
-        core::slice::from_raw_parts(
-            (self as *const Self) as *const u8,
-            1 + 2 + self.content.len(),
-        )
+    pub fn to_bytes(&self, buffer: &'a mut [u8]) -> &'a [u8] {
+        let content_len = usize::from(self.content_len);
+
+        if buffer.len() < content_len + 3 {
+            return &[];  // or handle this case differently
+        }
+
+        buffer[0] = match self.message_type {
+            MessageType::Startup => 0,
+            MessageType::Acknowledge => 1,
+            MessageType::Ping => 2,
+            MessageType::Pong => 3,
+            MessageType::ThermocoupleReading => 4,
+        };
+
+        let content_len_bytes = self.content_len.to_be_bytes();
+        buffer[1..3].copy_from_slice(&content_len_bytes);
+
+        buffer[3..3+content_len].copy_from_slice(self.content);
+
+        &buffer[..3+content_len]
+    }
+
+    pub fn parse(data: &[u8]) -> Option<MessageDTO> {
+        let t = MessageType::from_u8(data[..1].first().unwrap());
+
+        let n = u16::from_le_bytes(data[2..4].try_into().unwrap());
+
+        let data = &data[5..n as usize];
+
+        Some(MessageDTO {
+            message_type: t.unwrap(),
+            content_len: n,
+            content: data,
+        })
     }
 }
 
@@ -546,31 +487,6 @@ async fn main(_s: embassy_executor::Spawner) {
             gpio.set_low();
             Timer::after(Duration::from_millis(500)).await;
         };
-
-        let wait_for_startup = async {
-            inbound_flag.wait_for_high().await;
-            read_message(
-                &mut client_spi,
-                &mut type_buff,
-                &mut len_buff,
-                &mut content_buffer,
-                content.as_slice(),
-        ).await };
-
-        let res = embassy_futures::select::select(blink_task, wait_for_startup).await;
-        match res {
-            Either::First(_) => {}
-            Either::Second(message) => {
-                match message {
-                    None => {
-                        return;
-                    }
-                    Some(m) => if let MessageType::Startup = m.message_type {
-                        break;
-                    },
-                }
-            }
-        }
     }
 
 
@@ -600,10 +516,6 @@ async fn main(_s: embassy_executor::Spawner) {
     KILL_SIGNAL.wait().await;
 }
 
-#[embassy_executor::task]
-async fn test(p0: &'static mut UsbDevice<'static, Driver<'static, USB>>, p1: CdcAcmClass<'static, Driver<'static, USB>>) {
-}
-
 struct Disconnected {}
 
 impl From<EndpointError> for Disconnected {
@@ -616,7 +528,7 @@ impl From<EndpointError> for Disconnected {
 }
 
 async fn echo<'d, T: Instance + 'd>(class: &mut CdcAcmClass<'d, Driver<'d, T>>) -> Result<(), Disconnected> {
-    let mut buf = [0; 64];
+    let mut buf = [0; 3];
     loop {
         let n = class.read_packet(&mut buf).await?;
         let data = &buf[..n];

@@ -16,20 +16,20 @@ Console.ReadKey();
 
 mcu.Observable.Subscribe(x => Console.WriteLine(x.ToString()));
 
-Task.Run(() =>
-{
-    while (true)
-    {
-        try
-        {
-            mcu.ReadMessages();
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
-    }
-});
+// Task.Run(() =>
+// {
+//     while (true)
+//     {
+//         try
+//         {
+//             //mcu.ReadMessages();
+//         }
+//         catch (Exception e)
+//         {
+//             Console.WriteLine(e);
+//         }
+//     }
+// });
 
 mcu.Send(new Message(MessageType.Startup){} );
 
