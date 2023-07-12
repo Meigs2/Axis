@@ -13,7 +13,6 @@ use embassy_futures::select::Either;
 use embassy_net::tcp::TcpSocket;
 use embassy_net::{Stack, StackResources};
 use embassy_rp::peripherals::{PIN_16, SPI0, SPI1, USB};
-use embassy_rp::usb::{Driver, Instance, InterruptHandler};
 use embassy_rp::{bind_interrupts, interrupt};
 use embassy_rp::gpio::{Input, Level, Output, Pull};
 use embassy_rp::interrupt::{InterruptExt, Priority};
@@ -334,16 +333,10 @@ pub async fn main_loop(runtime: &'static mut AxisRuntime<'static>) {
     runtime.watchdog.trigger_reset();
 }
 
-bind_interrupts!(struct Irqs {
-    USBCTRL_IRQ => InterruptHandler<USB>;
-});
-
 #[embassy_executor::task]
 async fn logger_task(driver: Driver<'static, USB>) {
     embassy_usb_logger::run!(1024, log::LevelFilter::Info, driver);
 }
-
-type MyDriver = Driver<'static, embassy_rp::peripherals::USB>;
 
 #[embassy_executor::task]
 async fn usb_task(mut usb: UsbDevice<'static, MyDriver>, mut class: CdcAcmClass<'static, Driver<'static, USB>>) {
@@ -370,57 +363,85 @@ pub async fn usb_reader(mut class: &'static mut CdcAcmClass<'static, Driver<'sta
     }
 }
 
+mod axis_peripherals {
+    use embassy_rp::bind_interrupts;
+    use embassy_rp::peripherals::USB;
+    use embassy_usb::class::cdc_acm::CdcAcmClass;
+    use embassy_usb::driver::EndpointError;
+    use embassy_usb::{Builder, Config, UsbDevice};
+    use embassy_rp::usb::{Driver, Instance, InterruptHandler};
+    use static_cell::make_static;
 
-// Global static state
-static DRIVER: StaticCell<Driver<USB>> = StaticCell::new();
-static USB_CONFIG: StaticCell<embassy_usb::Config> = StaticCell::new();
-static DEVICE_DESCRIPTOR: StaticCell<[u8; 256]> = StaticCell::new();
-static CONFIG_DESCRIPTOR: StaticCell<[u8; 256]> = StaticCell::new();
-static BOS_DESCRIPTOR:StaticCell<[u8; 256]> = StaticCell::new();
-static CONTROL_BUF: StaticCell<[u8; 64]> = StaticCell::new();
-static USB_STATE: StaticCell<State> = StaticCell::new();
-static BUILDER: StaticCell<Builder<Driver<USB>>> = StaticCell::new();
-static CDC_ADM_CLASS: StaticCell<CdcAcmClass<Driver<USB>>> = StaticCell::new();
-static USB: StaticCell<UsbDevice<Driver<USB>>> = StaticCell::new();
+    type MyDriver = Driver<'static, USB>;
+
+    bind_interrupts!(struct Irqs {
+        USBCTRL_IRQ => InterruptHandler<USB>;
+    });
+
+    struct Disconnected {}
+
+    impl From<EndpointError> for Disconnected {
+        fn from(val: EndpointError) -> Self {
+            match val {
+                EndpointError::BufferOverflow => panic!("Buffer overflow"),
+                EndpointError::Disabled => Disconnected {},
+            }
+        }
+    }
+
+    struct UsbSerial<'a> {
+        cdc_adm: CdcAcmClass<'a, Driver<'a, USB>>,
+        usb_device: UsbDevice<'a, MyDriver>
+    }
+
+    impl<'a> UsbSerial<'a> {
+        pub fn new() -> UsbSerial<'a> {
+            // Create the driver, from the HAL.
+            let driver = Driver::new(p.USB, Irqs);
+
+            // Create embassy-usb Config
+            let mut config = Config::new(0xc0de, 0xcafe);
+            config.manufacturer = Some("Embassy");
+            config.product = Some("Axis USB Serial Interface");
+            config.serial_number = Some("axis-usb");
+            config.max_power = 100;
+            config.max_packet_size_0 = 64;
+
+            // Required for windows compatibility.
+            // https://developer.nordicsemi.com/nRF_Connect_SDK/doc/1.9.1/kconfig/CONFIG_CDC_ACM_IAD.html#help
+            config.device_class = 0xEF;
+            config.device_sub_class = 0x02;
+            config.device_protocol = 0x01;
+            config.composite_with_iads = true;
+
+            // Create embassy-usb DeviceBuilder using the driver and config.
+            let mut builder = Builder::new(
+                driver,
+                config,
+                &mut make_static!([0; 256])[..],
+                &mut make_static!([0; 256])[..],
+                &mut make_static!([0; 256])[..],
+                &mut make_static!([0; 64])[..],
+            );
+
+            // Create classes on the builder.
+            let cdc_adm = CdcAcmClass::new(&mut builder, make_static!(embassy_usb::class::cdc_acm::State::new()), 64);
+
+            // Build the builder.
+            let usb_device = builder.build();
+
+            return UsbSerial {
+                cdc_adm,
+                usb_device
+            }
+        }
+    }
+}
 
 #[embassy_executor::main]
 async fn main(_s: embassy_executor::Spawner) {
     let p = embassy_rp::init(Default::default());
     let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);
-
-    // Create the driver, from the HAL.
-    let driver = Driver::new(p.USB, Irqs);
-
-    // Create embassy-usb Config
-    let mut config = embassy_usb::Config::new(0xc0de, 0xcafe);
-    config.manufacturer = Some("Embassy");
-    config.product = Some("USB-serial example");
-    config.serial_number = Some("12345678");
-    config.max_power = 100;
-    config.max_packet_size_0 = 64;
-
-    // Required for windows compatibility.
-    // https://developer.nordicsemi.com/nRF_Connect_SDK/doc/1.9.1/kconfig/CONFIG_CDC_ACM_IAD.html#help
-    config.device_class = 0xEF;
-    config.device_sub_class = 0x02;
-    config.device_protocol = 0x01;
-    config.composite_with_iads = true;
-
-    // Create embassy-usb DeviceBuilder using the driver and config.
-    let mut builder = Builder::new(
-        driver,
-        config,
-        &mut make_static!([0; 256])[..],
-        &mut make_static!([0; 256])[..],
-        &mut make_static!([0; 256])[..],
-        &mut make_static!([0; 64])[..],
-    );
-
-    // Create classes on the builder.
-    let class = CdcAcmClass::new(&mut builder, make_static!(embassy_usb::class::cdc_acm::State::new()), 64);
-
-    // Build the builder.
-    let usb = builder.build();
 
     // Low priority executor: runs in thread mode, using WFE/SEV
     let executor = EXECUTOR_LOW.init(Executor::new());
@@ -514,17 +535,6 @@ async fn main(_s: embassy_executor::Spawner) {
     unwrap!(spawner.spawn(thermocouple_read(thermocouple, c2)));
 
     KILL_SIGNAL.wait().await;
-}
-
-struct Disconnected {}
-
-impl From<EndpointError> for Disconnected {
-    fn from(val: EndpointError) -> Self {
-        match val {
-            EndpointError::BufferOverflow => panic!("Buffer overflow"),
-            EndpointError::Disabled => Disconnected {},
-        }
-    }
 }
 
 async fn echo<'d, T: Instance + 'd>(class: &mut CdcAcmClass<'d, Driver<'d, T>>) -> Result<(), Disconnected> {
