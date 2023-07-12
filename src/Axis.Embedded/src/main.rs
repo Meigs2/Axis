@@ -395,13 +395,13 @@ mod axis_peripherals {
     }
 
     impl<'a> UsbSerial<'a> {
-        pub fn new() -> UsbSerial<'a> {
+        pub fn new(usb: USB) -> UsbSerial<'a> {
             // Create the driver, from the HAL.
-            let driver = Driver::new(p.USB, Irqs);
+            let driver = Driver::new(usb, Irqs);
 
             // Create embassy-usb Config
             let mut config = Config::new(0xc0de, 0xcafe);
-            config.manufacturer = Some("Embassy");
+            config.manufacturer = Some("Axis");
             config.product = Some("Axis USB Serial Interface");
             config.serial_number = Some("axis-usb");
             config.max_power = 100;
@@ -434,6 +434,10 @@ mod axis_peripherals {
                 cdc_adm,
                 usb_device
             }
+        }
+
+        pub async fn read_packet(&mut self, data: &mut [u8]) -> Result<usize, EndpointError> {
+            self.cdc_adm.read_packet(data).await
         }
     }
 }
