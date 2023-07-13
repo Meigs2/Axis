@@ -1,11 +1,15 @@
 use defmt::info;
 use embassy_rp::bind_interrupts;
 use embassy_rp::peripherals::USB;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_sync::channel::{Receiver, Sender, TryRecvError};
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
 use embassy_usb::driver::EndpointError;
 use embassy_usb::{Builder, Config, UsbDevice};
 use embassy_rp::usb::{Driver, Instance, InterruptHandler};
 use static_cell::make_static;
+
+use crate::MessageDTO;
 
 type MyDriver<'a> = Driver<'a, USB>;
 
@@ -24,13 +28,23 @@ impl From<EndpointError> for Disconnected {
     }
 }
 
-struct UsbSerial<'a> {
-    cdc_adm: CdcAcmClass<'a, Driver<'a, USB>>,
-    usb_device: UsbDevice<'a, MyDriver<'a>>
+impl From<TryRecvError> for Disconnected {
+    fn from(value: TryRecvError) -> Self {
+        match value {
+            a =>{a.}},
+        }
+    }
 }
 
-impl<'a> UsbSerial<'a> {
-    pub fn new(usb: USB, state: &'a mut State<'a>) -> UsbSerial<'a> {
+struct UsbInterface<'a> {
+    cdc_adm: CdcAcmClass<'a, Driver<'a, USB>>,
+    usb_device: UsbDevice<'a, MyDriver<'a>>,
+    external_to_internal_channel: Sender<'a, CriticalSectionRawMutex, MessageDTO<'a>, 1>,
+    internal_to_external_channel: Receiver<'a, CriticalSectionRawMutex, MessageDTO<'a>, 1>,
+}
+
+impl<'a> UsbInterface<'a> {
+    pub fn new(usb: USB, state: &'a mut State<'a>) -> UsbInterface<'a> {
         // Create the driver, from the HAL.
         let driver = Driver::new(usb, Irqs);
 
@@ -65,25 +79,25 @@ impl<'a> UsbSerial<'a> {
         // Build the builder.
         let usb_device = builder.build();
 
-        return UsbSerial {
-            cdc_adm,
-            usb_device
-        }
+        todo!();
     }
 
     pub async fn start(&mut self) -> ! {
         loop {
             self.cdc_adm.wait_connection().await;
             defmt::info!("Connected");
-            let _ = self.read_packets().await;
+            let _ = self.process_packets().await;
             defmt::info!("Disconnected");
         }
     }
 
-    async fn read_packets(&mut self) -> Result<(), Disconnected> {
-        let mut buf = [0; 3];
+    async fn process_packets(&mut self) -> Result<(), Disconnected> {
+        let mut buf = [0; 64];
         loop {
+            let a = self.internal_to_external_channel.try_recv()?;
+
             let n = self.cdc_adm.read_packet(&mut buf).await?;
+            let data: MessageDTO = minicbor::decode(&buf);
             let data = &buf[..n];
             info!("data: {:x}", data);
             self.cdc_adm.write_packet(data).await?;
