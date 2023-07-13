@@ -5,6 +5,8 @@
 #![feature(async_closure)]
 #![feature(never_type)]
 
+mod axis_peripherals;
+
 use core::future::Future;
 use defmt::{info, unwrap};
 use embassy_executor::{Executor, InterruptExecutor, Spawner};
@@ -17,6 +19,7 @@ use embassy_rp::{bind_interrupts, interrupt};
 use embassy_rp::gpio::{Input, Level, Output, Pull};
 use embassy_rp::interrupt::{InterruptExt, Priority};
 use embassy_rp::spi::{Async, Spi};
+use embassy_rp::usb::Driver;
 use embassy_rp::watchdog::Watchdog;
 use embassy_sync::blocking_mutex::CriticalSectionMutex;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
@@ -34,9 +37,6 @@ use static_cell::{make_static, StaticCell};
 use {defmt_rtt as _, panic_probe as _};
 use crate::MessageError::InvalidMessageType;
 use crate::MessageType::{Ping, Pong, ThermocoupleReading};
-use crate::peripherals::MAX31855;
-
-mod peripherals;
 
 pub struct AxisRuntime<'a> {
     internal_to_external_channel: &'a Channel<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
@@ -262,31 +262,6 @@ unsafe fn SWI_IRQ_0() {
     EXECUTOR_MED.on_interrupt()
 }
 
-// #[embassy_executor::task]
-// pub async fn watchdog_monitor(
-//     watchdog: &'static mut Watchdog,
-//     mut request_pin: Output<'static, PIN_26>,
-//     mut reply_pin: Input<'static, PIN_28>,
-// ) {
-//     watchdog.start(Duration::from_secs(5));
-//
-//     loop {
-//         if (wait_with_timeout(3_000, reply_pin.wait_for_high()).await).is_err() {
-//             watchdog.trigger_reset();
-//             return;
-//         }
-//         request_pin.set_high();
-//
-//         if (wait_with_timeout(1_000, reply_pin.wait_for_low()).await).is_err() {
-//             watchdog.trigger_reset();
-//             return;
-//         }
-//
-//         request_pin.set_low();
-//         watchdog.feed();
-//     }
-// }
-
 pub async fn wait_with_timeout<F: Future>(millis: u64, fut: F) -> Result<F::Output, embassy_time::TimeoutError> {
     embassy_time::with_timeout(Duration::from_millis(millis), fut).await
 }
@@ -296,61 +271,8 @@ const SPI_CLOCK_FREQ: u32 = 500_000;
 static THERMOCOUPLE_BUFFER: &[u8] = [0u8; 4].as_slice();
 
 #[embassy_executor::task]
-pub async fn thermocouple_read(
-    mut thermocouple: MAX31855,
-    mut channel: &'static Channel<CriticalSectionRawMutex, MessageDTO<'static>, 1>,
-) {
-    static BUFFER: StaticCell<[u8; 4]> = StaticCell::new();
-    let mut c = BUFFER.init([0u8; 4]);
-        let a = embassy_time::with_timeout(Duration::from_millis(100), thermocouple.read()).await;
-        if let Ok(r) = a {
-            if let Ok(s) = r {
-                let u = s.temperature.to_le_bytes();
-                c.copy_from_slice(&u);
-                let _ = embassy_time::with_timeout(Duration::from_millis(100), async {
-                    channel
-                        .send(MessageDTO {
-                            message_type: ThermocoupleReading,
-                            content: c,
-                            content_len: 4,
-                        })
-                        .await
-                })
-                .await;
-            };
-        };
-}
-
-#[embassy_executor::task]
-pub async fn main_loop(runtime: &'static mut AxisRuntime<'static>) {
-    embassy_futures::join::join(
-        runtime.run(),
-        async {
-            KILL_SIGNAL.wait().await;
-        }
-    )
-    .await;
-    runtime.watchdog.trigger_reset();
-}
-
-#[embassy_executor::task]
 async fn logger_task(driver: Driver<'static, USB>) {
     embassy_usb_logger::run!(1024, log::LevelFilter::Info, driver);
-}
-
-#[embassy_executor::task]
-async fn usb_task(mut usb: UsbDevice<'static, MyDriver>, mut class: CdcAcmClass<'static, Driver<'static, USB>>) {
-    let usb_read = usb.run();
-    let loop_task = async {
-            loop {
-                class.wait_connection().await;
-                info!("Connected");
-                let _ = echo(&mut class).await;
-                info!("Disconnected");
-            }
-        };
-    
-    join(usb_read, loop_task).await;
 }
 
 #[embassy_executor::task]
@@ -360,85 +282,6 @@ pub async fn usb_reader(mut class: &'static mut CdcAcmClass<'static, Driver<'sta
         defmt::info!("Connected");
         let _ = echo(&mut class).await;
         defmt::info!("Disconnected");
-    }
-}
-
-mod axis_peripherals {
-    use embassy_rp::bind_interrupts;
-    use embassy_rp::peripherals::USB;
-    use embassy_usb::class::cdc_acm::CdcAcmClass;
-    use embassy_usb::driver::EndpointError;
-    use embassy_usb::{Builder, Config, UsbDevice};
-    use embassy_rp::usb::{Driver, Instance, InterruptHandler};
-    use static_cell::make_static;
-
-    type MyDriver = Driver<'static, USB>;
-
-    bind_interrupts!(struct Irqs {
-        USBCTRL_IRQ => InterruptHandler<USB>;
-    });
-
-    struct Disconnected {}
-
-    impl From<EndpointError> for Disconnected {
-        fn from(val: EndpointError) -> Self {
-            match val {
-                EndpointError::BufferOverflow => panic!("Buffer overflow"),
-                EndpointError::Disabled => Disconnected {},
-            }
-        }
-    }
-
-    struct UsbSerial<'a> {
-        cdc_adm: CdcAcmClass<'a, Driver<'a, USB>>,
-        usb_device: UsbDevice<'a, MyDriver>
-    }
-
-    impl<'a> UsbSerial<'a> {
-        pub fn new(usb: USB) -> UsbSerial<'a> {
-            // Create the driver, from the HAL.
-            let driver = Driver::new(usb, Irqs);
-
-            // Create embassy-usb Config
-            let mut config = Config::new(0xc0de, 0xcafe);
-            config.manufacturer = Some("Axis");
-            config.product = Some("Axis USB Serial Interface");
-            config.serial_number = Some("axis-usb");
-            config.max_power = 100;
-            config.max_packet_size_0 = 64;
-
-            // Required for windows compatibility.
-            // https://developer.nordicsemi.com/nRF_Connect_SDK/doc/1.9.1/kconfig/CONFIG_CDC_ACM_IAD.html#help
-            config.device_class = 0xEF;
-            config.device_sub_class = 0x02;
-            config.device_protocol = 0x01;
-            config.composite_with_iads = true;
-
-            // Create embassy-usb DeviceBuilder using the driver and config.
-            let mut builder = Builder::new(
-                driver,
-                config,
-                &mut make_static!([0; 256])[..],
-                &mut make_static!([0; 256])[..],
-                &mut make_static!([0; 256])[..],
-                &mut make_static!([0; 64])[..],
-            );
-
-            // Create classes on the builder.
-            let cdc_adm = CdcAcmClass::new(&mut builder, make_static!(embassy_usb::class::cdc_acm::State::new()), 64);
-
-            // Build the builder.
-            let usb_device = builder.build();
-
-            return UsbSerial {
-                cdc_adm,
-                usb_device
-            }
-        }
-
-        pub async fn read_packet(&mut self, data: &mut [u8]) -> Result<usize, EndpointError> {
-            self.cdc_adm.read_packet(data).await
-        }
     }
 }
 
@@ -539,14 +382,4 @@ async fn main(_s: embassy_executor::Spawner) {
     unwrap!(spawner.spawn(thermocouple_read(thermocouple, c2)));
 
     KILL_SIGNAL.wait().await;
-}
-
-async fn echo<'d, T: Instance + 'd>(class: &mut CdcAcmClass<'d, Driver<'d, T>>) -> Result<(), Disconnected> {
-    let mut buf = [0; 3];
-    loop {
-        let n = class.read_packet(&mut buf).await?;
-        let data = &buf[..n];
-        info!("data: {:x}", data);
-        class.write_packet(data).await?;
-    }
 }
