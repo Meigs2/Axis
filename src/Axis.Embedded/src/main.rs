@@ -7,13 +7,12 @@
 
 mod axis_peripherals;
 
+use minicbor::{Encode, Decode};
 use core::future::Future;
 use defmt::{info, unwrap};
 use embassy_executor::{Executor, InterruptExecutor, Spawner};
 use embassy_futures::join::join;
 use embassy_futures::select::Either;
-use embassy_net::tcp::TcpSocket;
-use embassy_net::{Stack, StackResources};
 use embassy_rp::peripherals::{PIN_16, SPI0, SPI1, USB};
 use embassy_rp::{bind_interrupts, interrupt};
 use embassy_rp::gpio::{Input, Level, Output, Pull};
@@ -23,40 +22,31 @@ use embassy_rp::usb::Driver;
 use embassy_rp::watchdog::Watchdog;
 use embassy_sync::blocking_mutex::CriticalSectionMutex;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_sync::channel::Channel;
+use embassy_sync::channel::{Channel, Receiver, Sender};
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
-use embassy_usb::class::cdc_ncm::embassy_net::{Device, Runner, State as NetState};
-use embassy_usb::class::cdc_ncm::{CdcNcmClass, State};
-use embassy_usb::{Builder, Config, UsbDevice};
-use embassy_usb::class::cdc_acm::CdcAcmClass;
-use embassy_usb::driver::EndpointError;
-use embedded_io::asynch::Write;
-use futures::SinkExt;
 use static_cell::{make_static, StaticCell};
 use {defmt_rtt as _, panic_probe as _};
 use crate::MessageError::InvalidMessageType;
 use crate::MessageType::{Ping, Pong, ThermocoupleReading};
 
 pub struct AxisRuntime<'a> {
-    internal_to_external_channel: &'a Channel<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
-    external_to_internal_channel: &'a Channel<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
+    internal_to_external_channel: Receiver<'a, CriticalSectionRawMutex, MessageDTO<'a>, 1>,
+    external_to_internal_channel: Sender<'a, CriticalSectionRawMutex, MessageDTO<'a>, 1>,
     pub watchdog: &'a mut Watchdog,
     client_spi: &'a mut Spi<'a, SPI0, Async>,
 }
 
 impl<'a> AxisRuntime<'a> {
     pub fn new(
-        internal_to_external_channel: &'a Channel<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
-        external_to_internal_channel: &'a Channel<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
+        internal_to_external_channel: Receiver<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
+        external_to_internal_channel: Sender<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
         watchdog: &'a mut Watchdog,
-        client_spi: &'a mut Spi<'a, SPI0, Async>,
     ) -> Self {
         Self {
             internal_to_external_channel,
             external_to_internal_channel,
             watchdog,
-            client_spi,
         }
     }
 
@@ -86,12 +76,6 @@ impl<'a> AxisRuntime<'a> {
         }
     }
 
-    async fn process_external_to_internal(&mut self) {
-        let mut type_buff = [0u8; 1];
-        let mut len_buff = [0u8; 2];
-        let mut content_buffer = [0u8; 1024];
-        let content = make_static!([0u8; 1024]);
-    }
 
     async fn process_internal_to_external(&mut self) {
         let task = self.internal_to_external_channel.recv();
@@ -146,7 +130,6 @@ pub async unsafe fn client_mcu_communication_loop(
             });
     }
 }
-
 pub struct MessageDTO<'a> {
     message_type: MessageType,
     content_len: u16,
@@ -154,21 +137,51 @@ pub struct MessageDTO<'a> {
 }
 
 #[repr(u8)]
+#[derive(Copy, Clone)]
 pub enum MessageType {
-    Startup = 0,
-    Acknowledge = 1,
-    Ping = 2,
-    Pong = 3,
-    ThermocoupleReading = 4,
+    Unknown = 0,
+    Startup = 1,
+    Acknowledge = 2,
+    Ping = 3,
+    Pong = 4,
+    ThermocoupleReading = 5,
+    Log = 6,
 }
 
-impl MessageType {
-    pub fn from_u8(val: &u8) -> Result<MessageType, MessageError> {
-        match val {
-            1 => Ok(Ping),
-            2 => Ok(Pong),
-            _ => Err(InvalidMessageType),
+impl Into<MessageType> for u8 {
+    fn into(self) -> MessageType {
+        match self {
+            _ => MessageType::Unknown,
+            1 => MessageType::Startup,
+            2 => MessageType::Acknowledge,
+            3 => MessageType::Ping,
+            4 => MessageType::Pong,
+            5 => MessageType::ThermocoupleReading,
+            6 => MessageType::Log,
         }
+    }
+}
+
+impl<'a> Encode<MessageDTO<'a>> for MessageDTO<'a> {
+    fn encode<W: minicbor::encode::Write>(&self, e: &mut minicbor::Encoder<W>, ctx: &mut MessageDTO<'a>) -> Result<(), minicbor::encode::Error<W::Error>> {
+        e.u8(self.message_type as u8)?;
+        e.u16(self.content_len)?;
+        e.bytes(self.content)?;
+        e.ok()
+    }
+}
+
+impl<'a, 'b> Decode<'b, MessageDTO<'a>> for MessageDTO<'a> {
+    fn decode(d: &mut minicbor::Decoder<'b>, ctx: &mut MessageDTO<'a>) -> Result<Self, minicbor::decode::Error> {
+        let message_type = d.u8()?;
+        let content_len = d.u16()?;
+        let content = d.bytes()?;
+
+        Ok(MessageDTO {
+            message_type: message_type.into(),
+            content_len,
+            content
+        })
     }
 }
 
@@ -179,27 +192,11 @@ pub enum MessageError {
 }
 
 impl<'a> MessageDTO<'a> {
-    pub fn to_bytes(&self, buffer: &'a mut [u8]) -> &'a [u8] {
-        let content_len = usize::from(self.content_len);
-
-        if buffer.len() < content_len + 3 {
-            return &[];  // or handle this case differently
-        }
-
-        buffer[0] = match self.message_type {
-            MessageType::Startup => 0,
-            MessageType::Acknowledge => 1,
-            MessageType::Ping => 2,
-            MessageType::Pong => 3,
-            MessageType::ThermocoupleReading => 4,
-        };
-
-        let content_len_bytes = self.content_len.to_be_bytes();
-        buffer[1..3].copy_from_slice(&content_len_bytes);
-
-        buffer[3..3+content_len].copy_from_slice(self.content);
-
-        &buffer[..3+content_len]
+    unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
+        ::core::slice::from_raw_parts(
+            (p as *const T) as *const u8,
+            ::core::mem::size_of::<T>(),
+        )
     }
 
     pub fn parse(data: &[u8]) -> Option<MessageDTO> {
@@ -295,11 +292,6 @@ async fn main(_s: embassy_executor::Spawner) {
     let executor = executor.run(|spawner| {
         unwrap!(spawner.spawn(usb_task(usb, class)));
     });
-
-    // Run the USB device.
-    // let usb_fut = usb.run();
-
-    // Do stuff with the class!
 
     let external_to_internal_channel = EXTERNAL_TO_INTERNAL_CHANNEL.init(Channel::new());
 
