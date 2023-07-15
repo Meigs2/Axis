@@ -5,8 +5,6 @@
 #![feature(async_closure)]
 #![feature(never_type)]
 
-extern crate alloc;
-
 mod axis_peripherals;
 
 use serde::{Serialize, Deserialize};

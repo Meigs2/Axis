@@ -1,4 +1,3 @@
-use alloc::borrow::ToOwned;
 use byte_slice_cast::AsMutByteSlice;
 use core::fmt::{Debug, Display, Formatter};
 use core::future::Future;
@@ -24,10 +23,6 @@ use thiserror_no_std::Error;
 use crate::{MessageDTO};
 
 type MyDriver<'a> = Driver<'a, USB>;
-
-bind_interrupts!(struct Irqs {
-    USBCTRL_IRQ => InterruptHandler<USB>;
-});
 
 #[derive(Error, Debug)]
 pub enum UsbError {
