@@ -9,13 +9,12 @@ extern crate alloc;
 
 mod axis_peripherals;
 
-use alloc::borrow::ToOwned;
-use crate::axis_peripherals::usb_serial::UsbInterface;
+use serde::{Serialize, Deserialize};
+
 use crate::MessageError::InvalidMessageType;
 use crate::MessageType::{Ping, Pong, ThermocoupleReading};
 use core::future::Future;
-use byte_slice_cast::AsByteSlice;
-use defmt::{info, unwrap, Format};
+use byte_slice_cast::{AsByteSlice, AsMutByteSlice};
 use embassy_executor::{Executor, InterruptExecutor, Spawner};
 use embassy_futures::join::{join, join4};
 use embassy_futures::select::Either;
@@ -33,8 +32,9 @@ use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
 use embassy_usb::{Builder, UsbDevice};
-use minicbor::encode::{Error, Write};
-use minicbor::{Decode, Encode, Encoder};
+use serde::ser::SerializeStruct;
+use serde_json_core::heapless;
+use serde_json_core::heapless::{String, Vec};
 use static_cell::{make_static, StaticCell};
 use {defmt_rtt as _, panic_probe as _};
 
@@ -42,9 +42,8 @@ bind_interrupts!(struct Irqs {
     USBCTRL_IRQ => embassy_rp::usb::InterruptHandler<USB>;
 });
 
+
 pub struct AxisRuntime<'a> {
-    internal_to_external_channel: Receiver<'a, CriticalSectionRawMutex, MessageDTO<'a>, 1>,
-    external_to_internal_channel: Sender<'a, CriticalSectionRawMutex, MessageDTO<'a>, 1>,
     pub watchdog: &'a mut Watchdog,
     client_spi: &'a mut Spi<'a, SPI0, Async>,
 }
@@ -59,25 +58,14 @@ async fn read_thermocouple(mut pin: Output<'static, PIN_16>) {
     }
 }
 
-#[derive(Format, Copy, Clone)]
-pub struct MessageDTO<'a> {
+#[derive(Serialize, Deserialize)]
+pub struct MessageDTO<const N: usize> {
     message_type: MessageType,
-    content_len: u16,
-    content: &'a [u8],
-}
-
-impl<'a> Encode<()> for MessageDTO<'a> {
-    fn encode<W: Write>(&self, e: &mut Encoder<W>, ctx: &mut ()) -> Result<(), Error<W::Error>> {
-        e.u16(self.message_type as u16)?;
-        e.u16(self.content_len)?;
-        e.bytes(self.content)?;
-
-        e.ok()
-    }
+    contents: String<N>
 }
 
 #[repr(u16)]
-#[derive(Copy, Clone, Format)]
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum MessageType {
     Unknown = 0,
     Startup = 1,
@@ -110,31 +98,9 @@ pub enum MessageError {
     Unknown,
 }
 
-pub struct Messenger<'a> {
-    channel: &'a Channel<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
-}
-
-impl<'a> Messenger<'a> {
-    pub fn new(
-        channel: &'a Channel<
-            embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex,
-            MessageDTO<'a>,
-            1,
-        >,
-    ) -> Self {
-        Self { channel }
-    }
-
-    pub async fn publish(&self, m: MessageDTO<'a>) {
-        self.channel.send(m).await;
-    }
-
-    pub async fn receive(&self) -> MessageDTO<'a> {
-        self.channel.recv().await
-    }
-}
-
 pub enum SignalFlag {}
+
+const N: usize = 64;
 
 static EXECUTOR_HIGH: InterruptExecutor = InterruptExecutor::new();
 static EXECUTOR_MED: InterruptExecutor = InterruptExecutor::new();
@@ -144,13 +110,13 @@ static WATCHDOG: StaticCell<Watchdog> = StaticCell::new();
 static CLIENT_SPI: StaticCell<Spi<SPI0, Async>> = StaticCell::new();
 static THERMOCOUPLE_SPI: StaticCell<Spi<SPI1, Async>> = StaticCell::new();
 
-static INTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, MessageDTO, 1>> =
+static INTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, MessageDTO<N>, 1>> =
     StaticCell::new();
 
-static EXTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, MessageDTO, 1>> =
+static EXTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, MessageDTO<N>, 1>> =
     StaticCell::new();
 
-static TEST: StaticCell<CriticalSectionMutex<Channel<CriticalSectionRawMutex, MessageDTO, 1>>> =
+static TEST: StaticCell<CriticalSectionMutex<Channel<CriticalSectionRawMutex, MessageDTO<N>, 1>>> =
     StaticCell::new();
 
 static KILL_SIGNAL: Signal<CriticalSectionRawMutex, SignalFlag> = Signal::new();
@@ -228,29 +194,12 @@ async fn main(_s: embassy_executor::Spawner) {
 
     let (mut usb_sender, mut usb_reader) = class.split();
 
-    let buffer = make_static!([0u8; 64]);
+    let mut buffer: &'static mut Vec<u8, N> = make_static!(Vec::new());
     let run_fut = usb.run();
     let read_usb_fut = async {
         loop {
             let n: usize;
-            // ugly, I know.
-            /*
-            error[E0502]: cannot borrow `*buffer` as mutable because it is also borrowed as immutable
-               --> src/main.rs:240:42
-                |
-            224 |     let inbound_sender = internal_channel.sender();
-                |         -------------- lifetime `'1` appears in the type of `inbound_sender`
-            ...
-            240 |             match usb_reader.read_packet(buffer).await {
-                |                                          ^^^^^^ mutable borrow occurs here
-            ...
-            248 |             let parsed: Result<MessageDTO, minicbor::decode::Error> = minicbor::decode(buffer);
-                |                                                                                        ------ immutable borrow occurs here
-            ...
-            251 |                     inbound_sender.send(m.clone()).await;
-                |                     ------------------------------ argument requires that `*buffer` is borrowed for `'1`
-             */
-            match usb_reader.read_packet(buffer).await {
+            match usb_reader.read_packet(buffer.clone().as_mut_byte_slice()).await {
                 Ok(s) => {
                     n = s;
                 }
@@ -258,25 +207,18 @@ async fn main(_s: embassy_executor::Spawner) {
                     continue;
                 }
             }
-            let parsed: Result<MessageDTO, minicbor::decode::Error> = minicbor::decode(buffer);
-            match parsed {
-                Ok(m) => {
-                    inbound_sender.send(m.clone()).await;
-                }
-                Err(_) => {}
-            }
+            let (message, x): (MessageDTO<N>, usize) = serde_json_core::de::from_slice(&buffer[..]).unwrap();
+            inbound_sender.send(message).await;
         }
     };
     let write_usb_fut = async {
         loop {
-            let buffer = &mut [0u8; 64][..];
+            let mut buffer: Vec<u8, N> = Vec::new();
             let m = outbound_receiver.recv().await;
-            let mut encoder = Encoder::new(buffer);
-            match m.encode(&mut encoder, &mut ()) {
-                Err(_) => continue,
-                _ => {}
-            };
-            if let Err(e) = usb_sender.write_packet(encoder.into_writer()).await {
+
+            let ser = serde_json_core::ser::to_slice(&m, &mut buffer[..]).unwrap();
+
+            if let Err(e) = usb_sender.write_packet(&buffer[..ser]).await {
                 continue;
             }
         }
