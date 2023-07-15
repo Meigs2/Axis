@@ -1,3 +1,2 @@
-mod max31588;
-mod usb_serial;
-
+pub mod max31588;
+pub mod usb_serial;

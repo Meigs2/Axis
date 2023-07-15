@@ -5,94 +5,48 @@
 #![feature(async_closure)]
 #![feature(never_type)]
 
+extern crate alloc;
+
 mod axis_peripherals;
 
-use minicbor::{Encode, Decode};
+use alloc::borrow::ToOwned;
+use crate::axis_peripherals::usb_serial::UsbInterface;
+use crate::MessageError::InvalidMessageType;
+use crate::MessageType::{Ping, Pong, ThermocoupleReading};
 use core::future::Future;
-use defmt::{info, unwrap};
+use byte_slice_cast::AsByteSlice;
+use defmt::{info, unwrap, Format};
 use embassy_executor::{Executor, InterruptExecutor, Spawner};
-use embassy_futures::join::join;
+use embassy_futures::join::{join, join4};
 use embassy_futures::select::Either;
-use embassy_rp::peripherals::{PIN_16, SPI0, SPI1, USB};
-use embassy_rp::{bind_interrupts, interrupt};
 use embassy_rp::gpio::{Input, Level, Output, Pull};
 use embassy_rp::interrupt::{InterruptExt, Priority};
+use embassy_rp::peripherals::{PIN_16, SPI0, SPI1, USB};
 use embassy_rp::spi::{Async, Spi};
 use embassy_rp::usb::Driver;
 use embassy_rp::watchdog::Watchdog;
-use embassy_sync::blocking_mutex::CriticalSectionMutex;
+use embassy_rp::{bind_interrupts, interrupt};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_sync::channel::{Channel, Receiver, Sender};
+use embassy_sync::blocking_mutex::CriticalSectionMutex;
+use embassy_sync::channel::{Channel, Receiver, RecvFuture, Sender};
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
+use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
+use embassy_usb::{Builder, UsbDevice};
+use minicbor::encode::{Error, Write};
+use minicbor::{Decode, Encode, Encoder};
 use static_cell::{make_static, StaticCell};
 use {defmt_rtt as _, panic_probe as _};
-use crate::MessageError::InvalidMessageType;
-use crate::MessageType::{Ping, Pong, ThermocoupleReading};
+
+bind_interrupts!(struct Irqs {
+    USBCTRL_IRQ => embassy_rp::usb::InterruptHandler<USB>;
+});
 
 pub struct AxisRuntime<'a> {
     internal_to_external_channel: Receiver<'a, CriticalSectionRawMutex, MessageDTO<'a>, 1>,
     external_to_internal_channel: Sender<'a, CriticalSectionRawMutex, MessageDTO<'a>, 1>,
     pub watchdog: &'a mut Watchdog,
     client_spi: &'a mut Spi<'a, SPI0, Async>,
-}
-
-impl<'a> AxisRuntime<'a> {
-    pub fn new(
-        internal_to_external_channel: Receiver<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
-        external_to_internal_channel: Sender<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
-        watchdog: &'a mut Watchdog,
-    ) -> Self {
-        Self {
-            internal_to_external_channel,
-            external_to_internal_channel,
-            watchdog,
-        }
-    }
-
-    async fn handle(m: MessageDTO<'a>) -> Result<Option<MessageType>, MessageError> {
-        match m.message_type {
-            Ping => Ok(Some(Pong)),
-            _ => Err(InvalidMessageType),
-        }
-    }
-
-    async fn SendPong(&mut self) -> Result<(), MessageError> {
-        self.internal_to_external_channel
-            .send(MessageDTO {
-                message_type: Pong,
-                content_len: 0,
-                content: &[0u8; 0],
-            })
-            .await;
-        self.watchdog.feed();
-        Ok(())
-    }
-
-    pub async fn run(&mut self) {
-        loop {
-            self.process_internal_to_external().await;
-            self.process_external_to_internal().await;
-        }
-    }
-
-
-    async fn process_internal_to_external(&mut self) {
-        let task = self.internal_to_external_channel.recv();
-
-        let _ = embassy_time::with_timeout(Duration::from_micros(1), task)
-            .await
-            .map(move |m| async move {
-                unsafe {
-                    embassy_time::with_timeout(
-                        Duration::from_millis(1),
-                        self.client_spi.write(core::slice::from_raw_parts(
-                          (&m as *const MessageDTO) as *const u8,
-                          1 + 2 + m.content.len()),
-                        ))
-                }.await
-            });
-    }
 }
 
 #[embassy_executor::task]
@@ -105,39 +59,25 @@ async fn read_thermocouple(mut pin: Output<'static, PIN_16>) {
     }
 }
 
-#[embassy_executor::task]
-pub async unsafe fn client_mcu_communication_loop(
-    spi: &'static mut Spi<'static, SPI0, Async>,
-    external_to_internal_channel: &'static Channel<CriticalSectionRawMutex, MessageDTO<'static>, 1>,
-    internal_to_external_channel: &'static Channel<CriticalSectionRawMutex, MessageDTO<'static>, 1>,
-) {
-    let mut type_buff = [0u8; 1];
-    let mut len_buff = [0u8; 2];
-    let mut content_buffer = [0u8; 1024];
-    let content = make_static!([0u8; 1024]);
-
-    loop {
-        let work = internal_to_external_channel.recv();
-
-        let _a = embassy_time::with_timeout(Duration::from_micros(1), work)
-            .await
-            .map(|m| async {
-                embassy_time::with_timeout(
-                    Duration::from_micros(1),
-                    internal_to_external_channel.send(m),
-                )
-                .await
-            });
-    }
-}
+#[derive(Format, Copy, Clone)]
 pub struct MessageDTO<'a> {
     message_type: MessageType,
     content_len: u16,
     content: &'a [u8],
 }
 
-#[repr(u8)]
-#[derive(Copy, Clone)]
+impl<'a> Encode<()> for MessageDTO<'a> {
+    fn encode<W: Write>(&self, e: &mut Encoder<W>, ctx: &mut ()) -> Result<(), Error<W::Error>> {
+        e.u16(self.message_type as u16)?;
+        e.u16(self.content_len)?;
+        e.bytes(self.content)?;
+
+        e.ok()
+    }
+}
+
+#[repr(u16)]
+#[derive(Copy, Clone, Format)]
 pub enum MessageType {
     Unknown = 0,
     Startup = 1,
@@ -146,42 +86,21 @@ pub enum MessageType {
     Pong = 4,
     ThermocoupleReading = 5,
     Log = 6,
+    Error = 7,
 }
 
 impl Into<MessageType> for u8 {
     fn into(self) -> MessageType {
         match self {
-            _ => MessageType::Unknown,
             1 => MessageType::Startup,
             2 => MessageType::Acknowledge,
             3 => MessageType::Ping,
             4 => MessageType::Pong,
             5 => MessageType::ThermocoupleReading,
             6 => MessageType::Log,
+            7 => MessageType::Error,
+            _ => MessageType::Unknown,
         }
-    }
-}
-
-impl<'a> Encode<MessageDTO<'a>> for MessageDTO<'a> {
-    fn encode<W: minicbor::encode::Write>(&self, e: &mut minicbor::Encoder<W>, ctx: &mut MessageDTO<'a>) -> Result<(), minicbor::encode::Error<W::Error>> {
-        e.u8(self.message_type as u8)?;
-        e.u16(self.content_len)?;
-        e.bytes(self.content)?;
-        e.ok()
-    }
-}
-
-impl<'a, 'b> Decode<'b, MessageDTO<'a>> for MessageDTO<'a> {
-    fn decode(d: &mut minicbor::Decoder<'b>, ctx: &mut MessageDTO<'a>) -> Result<Self, minicbor::decode::Error> {
-        let message_type = d.u8()?;
-        let content_len = d.u16()?;
-        let content = d.bytes()?;
-
-        Ok(MessageDTO {
-            message_type: message_type.into(),
-            content_len,
-            content
-        })
     }
 }
 
@@ -191,35 +110,18 @@ pub enum MessageError {
     Unknown,
 }
 
-impl<'a> MessageDTO<'a> {
-    unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
-        ::core::slice::from_raw_parts(
-            (p as *const T) as *const u8,
-            ::core::mem::size_of::<T>(),
-        )
-    }
-
-    pub fn parse(data: &[u8]) -> Option<MessageDTO> {
-        let t = MessageType::from_u8(data[..1].first().unwrap());
-
-        let n = u16::from_le_bytes(data[2..4].try_into().unwrap());
-
-        let data = &data[5..n as usize];
-
-        Some(MessageDTO {
-            message_type: t.unwrap(),
-            content_len: n,
-            content: data,
-        })
-    }
-}
-
 pub struct Messenger<'a> {
     channel: &'a Channel<CriticalSectionRawMutex, MessageDTO<'a>, 1>,
 }
 
 impl<'a> Messenger<'a> {
-    pub fn new(channel: &'a Channel<embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex, MessageDTO<'a>, 1>) -> Self {
+    pub fn new(
+        channel: &'a Channel<
+            embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex,
+            MessageDTO<'a>,
+            1,
+        >,
+    ) -> Self {
         Self { channel }
     }
 
@@ -242,10 +144,14 @@ static WATCHDOG: StaticCell<Watchdog> = StaticCell::new();
 static CLIENT_SPI: StaticCell<Spi<SPI0, Async>> = StaticCell::new();
 static THERMOCOUPLE_SPI: StaticCell<Spi<SPI1, Async>> = StaticCell::new();
 
-static EXTERNAL_TO_INTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, MessageDTO, 1>> =
+static INTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, MessageDTO, 1>> =
     StaticCell::new();
 
-static TEST: StaticCell<CriticalSectionMutex<Channel<CriticalSectionRawMutex, MessageDTO, 1>>> = StaticCell::new();
+static EXTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, MessageDTO, 1>> =
+    StaticCell::new();
+
+static TEST: StaticCell<CriticalSectionMutex<Channel<CriticalSectionRawMutex, MessageDTO, 1>>> =
+    StaticCell::new();
 
 static KILL_SIGNAL: Signal<CriticalSectionRawMutex, SignalFlag> = Signal::new();
 
@@ -259,7 +165,10 @@ unsafe fn SWI_IRQ_0() {
     EXECUTOR_MED.on_interrupt()
 }
 
-pub async fn wait_with_timeout<F: Future>(millis: u64, fut: F) -> Result<F::Output, embassy_time::TimeoutError> {
+pub async fn wait_with_timeout<F: Future>(
+    millis: u64,
+    fut: F,
+) -> Result<F::Output, embassy_time::TimeoutError> {
     embassy_time::with_timeout(Duration::from_millis(millis), fut).await
 }
 
@@ -267,36 +176,128 @@ const SPI_CLOCK_FREQ: u32 = 500_000;
 
 static THERMOCOUPLE_BUFFER: &[u8] = [0u8; 4].as_slice();
 
-#[embassy_executor::task]
-async fn logger_task(driver: Driver<'static, USB>) {
-    embassy_usb_logger::run!(1024, log::LevelFilter::Info, driver);
-}
-
-#[embassy_executor::task]
-pub async fn usb_reader(mut class: &'static mut CdcAcmClass<'static, Driver<'static, USB>>) {
-    loop {
-        class.wait_connection().await;
-        defmt::info!("Connected");
-        let _ = echo(&mut class).await;
-        defmt::info!("Disconnected");
-    }
-}
-
 #[embassy_executor::main]
 async fn main(_s: embassy_executor::Spawner) {
     let p = embassy_rp::init(Default::default());
     let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);
+    // Create the driver, from the HAL.
+    let driver = Driver::new(p.USB, Irqs);
 
-    // Low priority executor: runs in thread mode, using WFE/SEV
-    let executor = EXECUTOR_LOW.init(Executor::new());
-    let executor = executor.run(|spawner| {
-        unwrap!(spawner.spawn(usb_task(usb, class)));
-    });
+    const MAX_PACKET_SIZE: u8 = 64;
+    let mut config = embassy_usb::Config::new(0xc0de, 0xcafe);
+    config.manufacturer = Some("Embassy");
+    config.product = Some("USB-serial logger");
+    config.serial_number = None;
+    config.max_power = 100;
+    config.max_packet_size_0 = MAX_PACKET_SIZE;
 
-    let external_to_internal_channel = EXTERNAL_TO_INTERNAL_CHANNEL.init(Channel::new());
+    // Required for windows compatiblity.
+    // https://developer.nordicsemi.com/nRF_Connect_SDK/doc/1.9.1/kconfig/CONFIG_CDC_ACM_IAD.html#help
+    config.device_class = 0xEF;
+    config.device_sub_class = 0x02;
+    config.device_protocol = 0x01;
+    config.composite_with_iads = true;
 
-    static INTERNAL_TO_EXTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, MessageDTO, 1>> = StaticCell::new();
-    let c = &*INTERNAL_TO_EXTERNAL_CHANNEL.init(Channel::new());
+    let mut device_descriptor = make_static!([0; 256]);
+    let mut config_descriptor = make_static!([0; 256]);
+    let mut bos_descriptor = make_static!([0; 256]);
+    let mut control_buf = make_static!([0; 64]);
+    let mut state = make_static!(State::new());
+
+    let mut builder = Builder::new(
+        driver,
+        config,
+        device_descriptor,
+        config_descriptor,
+        bos_descriptor,
+        control_buf,
+    );
+
+    // Create classes on the builder.
+    let class = CdcAcmClass::new(&mut builder, state, MAX_PACKET_SIZE as u16);
+
+    let mut usb = builder.build();
+
+    let internal_channel = INTERNAL_CHANNEL.init(Channel::new());
+    let external_channel = EXTERNAL_CHANNEL.init(Channel::new());
+
+    let inbound_sender = internal_channel.sender();
+    let outbound_receiver = external_channel.receiver();
+    let outbound_sender = external_channel.sender();
+    let inbound_receiver = internal_channel.receiver();
+
+    let (mut usb_sender, mut usb_reader) = class.split();
+
+    let buffer = make_static!([0u8; 64]);
+    let run_fut = usb.run();
+    let read_usb_fut = async {
+        loop {
+            let n: usize;
+            // ugly, I know.
+            /*
+            error[E0502]: cannot borrow `*buffer` as mutable because it is also borrowed as immutable
+               --> src/main.rs:240:42
+                |
+            224 |     let inbound_sender = internal_channel.sender();
+                |         -------------- lifetime `'1` appears in the type of `inbound_sender`
+            ...
+            240 |             match usb_reader.read_packet(buffer).await {
+                |                                          ^^^^^^ mutable borrow occurs here
+            ...
+            248 |             let parsed: Result<MessageDTO, minicbor::decode::Error> = minicbor::decode(buffer);
+                |                                                                                        ------ immutable borrow occurs here
+            ...
+            251 |                     inbound_sender.send(m.clone()).await;
+                |                     ------------------------------ argument requires that `*buffer` is borrowed for `'1`
+             */
+            match usb_reader.read_packet(buffer).await {
+                Ok(s) => {
+                    n = s;
+                }
+                Err(_) => {
+                    continue;
+                }
+            }
+            let parsed: Result<MessageDTO, minicbor::decode::Error> = minicbor::decode(buffer);
+            match parsed {
+                Ok(m) => {
+                    inbound_sender.send(m.clone()).await;
+                }
+                Err(_) => {}
+            }
+        }
+    };
+    let write_usb_fut = async {
+        loop {
+            let buffer = &mut [0u8; 64][..];
+            let m = outbound_receiver.recv().await;
+            let mut encoder = Encoder::new(buffer);
+            match m.encode(&mut encoder, &mut ()) {
+                Err(_) => continue,
+                _ => {}
+            };
+            if let Err(e) = usb_sender.write_packet(encoder.into_writer()).await {
+                continue;
+            }
+        }
+    };
+    let fut = async {
+        loop {
+            let message = inbound_receiver.recv().await;
+            outbound_sender.send(message).await;
+        }
+    };
+
+    join4(run_fut, read_usb_fut, write_usb_fut, fut).await;
+
+    // // Low priority executor: runs in thread mode, using WFE/SEV
+    // let executor = EXECUTOR_LOW.init(Executor::new());
+    // let executor = executor.run(|spawner| {
+    //     unwrap!(spawner.spawn());
+    // });
+
+
+    let c = &*EXTERNAL_CHANNEL.init(Channel::new());
 
     let watchdog = WATCHDOG.init(Watchdog::new(p.WATCHDOG));
 
@@ -329,7 +330,7 @@ async fn main(_s: embassy_executor::Spawner) {
         THERMOCOUPLE_SPI.init(Spi::new_rxonly(p.SPI1, th_clk, th_miso, rx_dma, config));
 
     let thermocouple_pinout = Output::new(p.PIN_11, Level::Low);
-    let thermocouple = MAX31855::new(thermocouple_spi, thermocouple_pinout);
+    // let thermocouple = MAX31855::new(thermocouple_spi, thermocouple_pinout);
 
     let content = [0u8; 1024];
 
@@ -349,7 +350,6 @@ async fn main(_s: embassy_executor::Spawner) {
         };
     }
 
-
     loop {
         gpio.set_high();
         Timer::after(Duration::from_millis(100)).await;
@@ -358,20 +358,20 @@ async fn main(_s: embassy_executor::Spawner) {
     }
 
     let c2 = c;
-    let runtime = RUNTIME.init(AxisRuntime::new(
-        c2,
-        external_to_internal_channel,
-        watchdog,
-        client_spi,
-    ));
-
+    // let runtime = RUNTIME.init(AxisRuntime::new(
+    //     c2,
+    //     external_to_internal_channel,
+    //     watchdog,
+    //     client_spi,
+    // ));
 
     // High-priority executor: SWI_IRQ_1, priority level 2
     interrupt::SWI_IRQ_1.set_priority(Priority::P1);
-    unwrap!(spawner.spawn(main_loop(runtime)));
+    //unwrap!(spawner.spawn(main_loop(runtime)));
 
     let c2 = c;
-    unwrap!(spawner.spawn(thermocouple_read(thermocouple, c2)));
+    //unwrap!(spawner.spawn(thermocouple_read(thermocouple, c2)));
 
     KILL_SIGNAL.wait().await;
 }
+

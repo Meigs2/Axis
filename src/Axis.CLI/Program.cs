@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Reactive.Linq;
 using Axis.Core;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,6 +16,7 @@ Console.WriteLine("Press any to to perform handshake...\n");
 Console.ReadKey();
 
 mcu.Observable.Subscribe(x => Console.WriteLine(x.ToString()));
+mcu._subject.Publish(new MessageDTO());
 
 // Task.Run(() =>
 // {
@@ -31,6 +33,6 @@ mcu.Observable.Subscribe(x => Console.WriteLine(x.ToString()));
 //     }
 // });
 
-mcu.Send(new Message(MessageType.Startup){} );
+await mcu.Send(new MessageDTO(MessageType.Startup){} );
 
 app.Run();

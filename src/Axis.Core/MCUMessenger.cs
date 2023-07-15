@@ -5,15 +5,20 @@ using System.IO.Ports;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
+using System.Formats.Cbor;
+using Dahomey.Cbor;
+using Dahomey.Cbor.ObjectModel;
+using Dahomey.Cbor.Util;
+
 namespace Axis.Core;
 
-public struct Message
+public struct MessageDTO
 {
     public MessageType MessageType { get; set; }
-    public ushort ContentLength { get; set; }
+    public UInt16 ContentLength { get; set; }
     public byte[] Content { get; set; }
 
-    public Message(MessageType type)
+    public MessageDTO(MessageType type)
     {
         MessageType = type;
         ContentLength = 0;
@@ -33,10 +38,10 @@ public struct Message
         return bytes.ToArray().AsSpan();
     }
 
-    public static Message Deserialize(Span<byte> bytes)
+    public static MessageDTO Deserialize(Span<byte> bytes)
     {
         var contentLength = BitConverter.ToUInt16(bytes[2..4]);
-        return new Message()
+        return new MessageDTO()
         {
             MessageType = (MessageType)bytes[0],
             ContentLength = contentLength,
@@ -46,11 +51,11 @@ public struct Message
 
     public override string ToString()
     {
-        return MessageType.ToString();
+        return "Message!";
     }
 }
 
-public enum MessageType : byte
+public enum MessageType : UInt16
 {
     Startup = 0,
     Acknowledge = 1,
@@ -61,8 +66,8 @@ public enum MessageType : byte
 
 public class MicroController : IDisposable
 {
-    private Subject<Message> _subject = new();
-    public IObservable<Message> Observable => _subject.AsObservable();
+    public Subject<MessageDTO> _subject = new();
+    public IObservable<MessageDTO> Observable => _subject.AsObservable();
     private SerialPort _serialPort;
 
     public MicroController()
@@ -70,17 +75,20 @@ public class MicroController : IDisposable
         _serialPort = new SerialPort("/dev/tty.usbmodem123456781");
     }
     
-    public void Send(Message message)
+    public async Task Send(MessageDTO messageDto)
     {
         if (!_serialPort.IsOpen)
         {
             _serialPort.Open();
         }
 
+        var buffer = new byte[1028];
+        var byteStream = new MemoryStream();
         try
         {
-            var buffer = message.Seralize();
-            _serialPort.Write(buffer.ToArray(), 0, buffer.Length);
+            var bufferWriter = new ByteBufferWriter();
+            await Cbor.SerializeAsync(messageDto, byteStream);
+            _serialPort.Write(byteStream.ToArray(), 0, (int)byteStream.Length);
             Thread.Sleep(10);
             ReadMessage();
         }
@@ -101,6 +109,8 @@ public class MicroController : IDisposable
 
     private void ReadMessage()
     {
+
+        var buffer = new byte[1028];
         try
         {
             if (!_serialPort.IsOpen)
@@ -108,16 +118,10 @@ public class MicroController : IDisposable
                 _serialPort.Open();
             }
 
-            var buff = new byte[1];
-            var messageType = _serialPort.Read(buff, 0, 1);
-            buff = new byte[2];
-            _serialPort.Read(buff, 0, 2);
-            var contentLength = BitConverter.ToUInt16(buff);
-            buff = new byte[contentLength];
-            var content = _serialPort.Read(buff, 0, contentLength);
-
-            var message = new Message((MessageType)messageType) { ContentLength = contentLength, Content = buff };
-            _subject.Publish(message);
+            _serialPort.Read(buffer, 0, 64);
+            var result = Cbor.Deserialize<MessageDTO>(buffer);
+            Console.WriteLine("MCU Reply: " + result);
+            _subject.Publish(result);
         }
         catch (Exception e)
         {

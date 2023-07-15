@@ -1,7 +1,7 @@
+use crate::axis_peripherals::max31588::ThermocoupleError::FailedRead;
 use embassy_rp::gpio::Output;
 use embassy_rp::peripherals::{PIN_11, PIN_24, PIN_27, SPI1};
 use embassy_rp::spi::{Async, Spi};
-use crate::axis_peripherals::max31588::ThermocoupleError::FailedRead;
 
 const CLOCK_FRQ: u32 = 500_000;
 
