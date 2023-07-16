@@ -10,7 +10,6 @@ mod axis_peripherals;
 use serde::{Serialize, Deserialize};
 
 use crate::MessageError::InvalidMessageType;
-use crate::MessageType::{Ping, Pong, ThermocoupleReading};
 use core::future::Future;
 use core::str::from_utf8;
 use byte_slice_cast::{AsByteSlice, AsMutByteSlice};
@@ -42,6 +41,7 @@ use serde_json_core::de::Error;
 use serde_json_core::heapless::{String, Vec};
 use static_cell::{make_static, StaticCell};
 use {defmt_rtt as _, panic_probe as _};
+use crate::Message::{Ping, Pong};
 
 bind_interrupts!(struct Irqs {
     USBCTRL_IRQ => embassy_rp::usb::InterruptHandler<USB>;
@@ -63,22 +63,16 @@ async fn read_thermocouple(mut pin: Output<'static, PIN_16>) {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct MessageDTO<const N: usize> {
-    message_type: MessageType,
-    contents: String<N>
+const N: usize = 64;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Message {
+    Ping,
+    Pong {value: String<N>}
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum MessageType {
-    Unknown,
-    Startup,
-    Acknowledge,
-    Ping,
-    Pong,
-    ThermocoupleReading,
-    Log,
-    Error,
 }
 
 #[derive(Debug)]
@@ -89,8 +83,6 @@ pub enum MessageError {
 
 pub enum SignalFlag {}
 
-const N: usize = 64;
-
 static EXECUTOR_HIGH: InterruptExecutor = InterruptExecutor::new();
 static EXECUTOR_MED: InterruptExecutor = InterruptExecutor::new();
 static EXECUTOR_LOW: StaticCell<Executor> = StaticCell::new();
@@ -99,13 +91,13 @@ static WATCHDOG: StaticCell<Watchdog> = StaticCell::new();
 static CLIENT_SPI: StaticCell<Spi<SPI0, Async>> = StaticCell::new();
 static THERMOCOUPLE_SPI: StaticCell<Spi<SPI1, Async>> = StaticCell::new();
 
-static INTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, MessageDTO<N>, 1>> =
+static INTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, Message, 1>> =
     StaticCell::new();
 
-static EXTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, MessageDTO<N>, 1>> =
+static EXTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, Message, 1>> =
     StaticCell::new();
 
-static TEST: StaticCell<CriticalSectionMutex<Channel<CriticalSectionRawMutex, MessageDTO<N>, 1>>> =
+static TEST: StaticCell<CriticalSectionMutex<Channel<CriticalSectionRawMutex, Message, 1>>> =
     StaticCell::new();
 
 static KILL_SIGNAL: Signal<CriticalSectionRawMutex, SignalFlag> = Signal::new();
@@ -205,10 +197,11 @@ async fn main(_s: embassy_executor::Spawner) {
         loop {
             match usb_reader.read_packet(&mut buff[..]).await {
                 Ok(s) => {
+                    debug!("Read packet: {:?}", {
+                        from_utf8(&buff[..s]).unwrap()
+                    });
                     let stopwatch = embassy_time::Instant::now();
-                    let string = from_utf8(&buff[..s]).unwrap();
-                    debug!("Read packet: {:?}", string);
-                    let result: Result<(MessageDTO<N>, usize), Error> = from_str(string);
+                    let result: Result<(Message, usize), Error> = from_slice(&buff[..s]);
                     match result {
                         Ok(m) => {
                             inbound_sender.send(m.0).await;
@@ -242,7 +235,13 @@ async fn main(_s: embassy_executor::Spawner) {
     let fut = async {
         loop {
             let message = inbound_receiver.recv().await;
-            outbound_sender.send(message).await;
+            match message {
+                Ping => {
+                    outbound_sender.send(
+                    Pong {value: "value!".into()}).await;
+                }
+                _ => {}
+            }
         }
     };
 

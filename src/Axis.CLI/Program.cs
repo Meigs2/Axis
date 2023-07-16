@@ -13,14 +13,13 @@ var app = builder.Build();
 var mcu = app.Services.GetRequiredService<MicroController>();
 
 mcu.Observable.Subscribe(x => Console.WriteLine(x.ToString()));
-mcu._subject.Publish(new MessageDTO());
 
 while (true)
 {
     Console.WriteLine("Press Key to send message");
     Console.ReadKey();
 
-    await mcu.Send(new MessageDTO((MessageType)Random.Shared.Next(0,10)){} );
+    await mcu.Send(new Message.Ping());
 }
 
 // Task.Run(() =>
