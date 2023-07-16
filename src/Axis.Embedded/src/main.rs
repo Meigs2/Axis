@@ -14,13 +14,13 @@ use core::future::Future;
 use core::str::from_utf8;
 use byte_slice_cast::{AsByteSlice, AsMutByteSlice};
 use cortex_m::prelude::_embedded_hal_blocking_serial_Write;
-use defmt::{debug, error};
+use defmt::{debug, error, unwrap};
 use embassy_executor::{Executor, InterruptExecutor, Spawner};
 use embassy_futures::join::{join, join3, join4, join5};
 use embassy_futures::select::Either;
 use embassy_rp::gpio::{Input, Level, Output, Pull};
 use embassy_rp::interrupt::{InterruptExt, Priority};
-use embassy_rp::peripherals::{PIN_16, SPI0, SPI1, USB};
+use embassy_rp::peripherals::{PIN_16, PIN_7, SPI0, SPI1, USB};
 use embassy_rp::spi::{Async, Spi};
 use embassy_rp::usb::Driver;
 use embassy_rp::watchdog::Watchdog;
@@ -48,9 +48,29 @@ bind_interrupts!(struct Irqs {
 });
 
 
-pub struct AxisRuntime<'a> {
-    pub watchdog: &'a mut Watchdog,
-    client_spi: &'a mut Spi<'a, SPI0, Async>,
+#[derive(Clone)]
+pub struct Runtime<'a> {
+    outbound_sender: Sender<'a, CriticalSectionRawMutex, Message, 1>
+}
+
+impl<'a> Runtime<'a> {
+    pub fn new(outbound_sender: Sender<'a, CriticalSectionRawMutex, Message, 1>) -> Self {
+        Self {
+            outbound_sender
+        }
+    }
+
+    pub async fn handle(&self, message: Message) {
+        match message {
+            Ping => {
+                self.outbound_sender.send(Pong{value: "Pong!".into()}).await;
+            }
+            Pong { .. } => {
+                self.outbound_sender.send(Ping).await;
+            }
+        }
+
+    }
 }
 
 #[embassy_executor::task]
@@ -63,12 +83,13 @@ async fn read_thermocouple(mut pin: Output<'static, PIN_16>) {
     }
 }
 
-const N: usize = 64;
+pub const MAX_STRING_SIZE: usize = 64;
+pub const MAX_PACKET_SIZE: u8 = 64;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Message {
     Ping,
-    Pong {value: String<N>}
+    Pong {value: String<MAX_STRING_SIZE>}
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize)]
@@ -86,7 +107,7 @@ pub enum SignalFlag {}
 static EXECUTOR_HIGH: InterruptExecutor = InterruptExecutor::new();
 static EXECUTOR_MED: InterruptExecutor = InterruptExecutor::new();
 static EXECUTOR_LOW: StaticCell<Executor> = StaticCell::new();
-static RUNTIME: StaticCell<AxisRuntime> = StaticCell::new();
+static RUNTIME: StaticCell<Runtime> = StaticCell::new();
 static WATCHDOG: StaticCell<Watchdog> = StaticCell::new();
 static CLIENT_SPI: StaticCell<Spi<SPI0, Async>> = StaticCell::new();
 static THERMOCOUPLE_SPI: StaticCell<Spi<SPI1, Async>> = StaticCell::new();
@@ -123,6 +144,105 @@ const SPI_CLOCK_FREQ: u32 = 500_000;
 
 static THERMOCOUPLE_BUFFER: &[u8] = [0u8; 4].as_slice();
 
+mod tasks {
+    use core::future::Future;
+    use defmt::{debug, error, unwrap};
+    use embassy_executor::Spawner;
+    use embassy_rp::gpio::Output;
+    use embassy_rp::peripherals::{PIN_7, USB};
+    use embassy_rp::usb::Driver;
+    use embassy_rp::watchdog::Watchdog;
+    use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+    use embassy_sync::channel::{Receiver, Sender};
+    use embassy_time::{Duration, Timer};
+    use embassy_usb::class::cdc_ncm::embassy_net::Device;
+    use embassy_usb::UsbDevice;
+    use serde_json_core::de::Error;
+    use serde_json_core::{from_slice, from_str, to_slice};
+    use crate::{MAX_STRING_SIZE, Message, Runtime};
+    use heapless::Vec;
+    use crate::Message::*;
+
+    #[embassy_executor::task]
+    pub async fn run_usb(usb: &'static mut UsbDevice<'static, Driver<'static, USB>>) -> ! {
+        usb.run().await
+    }
+
+    #[embassy_executor::task]
+    pub async fn read_usb(inbound_sender: Sender<'static, CriticalSectionRawMutex, Message, 1>, usb_reader: &'static mut embassy_usb::class::cdc_acm::Receiver<'static, Driver<'static, USB>>) {
+        let mut buff = [0u8; MAX_STRING_SIZE];
+        usb_reader.wait_connection().await;
+        loop {
+            match usb_reader.read_packet(&mut buff[..]).await {
+                Ok(s) => {
+                    let stopwatch = embassy_time::Instant::now();
+                    let string = core::str::from_utf8(&buff[..s]).unwrap();
+                    let result: Result<(Vec<Message, MAX_STRING_SIZE>, _), Error> = from_str(string);
+                    let msgs = match result {
+                        Ok(m) => {
+                            m.0
+                        },
+                        Err(e) => {
+                            error!("Error deserializing packet(s).");
+                            Vec::new()
+                        }
+                    };
+
+                    for msg in msgs {
+                        inbound_sender.send(msg).await;
+                    }
+                    let a = stopwatch.elapsed().as_micros();
+                    debug!("Read/Write Operation Elapsed: {:?} microseconds", a);
+                }
+                Err(e) => {
+                    error!("Error reading packet: {:?}", e)
+                }
+            }
+        }
+    }
+
+    #[embassy_executor::task]
+    pub async fn handle_message(message: Message, runtime: &'static Runtime<'static>) {
+        runtime.handle(message).await;
+    }
+
+    #[embassy_executor::task]
+    pub async fn process_outgoing_messages(inbound_receiver: Receiver<'static, CriticalSectionRawMutex, Message, 1>, spawner: Spawner, runtime:&'static Runtime<'static>) {
+        loop {
+            let message = inbound_receiver.recv().await;
+            runtime.handle(message).await;
+            //unwrap!(spawner.spawn(handle_message(message, runtime)));
+        }
+    }
+
+
+    #[embassy_executor::task]
+    pub async fn write_usb(outbound_receiver: Receiver<'static, CriticalSectionRawMutex, Message, 1>, usb_sender: &'static mut embassy_usb::class::cdc_acm::Sender<'static, Driver<'static, USB>>) {
+        let mut buffer: Vec<u8, MAX_STRING_SIZE> = Vec::new();
+        for _ in 0..MAX_STRING_SIZE - 1 {
+            buffer.push(0x00).unwrap();
+        }
+        loop {
+            let m = outbound_receiver.recv().await;
+
+            if let Ok(s) = to_slice(&m, &mut buffer[..]) {
+                if let Ok(x) = usb_sender.write_packet(&buffer[..s]).await {}
+            }
+        }
+    }
+
+    #[embassy_executor::task]
+    pub async fn blink(pin: &'static mut Output<'static, PIN_7>, watchdog: &'static mut Watchdog) {
+        loop {
+            pin.set_high();
+            Timer::after(Duration::from_millis(500)).await;
+            pin.set_low();
+            Timer::after(Duration::from_millis(500)).await;
+            watchdog.feed();
+        }
+    }
+}
+
 #[embassy_executor::main]
 async fn main(_s: embassy_executor::Spawner) {
     let p = embassy_rp::init(Default::default());
@@ -130,7 +250,6 @@ async fn main(_s: embassy_executor::Spawner) {
     // Create the driver, from the HAL.
     let driver = Driver::new(p.USB, Irqs);
 
-    const MAX_PACKET_SIZE: u8 = 64;
     let mut config = embassy_usb::Config::new(0xc0de, 0xcafe);
     config.manufacturer = Some("Embassy");
     config.product = Some("USB-serial logger");
@@ -163,7 +282,7 @@ async fn main(_s: embassy_executor::Spawner) {
     // Create classes on the builder.
     let class = CdcAcmClass::new(&mut builder, state, MAX_PACKET_SIZE as u16);
 
-    let mut usb = builder.build();
+    let mut usb = make_static!(builder.build());
 
     let internal_channel = INTERNAL_CHANNEL.init(Channel::new());
     let external_channel = EXTERNAL_CHANNEL.init(Channel::new());
@@ -173,84 +292,26 @@ async fn main(_s: embassy_executor::Spawner) {
     let outbound_sender = external_channel.sender();
     let inbound_receiver = internal_channel.receiver();
 
-    let (mut usb_sender, mut usb_reader) = class.split();
+    let (mut sender, mut reader) = class.split();
 
-    let mut pin = Output::new(p.PIN_7, Level::Low);
+    let usb_sender = make_static!(sender);
+    let usb_reader = make_static!(reader);
 
-    let mut watchdog = Watchdog::new(p.WATCHDOG);
+    let mut pin = make_static!(Output::new(p.PIN_7, Level::Low));
+
+    let mut watchdog = make_static!(Watchdog::new(p.WATCHDOG));
     watchdog.start(Duration::from_secs(5));
 
-    let a = async {
-        loop {
-            pin.set_high();
-            Timer::after(Duration::from_millis(500)).await;
-            pin.set_low();
-            Timer::after(Duration::from_millis(500)).await;
-            watchdog.feed();
-        }
-    };
-
-    let run_fut = usb.run();
-    let read_usb_fut = async {
-        let mut buff = [0u8; 64];
-        usb_reader.wait_connection().await;
-        loop {
-            match usb_reader.read_packet(&mut buff[..]).await {
-                Ok(s) => {
-                    debug!("Read packet: {:?}", {
-                        from_utf8(&buff[..s]).unwrap()
-                    });
-                    let stopwatch = embassy_time::Instant::now();
-                    let result: Result<(Message, usize), Error> = from_slice(&buff[..s]);
-                    match result {
-                        Ok(m) => {
-                            inbound_sender.send(m.0).await;
-                        },
-                        Err(e) => {
-                            error!("Error deserializing packet.")
-                        }
-                    }
-                    debug!("Read/Write Operation Elapsed: {:?} microseconds", stopwatch.elapsed().as_micros());
-                }
-                Err(e) => {
-                    error!("Error reading packet: {:?}", e)
-                }
-            }
-        }
-    };
-    let write_usb_fut = async {
-        let mut buffer: Vec<u8, N> = Vec::new();
-        for _ in 0..N-1 {
-            buffer.push(0x00).unwrap();
-        }
-        loop {
-            let m = outbound_receiver.recv().await;
-
-            if let Ok(s) = to_slice(&m, &mut buffer[..]) {
-                if let Ok(x) = usb_sender.write_packet(&buffer[..s]).await {
-                }
-            }
-        }
-    };
-    let fut = async {
-        loop {
-            let message = inbound_receiver.recv().await;
-            match message {
-                Ping => {
-                    outbound_sender.send(
-                    Pong {value: "value!".into()}).await;
-                }
-                _ => {}
-            }
-        }
-    };
-
-    let a = join5(run_fut, read_usb_fut,write_usb_fut, fut,a).await;
-    //let a = join5(run_fut, read_usb_fut, write_usb_fut, fut, a).await;
+    let runtime = make_static!(Runtime::new(outbound_sender));
 
     // Low priority executor: runs in thread mode, using WFE/SEV
     let executor = EXECUTOR_LOW.init(Executor::new());
-    let executor = executor.run(|spawner| {
+    executor.run(|spawner| {
+        unwrap!(spawner.spawn(tasks::run_usb(usb)));
+        unwrap!(spawner.spawn(tasks::read_usb(inbound_sender, usb_reader)));
+        unwrap!(spawner.spawn(tasks::write_usb(outbound_receiver, usb_sender)));
+        unwrap!(spawner.spawn(tasks::process_outgoing_messages(inbound_receiver, spawner, runtime)));
+        unwrap!(spawner.spawn(tasks::blink(pin, watchdog)));
     });
 
 
@@ -331,4 +392,3 @@ async fn main(_s: embassy_executor::Spawner) {
     //
     // KILL_SIGNAL.wait().await;
 }
-

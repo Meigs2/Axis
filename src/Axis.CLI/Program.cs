@@ -20,6 +20,7 @@ while (true)
     Console.ReadKey();
 
     await mcu.Send(new Message.Ping());
+    await mcu.Send(new Message.Pong());
 }
 
 // Task.Run(() =>

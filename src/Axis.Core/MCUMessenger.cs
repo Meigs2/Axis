@@ -44,11 +44,11 @@ public class MicroController : IDisposable
         }
         try
         {
-            var json = JsonConvert.SerializeObject(message, _options);
+            var messages = new List<Message>(1){message};
+            var json = JsonConvert.SerializeObject(messages, _options);
             var bytes = Encoding.UTF8.GetBytes(json);
             Console.WriteLine(json);
             _serialPort.Write(bytes, 0, bytes.Length);
-            ReadMessage();
         }
         catch (Exception e)
         {
@@ -59,18 +59,14 @@ public class MicroController : IDisposable
 
     public async void ReadMessages()
     {
-        while (true) { ReadMessage(); }
-    }
-
-    private void ReadMessage()
-    {
         try
         {
             if (!_serialPort.IsOpen) { _serialPort.Open(); }
 
             var result = _serialPort.ReadExisting();
-            var message = JsonConvert.DeserializeObject<Message>(result, _options);
-            Console.WriteLine("MCU Reply: " + JsonConvert.SerializeObject(message, _options));
+            var message = JsonConvert.DeserializeObject<IEnumerable<Message>>(result, _options);
+            Console.WriteLine("Published:" + JsonConvert.SerializeObject(message, _options));
+            Thread.Sleep(1);
         }
         catch (Exception e)
         {
