@@ -12,9 +12,10 @@ use serde::{Serialize, Deserialize};
 use crate::MessageError::InvalidMessageType;
 use crate::MessageType::{Ping, Pong, ThermocoupleReading};
 use core::future::Future;
+use core::str::from_utf8;
 use byte_slice_cast::{AsByteSlice, AsMutByteSlice};
 use cortex_m::prelude::_embedded_hal_blocking_serial_Write;
-use defmt::debug;
+use defmt::{debug, error};
 use embassy_executor::{Executor, InterruptExecutor, Spawner};
 use embassy_futures::join::{join, join3, join4, join5};
 use embassy_futures::select::Either;
@@ -36,7 +37,8 @@ use embassy_usb::{Builder, UsbDevice};
 use embassy_usb::driver::EndpointError;
 use futures::SinkExt;
 use serde::ser::SerializeStruct;
-use serde_json_core::{from_slice, heapless, to_slice};
+use serde_json_core::{from_slice, from_str, heapless, to_slice};
+use serde_json_core::de::Error;
 use serde_json_core::heapless::{String, Vec};
 use static_cell::{make_static, StaticCell};
 use {defmt_rtt as _, panic_probe as _};
@@ -69,29 +71,14 @@ pub struct MessageDTO<const N: usize> {
 
 #[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum MessageType {
-    Unknown = 0,
-    Startup = 1,
-    Acknowledge = 2,
-    Ping = 3,
-    Pong = 4,
-    ThermocoupleReading = 5,
-    Log = 6,
-    Error = 7,
-}
-
-impl Into<MessageType> for u8 {
-    fn into(self) -> MessageType {
-        match self {
-            1 => MessageType::Startup,
-            2 => MessageType::Acknowledge,
-            3 => MessageType::Ping,
-            4 => MessageType::Pong,
-            5 => MessageType::ThermocoupleReading,
-            6 => MessageType::Log,
-            7 => MessageType::Error,
-            _ => MessageType::Unknown,
-        }
-    }
+    Unknown,
+    Startup,
+    Acknowledge,
+    Ping,
+    Pong,
+    ThermocoupleReading,
+    Log,
+    Error,
 }
 
 #[derive(Debug)]
@@ -216,10 +203,25 @@ async fn main(_s: embassy_executor::Spawner) {
         let mut buff = [0u8; 64];
         usb_reader.wait_connection().await;
         loop {
-            if let Ok(s) = usb_reader.read_packet(&mut buff[..]).await {
-                debug!("Inbound message: {:?}", &buff);
-                let m: (MessageDTO<N>, usize) = from_slice(&buff[..s]).unwrap();
-                inbound_sender.send(m.0).await;
+            match usb_reader.read_packet(&mut buff[..]).await {
+                Ok(s) => {
+                    let stopwatch = embassy_time::Instant::now();
+                    let string = from_utf8(&buff[..s]).unwrap();
+                    debug!("Read packet: {:?}", string);
+                    let result: Result<(MessageDTO<N>, usize), Error> = from_str(string);
+                    match result {
+                        Ok(m) => {
+                            inbound_sender.send(m.0).await;
+                        },
+                        Err(e) => {
+                            error!("Error deserializing packet.")
+                        }
+                    }
+                    debug!("Read/Write Operation Elapsed: {:?} microseconds", stopwatch.elapsed().as_micros());
+                }
+                Err(e) => {
+                    error!("Error reading packet: {:?}", e)
+                }
             }
         }
     };

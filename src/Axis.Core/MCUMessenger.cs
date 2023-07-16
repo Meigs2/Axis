@@ -3,6 +3,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Axis.Core;
 
@@ -22,10 +23,15 @@ public struct MessageDTO
     }
 }
 
+public abstract class Message
+{
+    public class Ping : Message
+}
+
 public enum MessageType : UInt16
 {
-    Startup = 0,
-    Acknowledge = 1,
+    Startup ,
+    Acknowledge ,
     Ping = 2,
     Pong = 3,
     ThermocoupleReading = 4,
@@ -36,7 +42,14 @@ public class MicroController : IDisposable
     public Subject<MessageDTO> _subject = new();
     public IObservable<MessageDTO> Observable => _subject.AsObservable();
     private SerialPort _serialPort;
-
+    
+    JsonSerializerOptions _options = new()
+    {
+        Converters ={
+            new JsonStringEnumConverter()
+        }
+    };
+    
     public MicroController()
     {
         _serialPort = new SerialPort("/dev/tty.usbmodem123456781");
@@ -51,12 +64,10 @@ public class MicroController : IDisposable
 
         try
         {
-            var json = JsonSerializer.Serialize(messageDto);
+            var json = JsonSerializer.Serialize(messageDto, _options);
             var bytes = Encoding.UTF8.GetBytes(json);
-            var log = "[" + String.Join(", ", bytes) + "]";
-            Console.WriteLine(log);
+            Console.WriteLine(json);
             _serialPort.Write(bytes, 0, bytes.Length);
-            Thread.Sleep(10);
             ReadMessage();
         }
         catch (Exception e)
