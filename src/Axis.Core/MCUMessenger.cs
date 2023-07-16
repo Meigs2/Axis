@@ -1,57 +1,24 @@
-using System.Buffers;
-using System.Device.Gpio;
-using System.Device.Spi;
 using System.IO.Ports;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-
-using System.Formats.Cbor;
-using Dahomey.Cbor;
-using Dahomey.Cbor.ObjectModel;
-using Dahomey.Cbor.Util;
+using System.Text;
+using System.Text.Json;
 
 namespace Axis.Core;
 
 public struct MessageDTO
 {
-    public MessageType MessageType { get; set; }
-    public UInt16 ContentLength { get; set; }
-    public byte[] Content { get; set; }
+    public MessageType message_type { get; set; }
+    public string contents { get; set; } = "Okay";
 
     public MessageDTO(MessageType type)
     {
-        MessageType = type;
-        ContentLength = 0;
-        Content = Array.Empty<byte>();
-    }
-
-    public Span<byte> Seralize()
-    {
-        var bytes = new List<byte>();
-        var t = (byte)MessageType;
-        var len = BitConverter.GetBytes(ContentLength);
-        var content = Content;
-        bytes.Add(t);
-        bytes.AddRange(len);
-        bytes.AddRange(content);
-
-        return bytes.ToArray().AsSpan();
-    }
-
-    public static MessageDTO Deserialize(Span<byte> bytes)
-    {
-        var contentLength = BitConverter.ToUInt16(bytes[2..4]);
-        return new MessageDTO()
-        {
-            MessageType = (MessageType)bytes[0],
-            ContentLength = contentLength,
-            Content = contentLength > 0 ? bytes[5..contentLength].ToArray() : Array.Empty<byte>()
-        };
+        message_type = type;
     }
 
     public override string ToString()
     {
-        return "Message!";
+        return JsonSerializer.Serialize(this);
     }
 }
 
@@ -82,13 +49,13 @@ public class MicroController : IDisposable
             _serialPort.Open();
         }
 
-        var buffer = new byte[1028];
-        var byteStream = new MemoryStream();
         try
         {
-            var bufferWriter = new ByteBufferWriter();
-            await Cbor.SerializeAsync(messageDto, byteStream);
-            _serialPort.Write(byteStream.ToArray(), 0, (int)byteStream.Length);
+            var json = JsonSerializer.Serialize(messageDto);
+            var bytes = Encoding.UTF8.GetBytes(json);
+            var log = "[" + String.Join(", ", bytes) + "]";
+            Console.WriteLine(log);
+            _serialPort.Write(bytes, 0, bytes.Length);
             Thread.Sleep(10);
             ReadMessage();
         }
@@ -109,19 +76,17 @@ public class MicroController : IDisposable
 
     private void ReadMessage()
     {
-
-        var buffer = new byte[1028];
+        var buffer = new byte[64];
         try
         {
+            
             if (!_serialPort.IsOpen)
             {
                 _serialPort.Open();
             }
 
-            _serialPort.Read(buffer, 0, 64);
-            var result = Cbor.Deserialize<MessageDTO>(buffer);
+            var result = _serialPort.ReadExisting();
             Console.WriteLine("MCU Reply: " + result);
-            _subject.Publish(result);
         }
         catch (Exception e)
         {

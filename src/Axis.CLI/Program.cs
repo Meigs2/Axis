@@ -12,11 +12,16 @@ var app = builder.Build();
 
 var mcu = app.Services.GetRequiredService<MicroController>();
 
-Console.WriteLine("Press any to to perform handshake...\n");
-Console.ReadKey();
-
 mcu.Observable.Subscribe(x => Console.WriteLine(x.ToString()));
 mcu._subject.Publish(new MessageDTO());
+
+while (true)
+{
+    Console.WriteLine("Press Key to send message");
+    Console.ReadKey();
+
+    await mcu.Send(new MessageDTO((MessageType)Random.Shared.Next(0,10)){} );
+}
 
 // Task.Run(() =>
 // {
@@ -32,7 +37,5 @@ mcu._subject.Publish(new MessageDTO());
 //         }
 //     }
 // });
-
-await mcu.Send(new MessageDTO(MessageType.Startup){} );
 
 app.Run();

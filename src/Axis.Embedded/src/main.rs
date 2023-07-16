@@ -13,8 +13,10 @@ use crate::MessageError::InvalidMessageType;
 use crate::MessageType::{Ping, Pong, ThermocoupleReading};
 use core::future::Future;
 use byte_slice_cast::{AsByteSlice, AsMutByteSlice};
+use cortex_m::prelude::_embedded_hal_blocking_serial_Write;
+use defmt::debug;
 use embassy_executor::{Executor, InterruptExecutor, Spawner};
-use embassy_futures::join::{join, join4};
+use embassy_futures::join::{join, join3, join4, join5};
 use embassy_futures::select::Either;
 use embassy_rp::gpio::{Input, Level, Output, Pull};
 use embassy_rp::interrupt::{InterruptExt, Priority};
@@ -23,6 +25,7 @@ use embassy_rp::spi::{Async, Spi};
 use embassy_rp::usb::Driver;
 use embassy_rp::watchdog::Watchdog;
 use embassy_rp::{bind_interrupts, interrupt};
+use embassy_rp::pac::io::Gpio;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::blocking_mutex::CriticalSectionMutex;
 use embassy_sync::channel::{Channel, Receiver, RecvFuture, Sender};
@@ -30,8 +33,10 @@ use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
 use embassy_usb::{Builder, UsbDevice};
+use embassy_usb::driver::EndpointError;
+use futures::SinkExt;
 use serde::ser::SerializeStruct;
-use serde_json_core::heapless;
+use serde_json_core::{from_slice, heapless, to_slice};
 use serde_json_core::heapless::{String, Vec};
 use static_cell::{make_static, StaticCell};
 use {defmt_rtt as _, panic_probe as _};
@@ -62,7 +67,6 @@ pub struct MessageDTO<const N: usize> {
     contents: String<N>
 }
 
-#[repr(u16)]
 #[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum MessageType {
     Unknown = 0,
@@ -151,7 +155,7 @@ async fn main(_s: embassy_executor::Spawner) {
     let mut config = embassy_usb::Config::new(0xc0de, 0xcafe);
     config.manufacturer = Some("Embassy");
     config.product = Some("USB-serial logger");
-    config.serial_number = None;
+    config.serial_number = Some("12345678");
     config.max_power = 100;
     config.max_packet_size_0 = MAX_PACKET_SIZE;
 
@@ -192,32 +196,44 @@ async fn main(_s: embassy_executor::Spawner) {
 
     let (mut usb_sender, mut usb_reader) = class.split();
 
-    let mut buffer: &'static mut Vec<u8, N> = make_static!(Vec::new());
+    let mut pin = Output::new(p.PIN_7, Level::Low);
+
+    let mut watchdog = Watchdog::new(p.WATCHDOG);
+    watchdog.start(Duration::from_secs(5));
+
+    let a = async {
+        loop {
+            pin.set_high();
+            Timer::after(Duration::from_millis(500)).await;
+            pin.set_low();
+            Timer::after(Duration::from_millis(500)).await;
+            watchdog.feed();
+        }
+    };
+
     let run_fut = usb.run();
     let read_usb_fut = async {
+        let mut buff = [0u8; 64];
+        usb_reader.wait_connection().await;
         loop {
-            let n: usize;
-            match usb_reader.read_packet(buffer.clone().as_mut_byte_slice()).await {
-                Ok(s) => {
-                    n = s;
-                }
-                Err(_) => {
-                    continue;
-                }
+            if let Ok(s) = usb_reader.read_packet(&mut buff[..]).await {
+                debug!("Inbound message: {:?}", &buff);
+                let m: (MessageDTO<N>, usize) = from_slice(&buff[..s]).unwrap();
+                inbound_sender.send(m.0).await;
             }
-            let (message, x): (MessageDTO<N>, usize) = serde_json_core::de::from_slice(&buffer[..]).unwrap();
-            inbound_sender.send(message).await;
         }
     };
     let write_usb_fut = async {
+        let mut buffer: Vec<u8, N> = Vec::new();
+        for _ in 0..N-1 {
+            buffer.push(0x00).unwrap();
+        }
         loop {
-            let mut buffer: Vec<u8, N> = Vec::new();
             let m = outbound_receiver.recv().await;
 
-            let ser = serde_json_core::ser::to_slice(&m, &mut buffer[..]).unwrap();
-
-            if let Err(e) = usb_sender.write_packet(&buffer[..ser]).await {
-                continue;
+            if let Ok(s) = to_slice(&m, &mut buffer[..]) {
+                if let Ok(x) = usb_sender.write_packet(&buffer[..s]).await {
+                }
             }
         }
     };
@@ -228,90 +244,90 @@ async fn main(_s: embassy_executor::Spawner) {
         }
     };
 
-    join4(run_fut, read_usb_fut, write_usb_fut, fut).await;
+    let a = join5(run_fut, read_usb_fut,write_usb_fut, fut,a).await;
+    //let a = join5(run_fut, read_usb_fut, write_usb_fut, fut, a).await;
 
-    // // Low priority executor: runs in thread mode, using WFE/SEV
-    // let executor = EXECUTOR_LOW.init(Executor::new());
-    // let executor = executor.run(|spawner| {
-    //     unwrap!(spawner.spawn());
-    // });
+    // Low priority executor: runs in thread mode, using WFE/SEV
+    let executor = EXECUTOR_LOW.init(Executor::new());
+    let executor = executor.run(|spawner| {
+    });
 
 
-    let c = &*EXTERNAL_CHANNEL.init(Channel::new());
-
-    let watchdog = WATCHDOG.init(Watchdog::new(p.WATCHDOG));
-
-    let mut spi0_config = embassy_rp::spi::Config::default();
-    spi0_config.frequency = 1_000_000;
-
-    let client_mosi = p.PIN_3;
-    let client_miso = p.PIN_0;
-    let clk = p.PIN_2;
-    let cs = p.PIN_1;
-    let mosi_dma = p.DMA_CH1;
-    let miso_dma = p.DMA_CH2;
-
-    let mut client_spi: &mut Spi<'static, SPI0, Async> = CLIENT_SPI.init(Spi::new(
-        p.SPI0,
-        clk,
-        client_mosi,
-        client_miso,
-        mosi_dma,
-        miso_dma,
-        spi0_config,
-    ));
-
-    let th_clk = p.PIN_10;
-    let th_miso = p.PIN_12;
-    let rx_dma = p.DMA_CH3;
-    let mut config = embassy_rp::spi::Config::default();
-    config.frequency = 500_000;
-    let mut thermocouple_spi: &mut Spi<'static, SPI1, Async> =
-        THERMOCOUPLE_SPI.init(Spi::new_rxonly(p.SPI1, th_clk, th_miso, rx_dma, config));
-
-    let thermocouple_pinout = Output::new(p.PIN_11, Level::Low);
-    // let thermocouple = MAX31855::new(thermocouple_spi, thermocouple_pinout);
-
-    let content = [0u8; 1024];
-
-    let mut type_buff = [0u8; 1];
-    let mut len_buff = [0u8; 2];
-    let mut content_buffer = [0u8; 1024];
-
-    let mut gpio = Output::new(p.PIN_7, Level::Low);
-    let mut inbound_flag = Input::new(p.PIN_4, Pull::None);
-
-    loop {
-        let blink_task = async {
-            gpio.set_high();
-            Timer::after(Duration::from_millis(500)).await;
-            gpio.set_low();
-            Timer::after(Duration::from_millis(500)).await;
-        };
-    }
-
-    loop {
-        gpio.set_high();
-        Timer::after(Duration::from_millis(100)).await;
-        gpio.set_low();
-        Timer::after(Duration::from_millis(100)).await;
-    }
-
-    let c2 = c;
-    // let runtime = RUNTIME.init(AxisRuntime::new(
-    //     c2,
-    //     external_to_internal_channel,
-    //     watchdog,
-    //     client_spi,
+    // let c = &*EXTERNAL_CHANNEL.init(Channel::new());
+    //
+    // let watchdog = WATCHDOG.init(Watchdog::new(p.WATCHDOG));
+    //
+    // let mut spi0_config = embassy_rp::spi::Config::default();
+    // spi0_config.frequency = 1_000_000;
+    //
+    // let client_mosi = p.PIN_3;
+    // let client_miso = p.PIN_0;
+    // let clk = p.PIN_2;
+    // let cs = p.PIN_1;
+    // let mosi_dma = p.DMA_CH1;
+    // let miso_dma = p.DMA_CH2;
+    //
+    // let mut client_spi: &mut Spi<'static, SPI0, Async> = CLIENT_SPI.init(Spi::new(
+    //     p.SPI0,
+    //     clk,
+    //     client_mosi,
+    //     client_miso,
+    //     mosi_dma,
+    //     miso_dma,
+    //     spi0_config,
     // ));
-
-    // High-priority executor: SWI_IRQ_1, priority level 2
-    interrupt::SWI_IRQ_1.set_priority(Priority::P1);
-    //unwrap!(spawner.spawn(main_loop(runtime)));
-
-    let c2 = c;
-    //unwrap!(spawner.spawn(thermocouple_read(thermocouple, c2)));
-
-    KILL_SIGNAL.wait().await;
+    //
+    // let th_clk = p.PIN_10;
+    // let th_miso = p.PIN_12;
+    // let rx_dma = p.DMA_CH3;
+    // let mut config = embassy_rp::spi::Config::default();
+    // config.frequency = 500_000;
+    // let mut thermocouple_spi: &mut Spi<'static, SPI1, Async> =
+    //     THERMOCOUPLE_SPI.init(Spi::new_rxonly(p.SPI1, th_clk, th_miso, rx_dma, config));
+    //
+    // let thermocouple_pinout = Output::new(p.PIN_11, Level::Low);
+    // // let thermocouple = MAX31855::new(thermocouple_spi, thermocouple_pinout);
+    //
+    // let content = [0u8; 1024];
+    //
+    // let mut type_buff = [0u8; 1];
+    // let mut len_buff = [0u8; 2];
+    // let mut content_buffer = [0u8; 1024];
+    //
+    // let mut gpio = Output::new(p.PIN_7, Level::Low);
+    // let mut inbound_flag = Input::new(p.PIN_4, Pull::None);
+    //
+    // loop {
+    //     let blink_task = async {
+    //         gpio.set_high();
+    //         Timer::after(Duration::from_millis(500)).await;
+    //         gpio.set_low();
+    //         Timer::after(Duration::from_millis(500)).await;
+    //     };
+    // }
+    //
+    // loop {
+    //     gpio.set_high();
+    //     Timer::after(Duration::from_millis(100)).await;
+    //     gpio.set_low();
+    //     Timer::after(Duration::from_millis(100)).await;
+    // }
+    //
+    // let c2 = c;
+    // // let runtime = RUNTIME.init(AxisRuntime::new(
+    // //     c2,
+    // //     external_to_internal_channel,
+    // //     watchdog,
+    // //     client_spi,
+    // // ));
+    //
+    // // High-priority executor: SWI_IRQ_1, priority level 2
+    // interrupt::SWI_IRQ_1.set_priority(Priority::P1);
+    // //unwrap!(spawner.spawn(main_loop(runtime)));
+    //
+    // let c2 = c;
+    // //unwrap!(spawner.spawn(thermocouple_read(thermocouple, c2)));
+    //
+    // KILL_SIGNAL.wait().await;
 }
 
