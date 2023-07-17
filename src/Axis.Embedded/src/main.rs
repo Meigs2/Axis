@@ -30,7 +30,7 @@ use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::blocking_mutex::CriticalSectionMutex;
 use embassy_sync::channel::{Channel, Receiver, RecvFuture, Sender};
 use embassy_sync::signal::Signal;
-use embassy_time::{Duration, Timer};
+use embassy_time::{Duration, Instant, Timer};
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
 use embassy_usb::{Builder, UsbDevice};
 use embassy_usb::driver::EndpointError;
@@ -41,7 +41,9 @@ use serde_json_core::de::Error;
 use serde_json_core::heapless::{String, Vec};
 use static_cell::{make_static, StaticCell};
 use {defmt_rtt as _, panic_probe as _};
-use crate::Message::{Ping, Pong};
+use crate::axis_peripherals::max31588::{MAX31855, Unit};
+use crate::Message::{Ping, Pong, ThermocoupleReading};
+use defmt::Format;
 
 bind_interrupts!(struct Irqs {
     USBCTRL_IRQ => embassy_rp::usb::InterruptHandler<USB>;
@@ -50,13 +52,13 @@ bind_interrupts!(struct Irqs {
 
 #[derive(Clone)]
 pub struct Runtime<'a> {
-    outbound_sender: Sender<'a, CriticalSectionRawMutex, Message, 1>
+    outbound_sender: Sender<'a, CriticalSectionRawMutex, Message, 1>,
 }
 
 impl<'a> Runtime<'a> {
     pub fn new(outbound_sender: Sender<'a, CriticalSectionRawMutex, Message, 1>) -> Self {
         Self {
-            outbound_sender
+            outbound_sender,
         }
     }
 
@@ -68,28 +70,22 @@ impl<'a> Runtime<'a> {
             Pong { .. } => {
                 self.outbound_sender.send(Ping).await;
             }
+            ThermocoupleReading => {
+                self.outbound_sender.send(ThermocoupleReading).await;
+            }
         }
 
-    }
-}
-
-#[embassy_executor::task]
-async fn read_thermocouple(mut pin: Output<'static, PIN_16>) {
-    loop {
-        pin.set_high();
-        Timer::after(Duration::from_millis(500)).await;
-        pin.set_low();
-        Timer::after(Duration::from_millis(500)).await;
     }
 }
 
 pub const MAX_STRING_SIZE: usize = 64;
 pub const MAX_PACKET_SIZE: u8 = 64;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Format, Debug, Serialize, Deserialize)]
 pub enum Message {
     Ping,
-    Pong {value: String<MAX_STRING_SIZE>}
+    Pong {value: String<MAX_STRING_SIZE>},
+    ThermocoupleReading {temperature: f32 }
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize)]
@@ -148,6 +144,8 @@ mod tasks {
     use core::future::Future;
     use defmt::{debug, error, unwrap};
     use embassy_executor::Spawner;
+    use embassy_futures::join::join;
+    use embassy_futures::select::select;
     use embassy_rp::gpio::Output;
     use embassy_rp::peripherals::{PIN_7, USB};
     use embassy_rp::usb::Driver;
@@ -161,6 +159,7 @@ mod tasks {
     use serde_json_core::{from_slice, from_str, to_slice};
     use crate::{MAX_STRING_SIZE, Message, Runtime};
     use heapless::Vec;
+    use crate::axis_peripherals::max31588::{MAX31855, Unit};
     use crate::Message::*;
 
     #[embassy_executor::task]
@@ -207,11 +206,10 @@ mod tasks {
     }
 
     #[embassy_executor::task]
-    pub async fn process_outgoing_messages(inbound_receiver: Receiver<'static, CriticalSectionRawMutex, Message, 1>, spawner: Spawner, runtime:&'static Runtime<'static>) {
+    pub async fn process_internal_messages(inbound_receiver: Receiver<'static, CriticalSectionRawMutex, Message, 1>, spawner: Spawner, runtime:&'static Runtime<'static>) {
         loop {
             let message = inbound_receiver.recv().await;
             runtime.handle(message).await;
-            //unwrap!(spawner.spawn(handle_message(message, runtime)));
         }
     }
 
@@ -225,8 +223,14 @@ mod tasks {
         loop {
             let m = outbound_receiver.recv().await;
 
-            if let Ok(s) = to_slice(&m, &mut buffer[..]) {
-                if let Ok(x) = usb_sender.write_packet(&buffer[..s]).await {}
+            let mut v: Vec<Message, 1> = Vec::new();
+
+            v.push(m);
+
+            if let Ok(s) = to_slice(&v.as_slice(), &mut buffer[..]) {
+                debug!("Outbound message: {:?}", buffer[..s]);
+                let timeout = Timer::after(Duration::from_millis(1));
+                select(usb_sender.write_packet(&buffer[..s]), timeout).await;
             }
         }
     }
@@ -239,6 +243,15 @@ mod tasks {
             pin.set_low();
             Timer::after(Duration::from_millis(500)).await;
             watchdog.feed();
+        }
+    }
+
+    #[embassy_executor::task]
+    pub async fn read_thermocouple(inbound_sender: Sender<'static, CriticalSectionRawMutex, Message, 1>, thermocouple: &'static mut MAX31855) {
+        loop {
+            Timer::after(Duration::from_millis(500)).await;
+            let reading = thermocouple.read_thermocouple(Unit::Fahrenheit).await;
+            inbound_sender.send(ThermocoupleReading {temperature: reading.unwrap()}).await;
         }
     }
 }
@@ -304,13 +317,27 @@ async fn main(_s: embassy_executor::Spawner) {
 
     let runtime = make_static!(Runtime::new(outbound_sender));
 
+
+    let th_clk = p.PIN_10;
+    let th_miso = p.PIN_12;
+    let rx_dma = p.DMA_CH3;
+
+    let mut config = embassy_rp::spi::Config::default();
+    config.frequency = 500_000;
+    let thermocouple_spi = make_static!(Spi::new_rxonly(p.SPI1, th_clk, th_miso, rx_dma, config));
+
+    let thermocouple_pinout = Output::new(p.PIN_11, Level::High);
+    let mut thermocouple = make_static!(MAX31855::new(thermocouple_spi, thermocouple_pinout));
+
+    spawner.spawn(tasks::read_thermocouple(internal_channel.sender(), thermocouple));
+
     // Low priority executor: runs in thread mode, using WFE/SEV
     let executor = EXECUTOR_LOW.init(Executor::new());
     executor.run(|spawner| {
         unwrap!(spawner.spawn(tasks::run_usb(usb)));
         unwrap!(spawner.spawn(tasks::read_usb(inbound_sender, usb_reader)));
         unwrap!(spawner.spawn(tasks::write_usb(outbound_receiver, usb_sender)));
-        unwrap!(spawner.spawn(tasks::process_outgoing_messages(inbound_receiver, spawner, runtime)));
+        unwrap!(spawner.spawn(tasks::process_internal_messages(inbound_receiver, spawner, runtime)));
         unwrap!(spawner.spawn(tasks::blink(pin, watchdog)));
     });
 
@@ -392,3 +419,4 @@ async fn main(_s: embassy_executor::Spawner) {
     //
     // KILL_SIGNAL.wait().await;
 }
+

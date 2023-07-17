@@ -14,13 +14,21 @@ var mcu = app.Services.GetRequiredService<MicroController>();
 
 mcu.Observable.Subscribe(x => Console.WriteLine(x.ToString()));
 
+var task = Task.Run(() =>
+{
+    while (true)
+    {
+        mcu.ReadMessages();
+    }
+});
+
 while (true)
 {
     Console.WriteLine("Press Key to send message");
     Console.ReadKey();
 
-    await mcu.Send(new Message.Ping());
-    await mcu.Send(new Message.Pong());
+    mcu.Send(new Message.Ping());
+    mcu.Send(new Message.Pong());
 }
 
 // Task.Run(() =>
