@@ -11,7 +11,7 @@
 use std::env;
 use std::fs::File;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 fn main() {
     // Put `memory.x` in our output directory and ensure it's

@@ -40,18 +40,16 @@
 //!     }
 //! ```
 
-use defmt::debug;
 use embassy_rp::gpio::Output;
-use embassy_rp::peripherals::{PIN_11, PIN_24, PIN_27, SPI1};
+use embassy_rp::peripherals::{PIN_11, SPI1};
 use embassy_rp::spi::{Async, Spi};
-use static_cell::make_static;
-use thiserror_no_std::Error;
-use core::ops::RangeInclusive;
+
 use bit_field::BitField;
+use core::ops::RangeInclusive;
 use {defmt_rtt as _, panic_probe as _};
-use defmt::export::u16;
-use defmt::Format;
+
 use crate::axis_peripherals::max31588::ThermocoupleError::*;
+use defmt::Format;
 
 /// The bits that represent the thermocouple value when reading the first u16 from the sensor
 const THERMOCOUPLE_BITS: RangeInclusive<usize> = 2..=15;
@@ -180,14 +178,14 @@ impl MAX31855 {
     }
 
     /// Reads the thermocouple temperature and leave it as a raw ADC count. Checks if there is a fault but doesn't detect what kind of fault it is
-   async fn read_thermocouple_raw(&mut self) -> Result<i16, ThermocoupleError> {
+    async fn read_thermocouple_raw(&mut self) -> Result<i16, ThermocoupleError> {
         let mut buffer = [0; 4];
 
         self.dc.set_low();
         let readout = self.spi.blocking_read(&mut buffer);
         self.dc.set_high();
 
-        if let Err(e) = readout {
+        if let Err(_e) = readout {
             return Err(ThermocoupleError::Fault);
         }
 
@@ -195,8 +193,7 @@ impl MAX31855 {
             Err(ThermocoupleError::Fault)?
         }
 
-        let raw = (buffer[0] as u16) << 8 |
-            (buffer[1] as u16);
+        let raw = (buffer[0] as u16) << 8 | (buffer[1] as u16);
 
         let thermocouple = bits_to_i16(raw.get_bits(THERMOCOUPLE_BITS), 14, 4, 2);
 
@@ -205,8 +202,8 @@ impl MAX31855 {
 
     /// Reads the thermocouple temperature and converts it into degrees in the provided unit. Checks if there is a fault but doesn't detect what kind of fault it is
     pub async fn read_thermocouple(&mut self, unit: Unit) -> Result<f32, ThermocoupleError> {
-        self
-            .read_thermocouple_raw().await
+        self.read_thermocouple_raw()
+            .await
             .map(|r| unit.convert(Reading::Thermocouple.convert(r)))
     }
 
@@ -218,15 +215,14 @@ impl MAX31855 {
         let readout = self.spi.blocking_read(&mut buffer);
         self.dc.set_low();
 
-        if let Err(e) = readout {
+        if let Err(_e) = readout {
             return Err(ThermocoupleError::Fault);
         }
 
         let fault = buffer[1].get_bit(0);
 
         if fault {
-            let raw = (buffer[2] as u16) << 8 |
-                (buffer[3] as u16);
+            let raw = (buffer[2] as u16) << 8 | (buffer[3] as u16);
 
             if raw.get_bit(FAULT_NO_THERMOCOUPLE_BIT) {
                 Err(MissingThermocoupleFault)?
@@ -241,10 +237,8 @@ impl MAX31855 {
             }
         }
 
-        let first_u16 = (buffer[0] as u16) << 8 |
-            (buffer[1] as u16) << 0;
-        let second_u16 = (buffer[2] as u16) << 8 |
-            (buffer[3] as u16) << 0;
+        let first_u16 = (buffer[0] as u16) << 8 | (buffer[1] as u16) << 0;
+        let second_u16 = (buffer[2] as u16) << 8 | (buffer[3] as u16) << 0;
 
         let thermocouple = bits_to_i16(first_u16.get_bits(THERMOCOUPLE_BITS), 14, 4, 2);
         let internal = bits_to_i16(second_u16.get_bits(INTERNAL_BITS), 12, 16, 4);
@@ -257,8 +251,6 @@ impl MAX31855 {
 
     /// Reads both the thermocouple and the internal temperatures, converts them into degrees in the provided unit and resolves faults to one of vcc short, ground short or missing thermocouple
     pub async fn read_all(&mut self, unit: Unit) -> Result<FullResult, ThermocoupleError> {
-        self
-            .read_all_raw().await
-            .map(|r| r.convert(unit))
+        self.read_all_raw().await.map(|r| r.convert(unit))
     }
 }
