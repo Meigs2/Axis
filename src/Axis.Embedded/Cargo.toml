@@ -49,6 +49,7 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde-json-core = {version = "0.5.0", features = ["custom-error-messages"] }
 heapless = { version = "0.7.16", features = ["defmt-impl", "serde"] }
 bit_field = "0.10.2"
+bitfield = "0.14.0"
 
 [profile.release]
 debug = true
