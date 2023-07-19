@@ -1,2 +1,2 @@
 pub mod max31588;
-mod ads1115;
+pub mod ads1115;

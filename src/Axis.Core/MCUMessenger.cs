@@ -49,9 +49,9 @@ public class MicroController : IDisposable
     private SerialPort _serialPort;
     private JsonSerializerSettings _options;
 
-    public MicroController()
+    public MicroController(string serialPortName)
     {
-        _serialPort = new SerialPort("/dev/tty.usbmodem123456781");
+        _serialPort = new SerialPort(serialPortName);
         _options = new JsonSerializerSettings();
         _options.Converters.Add(new MessageConverter());
     }

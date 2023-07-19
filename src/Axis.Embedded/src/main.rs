@@ -8,7 +8,7 @@
 mod axis_peripherals;
 
 use core::future::Future;
-use defmt::unwrap;
+use defmt::{info, unwrap};
 use embassy_executor::{Executor, InterruptExecutor};
 use embassy_rp::gpio::{Level, Output};
 use embassy_rp::interrupt::{InterruptExt, Priority};
@@ -20,7 +20,7 @@ use embassy_rp::{bind_interrupts, interrupt};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Sender};
 use serde::{Deserialize, Serialize};
-
+use embassy_rp::peripherals::I2C1;
 use crate::axis_peripherals::max31588::MAX31855;
 use crate::Message::{Ping, Pong};
 use defmt::Format;
@@ -30,9 +30,17 @@ use embassy_usb::Builder;
 use serde_json_core::heapless::String;
 use static_cell::{make_static, StaticCell};
 use {defmt_rtt as _, panic_probe as _};
+use embedded_hal_async::i2c::I2c;
+use crate::axis_peripherals::ads1115;
+use crate::axis_peripherals::ads1115::Ads1115;
+
 
 bind_interrupts!(struct Irqs {
     USBCTRL_IRQ => embassy_rp::usb::InterruptHandler<USB>;
+});
+
+bind_interrupts!(struct I2cIrqs {
+    I2C1_IRQ => embassy_rp::i2c::InterruptHandler<I2C1>;
 });
 
 #[derive(Clone)]
@@ -150,7 +158,6 @@ mod tasks {
         let buff = make_static!([0u8; MAX_STRING_SIZE]);
         usb_reader.wait_connection().await;
         loop {
-            let pool: &mut Pool<Vec<Message, MAX_STRING_SIZE>> = make_static!(Pool::new());
             match usb_reader.read_packet(&mut buff[..]).await {
                 Ok(s) => {
                     let stopwatch = embassy_time::Instant::now();
@@ -314,6 +321,14 @@ async fn main(_s: embassy_executor::Spawner) {
 
     let thermocouple_pinout = Output::new(p.PIN_11, Level::High);
     let thermocouple = make_static!(MAX31855::new(thermocouple_spi, thermocouple_pinout));
+    
+    let sda = p.PIN_14;
+    let scl = p.PIN_15;
+
+    info!("set up i2c ");
+    let mut i2c = i2c::I2c::new_async(p.I2C1, scl, sda, I2cIrqs, embassy_rp::i2c::Config::default());
+
+    let ads = Ads1115::new(i2c);
 
     interrupt::SWI_IRQ_1.set_priority(Priority::P0);
     let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);

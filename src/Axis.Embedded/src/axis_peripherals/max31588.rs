@@ -51,6 +51,7 @@ use {defmt_rtt as _, panic_probe as _};
 
 use crate::axis_peripherals::max31588::ThermocoupleError::*;
 use defmt::Format;
+use embedded_hal_1::spi::SpiBus;
 
 bitfield! {
     #[derive(Clone, Copy, Format)]
@@ -193,12 +194,12 @@ impl MAX31855 {
         Ok(thermocouple)
     }
 
-    fn read_spi<const N: usize>(
+    async fn read_spi<const N: usize>(
         &mut self,
         buffer: &mut [u8; N],
     ) -> Result<(), embassy_rp::spi::Error> {
         self.dc.set_low();
-        let readout = self.spi.blocking_read(buffer);
+        let readout = self.spi.read(buffer).await;
         self.dc.set_high();
         readout
     }

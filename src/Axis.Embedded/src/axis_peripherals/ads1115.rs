@@ -1,6 +1,10 @@
 use bitfield::bitfield;
 use core::ops::RangeInclusive;
+use embassy_rp::i2c::{Async};
+use embassy_rp::peripherals::I2C1;
 use {defmt_rtt as _, panic_probe as _};
+use crate::axis_peripherals::ads1115::Addresses::I2CDefault;
+use embedded_hal_async::i2c::I2c;
 
 bitfield! {
     // Define a new type `ConfigRegister` with base type u16 (as the ADS1115 config register is 16 bits)
@@ -17,6 +21,28 @@ bitfield! {
     u8, get_comp_lat, set_comp_lat: 2, 2;
     u8, get_comp_que, set_comp_que: 1, 0;
 }
+
+enum Addresses {
+    I2CWrite = 0b1001000_0,
+    I2CRead = 0b1001000_1
+}
+
+pub struct Ads1115 {
+    i2c: I2c<'static>
+}
+
+impl Ads1115 {
+    pub fn new(i2c: I2c<>) -> Self {
+        Self {
+            i2c
+        }
+    }
+
+    pub fn initialize(&self) {
+        self.i2c.write_async(I2CDefault, I2CDefault
+    }
+}
+
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Config {
