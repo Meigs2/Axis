@@ -7,33 +7,33 @@
 
 mod axis_peripherals;
 
+use crate::axis_peripherals::ads1115;
+use crate::axis_peripherals::ads1115::Ads1115;
+use crate::axis_peripherals::max31588::MAX31855;
+use crate::Message::{Ping, Pong};
 use core::future::Future;
+use defmt::Format;
 use defmt::{info, unwrap};
 use embassy_executor::{Executor, InterruptExecutor};
 use embassy_rp::gpio::{Level, Output};
+use embassy_rp::i2c::Config;
 use embassy_rp::interrupt::{InterruptExt, Priority};
+use embassy_rp::peripherals::I2C1;
 use embassy_rp::peripherals::USB;
 use embassy_rp::spi::Spi;
 use embassy_rp::usb::Driver;
 use embassy_rp::watchdog::Watchdog;
-use embassy_rp::{bind_interrupts, interrupt};
+use embassy_rp::{bind_interrupts, i2c, interrupt};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Sender};
-use serde::{Deserialize, Serialize};
-use embassy_rp::peripherals::I2C1;
-use crate::axis_peripherals::max31588::MAX31855;
-use crate::Message::{Ping, Pong};
-use defmt::Format;
 use embassy_time::Duration;
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
 use embassy_usb::Builder;
+use embedded_hal_async::i2c::I2c;
+use serde::{Deserialize, Serialize};
 use serde_json_core::heapless::String;
 use static_cell::{make_static, StaticCell};
 use {defmt_rtt as _, panic_probe as _};
-use embedded_hal_async::i2c::I2c;
-use crate::axis_peripherals::ads1115;
-use crate::axis_peripherals::ads1115::Ads1115;
-
 
 bind_interrupts!(struct Irqs {
     USBCTRL_IRQ => embassy_rp::usb::InterruptHandler<USB>;
@@ -321,12 +321,14 @@ async fn main(_s: embassy_executor::Spawner) {
 
     let thermocouple_pinout = Output::new(p.PIN_11, Level::High);
     let thermocouple = make_static!(MAX31855::new(thermocouple_spi, thermocouple_pinout));
-    
+
     let sda = p.PIN_14;
     let scl = p.PIN_15;
 
     info!("set up i2c ");
-    let mut i2c = i2c::I2c::new_async(p.I2C1, scl, sda, I2cIrqs, embassy_rp::i2c::Config::default());
+    let mut i2c: i2c::I2c<I2C1, i2c::Async> =
+        i2c::I2c::new_async(p.I2C1, scl, sda, I2cIrqs, Config::default());
+        i2c.write_read(address, write, read)
 
     let ads = Ads1115::new(i2c);
 
