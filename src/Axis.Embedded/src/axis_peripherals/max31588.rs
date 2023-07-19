@@ -181,12 +181,10 @@ impl MAX31855 {
     async fn read_thermocouple_raw(&mut self) -> Result<i16, ThermocoupleError> {
         let mut buffer = [0; 4];
 
-        self.dc.set_low();
-        let readout = self.spi.blocking_read(&mut buffer);
-        self.dc.set_high();
+        let readout = self.read_spi(&mut buffer);
 
         if let Err(_e) = readout {
-            return Err(ThermocoupleError::Fault);
+            return Err(ThermocoupleError::SpiError);
         }
 
         if buffer[1].get_bit(FAULT_BIT) {
@@ -200,6 +198,16 @@ impl MAX31855 {
         Ok(thermocouple)
     }
 
+    fn read_spi<const N: usize>(
+        &mut self,
+        buffer: &mut [u8; N],
+    ) -> Result<(), embassy_rp::spi::Error> {
+        self.dc.set_low();
+        let readout = self.spi.blocking_read(buffer);
+        self.dc.set_high();
+        readout
+    }
+
     /// Reads the thermocouple temperature and converts it into degrees in the provided unit. Checks if there is a fault but doesn't detect what kind of fault it is
     pub async fn read_thermocouple(&mut self, unit: Unit) -> Result<f32, ThermocoupleError> {
         self.read_thermocouple_raw()
@@ -211,9 +219,7 @@ impl MAX31855 {
     async fn read_all_raw(&mut self) -> Result<FullResultRaw, ThermocoupleError> {
         let mut buffer = [0; 4];
 
-        self.dc.set_high();
-        let readout = self.spi.blocking_read(&mut buffer);
-        self.dc.set_low();
+        let readout = self.read_spi(&mut buffer);
 
         if let Err(_e) = readout {
             return Err(ThermocoupleError::Fault);
