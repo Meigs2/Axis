@@ -11,6 +11,7 @@ use core::future::Future;
 use defmt::unwrap;
 use embassy_executor::{Executor, InterruptExecutor};
 use embassy_rp::gpio::{Level, Output};
+use embassy_rp::interrupt::{InterruptExt, Priority};
 use embassy_rp::peripherals::USB;
 use embassy_rp::spi::Spi;
 use embassy_rp::usb::Driver;
@@ -56,8 +57,8 @@ impl<'a> Runtime<'a> {
             Pong { .. } => {
                 self.outbound_sender.send(Ping).await;
             }
-            ThermocoupleReading => {
-                self.outbound_sender.send(ThermocoupleReading).await;
+            thermocouple_reading => {
+                self.outbound_sender.send(thermocouple_reading).await;
             }
         }
     }
@@ -122,6 +123,8 @@ mod tasks {
     use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
     use embassy_sync::channel::{Receiver, Sender};
     use embassy_time::{Duration, Timer};
+    use heapless::pool::Pool;
+    use static_cell::make_static;
 
     use crate::axis_peripherals::max31588::{Unit, MAX31855};
     use crate::Message::*;
@@ -144,9 +147,10 @@ mod tasks {
             Driver<'static, USB>,
         >,
     ) {
-        let mut buff = [0u8; MAX_STRING_SIZE];
+        let buff = make_static!([0u8; MAX_STRING_SIZE]);
         usb_reader.wait_connection().await;
         loop {
+            let pool: &mut Pool<Vec<Message, MAX_STRING_SIZE>> = make_static!(Pool::new());
             match usb_reader.read_packet(&mut buff[..]).await {
                 Ok(s) => {
                     let stopwatch = embassy_time::Instant::now();
@@ -196,11 +200,11 @@ mod tasks {
         outbound_receiver: Receiver<'static, CriticalSectionRawMutex, Message, 1>,
         usb_sender: &'static mut embassy_usb::class::cdc_acm::Sender<'static, Driver<'static, USB>>,
     ) {
-        let mut buff = [0u8; MAX_STRING_SIZE];
+        let buff = make_static!([0u8; MAX_STRING_SIZE]);
         loop {
             let m = outbound_receiver.recv().await;
 
-            let s = if let Ok(s) = to_slice(&m, &mut buff) {
+            let s = if let Ok(s) = to_slice(&m, buff) {
                 s
             } else {
                 continue;
@@ -242,7 +246,7 @@ mod tasks {
 #[embassy_executor::main]
 async fn main(_s: embassy_executor::Spawner) {
     let p = embassy_rp::init(Default::default());
-    let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);
+
     // Create the driver, from the HAL.
     let driver = Driver::new(p.USB, Irqs);
 
@@ -311,6 +315,8 @@ async fn main(_s: embassy_executor::Spawner) {
     let thermocouple_pinout = Output::new(p.PIN_11, Level::High);
     let thermocouple = make_static!(MAX31855::new(thermocouple_spi, thermocouple_pinout));
 
+    interrupt::SWI_IRQ_1.set_priority(Priority::P0);
+    let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);
     let _ = spawner.spawn(tasks::read_thermocouple(
         internal_channel.sender(),
         thermocouple,

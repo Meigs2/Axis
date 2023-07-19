@@ -51,10 +51,18 @@ heapless = { version = "0.7.16", features = ["defmt-impl", "serde"] }
 bit_field = "0.10.2"
 bitfield = "0.14.0"
 
+[profile.dev]
+# This isn't required for development builds, but makes development
+# build behavior match release builds. To enable unwinding panics
+# during development, simply remove this line.
+# panic = "abort"
+
 [profile.release]
-debug = true
+opt-level = 3
+lto = true
+codegen-units = 1
+# panic = "abort"
+strip = true
 
 [patch.crates-io]
 lora-phy = { git = "https://github.com/embassy-rs/lora-phy", rev = "ad289428fd44b02788e2fa2116445cc8f640a265" }
-
-[build-dependencies]

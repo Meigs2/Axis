@@ -45,27 +45,33 @@ use embassy_rp::peripherals::{PIN_11, SPI1};
 use embassy_rp::spi::{Async, Spi};
 
 use bit_field::BitField;
+use bitfield::bitfield;
 use core::ops::RangeInclusive;
 use {defmt_rtt as _, panic_probe as _};
 
 use crate::axis_peripherals::max31588::ThermocoupleError::*;
 use defmt::Format;
 
-/// The bits that represent the thermocouple value when reading the first u16 from the sensor
-const THERMOCOUPLE_BITS: RangeInclusive<usize> = 2..=15;
-/// The bit that indicates some kind of fault when reading the first u16 from the sensor
-const FAULT_BIT: usize = 0;
-/// The bits that represent the internal value when reading the second u16 from the sensor
-const INTERNAL_BITS: RangeInclusive<usize> = 4..=15;
-/// The bit that indicates a short-to-vcc fault when reading the second u16 from the sensor
-const FAULT_VCC_SHORT_BIT: usize = 2;
-/// The bit that indicates a short-to-gnd fault when reading the second u16 from the sensor
-const FAULT_GROUND_SHORT_BIT: usize = 1;
-/// The bit that indicates a missing thermocouple fault when reading the second u16 from the sensor
-const FAULT_NO_THERMOCOUPLE_BIT: usize = 0;
+bitfield! {
+    #[derive(Clone, Copy, Format)]
+    pub struct Readout(u32);
+    impl Debug;
+    impl Copy;
+
+    i16, thermocouple_temp, _ : 31, 18;
+    /// Bit reads 1 when there's any fault on the SCV, SCG or OC faults.
+    u8, fault, _ : 16;
+    i16, internal_temp, _ : 15, 4;
+    /// Bit reads 1 when the thermocouple is shorted to Vcc.
+    u8, scv_fault, _ : 2;
+    /// Bit reads 1 when the thermocouple is shorted to GND.
+    u8, scg_fault, _ : 1;
+    /// Bit reads 1 when the thermocouple is not connected.
+    u8, oc_fault, _ : 0;
+}
 
 /// Possible errors returned by this crate
-#[derive(Format, Debug)]
+#[derive(Format, Clone, Copy, Debug)]
 pub enum ThermocoupleError {
     /// An error returned by a call to Transfer::transfer
     SpiError,
@@ -122,17 +128,8 @@ impl Reading {
     }
 }
 
-fn bits_to_i16(bits: u16, len: usize, divisor: i16, shift: usize) -> i16 {
-    let negative = bits.get_bit(len - 1);
-    if negative {
-        (bits << shift) as i16 / divisor
-    } else {
-        bits as i16
-    }
-}
-
 /// Represents the data contained in a full 32-bit read from the MAX31855 as raw ADC counts
-#[derive(Debug)]
+#[derive(Format, Debug, Clone, Copy)]
 pub struct FullResultRaw {
     /// The temperature of the thermocouple as raw ADC counts
     pub thermocouple: i16,
@@ -155,7 +152,7 @@ impl FullResultRaw {
 }
 
 /// Represents the data contained in a full 32-bit read from the MAX31855 as degrees in the included Unit
-#[derive(Debug)]
+#[derive(Format, Debug, Clone, Copy)]
 pub struct FullResult {
     /// The temperature of the thermocouple
     pub thermocouple: f32,
@@ -164,8 +161,6 @@ pub struct FullResult {
     /// The unit that the temperatures are in
     pub unit: Unit,
 }
-
-const CLOCK_FRQ: u32 = 500_000;
 
 pub struct MAX31855 {
     spi: &'static mut Spi<'static, SPI1, Async>,
@@ -187,13 +182,13 @@ impl MAX31855 {
             return Err(ThermocoupleError::SpiError);
         }
 
-        if buffer[1].get_bit(FAULT_BIT) {
+        let readout = Readout(u32::from_le_bytes(buffer));
+
+        if readout.fault() {
             Err(ThermocoupleError::Fault)?
         }
 
-        let raw = (buffer[0] as u16) << 8 | (buffer[1] as u16);
-
-        let thermocouple = bits_to_i16(raw.get_bits(THERMOCOUPLE_BITS), 14, 4, 2);
+        let thermocouple = readout.thermocouple_temp();
 
         Ok(thermocouple)
     }
@@ -225,16 +220,14 @@ impl MAX31855 {
             return Err(ThermocoupleError::Fault);
         }
 
-        let fault = buffer[1].get_bit(0);
+        let readout = Readout(u32::from_le_bytes(buffer));
 
-        if fault {
-            let raw = (buffer[2] as u16) << 8 | (buffer[3] as u16);
-
-            if raw.get_bit(FAULT_NO_THERMOCOUPLE_BIT) {
+        if readout.fault() {
+            if readout.oc_fault() {
                 Err(MissingThermocoupleFault)?
-            } else if raw.get_bit(FAULT_GROUND_SHORT_BIT) {
+            } else if readout.scg_fault() {
                 Err(GroundShortFault)?
-            } else if raw.get_bit(FAULT_VCC_SHORT_BIT) {
+            } else if readout.scv_fault() {
                 Err(VccShortFault)?
             } else {
                 // This should impossible, one of the other fields should be set as well
@@ -243,11 +236,8 @@ impl MAX31855 {
             }
         }
 
-        let first_u16 = (buffer[0] as u16) << 8 | (buffer[1] as u16) << 0;
-        let second_u16 = (buffer[2] as u16) << 8 | (buffer[3] as u16) << 0;
-
-        let thermocouple = bits_to_i16(first_u16.get_bits(THERMOCOUPLE_BITS), 14, 4, 2);
-        let internal = bits_to_i16(second_u16.get_bits(INTERNAL_BITS), 12, 16, 4);
+        let thermocouple = readout.thermocouple_temp();
+        let internal = readout.internal_temp();
 
         Ok(FullResultRaw {
             thermocouple,
