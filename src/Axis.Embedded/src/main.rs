@@ -8,7 +8,7 @@
 mod axis_peripherals;
 
 use core::future::Future;
-use defmt::{info, unwrap};
+use defmt::{debug, info, unwrap};
 use embassy_executor::{Executor, InterruptExecutor};
 use embassy_rp::gpio::{Level, Output};
 use embassy_rp::interrupt::{InterruptExt, Priority};
@@ -24,7 +24,8 @@ use embassy_rp::peripherals::I2C1;
 use crate::axis_peripherals::max31588::MAX31855;
 use crate::Message::{Ping, Pong};
 use defmt::Format;
-use embassy_time::Duration;
+use embassy_rp::i2c::Async;
+use embassy_time::{Duration, Timer};
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
 use embassy_usb::Builder;
 use serde_json_core::heapless::String;
@@ -216,7 +217,7 @@ mod tasks {
             } else {
                 continue;
             };
-            debug!("Outbound message: {:?}", buff[..s]);
+            //debug!("Outbound message: {:?}", buff[..s]);
             let timeout = Timer::after(Duration::from_millis(1));
             select(usb_sender.write_packet(&buff[..s]), timeout).await;
         }
@@ -241,6 +242,7 @@ mod tasks {
         loop {
             Timer::after(Duration::from_millis(500)).await;
             let reading = thermocouple.read_thermocouple(Unit::Fahrenheit).await;
+            debug!("{:?}", reading);
             inbound_sender
                 .send(ThermocoupleReading {
                     temperature: reading.unwrap(),
@@ -326,16 +328,18 @@ async fn main(_s: embassy_executor::Spawner) {
     let scl = p.PIN_15;
 
     info!("set up i2c ");
-    let mut i2c = i2c::I2c::new_async(p.I2C1, scl, sda, I2cIrqs, embassy_rp::i2c::Config::default());
+    let mut i2c = embassy_rp::i2c::I2c::new_async(p.I2C1, scl, sda, I2cIrqs, embassy_rp::i2c::Config::default());
 
-    let ads = Ads1115::new(i2c);
+    let mut ads = Ads1115::new(i2c);
+    ads.initialize().unwrap();
 
-    interrupt::SWI_IRQ_1.set_priority(Priority::P0);
+    interrupt::SWI_IRQ_1.set_priority(Priority::P2);
     let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);
     let _ = spawner.spawn(tasks::read_thermocouple(
         internal_channel.sender(),
         thermocouple,
     ));
+    let _ = spawner.spawn(read_ads(ads));
 
     // Low priority executor: runs in thread mode, using WFE/SEV
     let executor = EXECUTOR_LOW.init(Executor::new());
@@ -427,4 +431,15 @@ async fn main(_s: embassy_executor::Spawner) {
     // //unwrap!(spawner.spawn(thermocouple_read(thermocouple, c2)));
     //
     // KILL_SIGNAL.wait().await;
+}
+
+
+#[embassy_executor::task]
+async fn read_ads(mut ads: Ads1115) {
+    ads.initialize().unwrap();
+    loop {
+        Timer::after(Duration::from_millis(100)).await;
+        let res = ads.read().unwrap();
+        debug!("{:?}", res);
+    }
 }
