@@ -122,15 +122,6 @@ impl Reading {
     }
 }
 
-fn bits_to_i16(bits: u16, len: usize, divisor: i16, shift: usize) -> i16 {
-    let negative = bits.get_bit(len - 1);
-    if negative {
-        (bits << shift) as i16 / divisor
-    } else {
-        bits as i16
-    }
-}
-
 /// Represents the data contained in a full 32-bit read from the MAX31855 as raw ADC counts
 #[derive(Debug)]
 pub struct FullResultRaw {
@@ -193,7 +184,7 @@ impl MAX31855 {
 
         let raw = (buffer[0] as u16) << 8 | (buffer[1] as u16);
 
-        let thermocouple = bits_to_i16(raw.get_bits(THERMOCOUPLE_BITS), 14, 4, 2);
+        let thermocouple = crate::bits_to_i16(raw.get_bits(THERMOCOUPLE_BITS), 14, 4, 2);
 
         Ok(thermocouple)
     }
@@ -243,11 +234,11 @@ impl MAX31855 {
             }
         }
 
-        let first_u16 = (buffer[0] as u16) << 8 | (buffer[1] as u16) << 0;
-        let second_u16 = (buffer[2] as u16) << 8 | (buffer[3] as u16) << 0;
+        let first_u16 = (buffer[0] as u16) << 8 | (buffer[1] as u16);
+        let second_u16 = (buffer[2] as u16) << 8 | (buffer[3] as u16);
 
-        let thermocouple = bits_to_i16(first_u16.get_bits(THERMOCOUPLE_BITS), 14, 4, 2);
-        let internal = bits_to_i16(second_u16.get_bits(INTERNAL_BITS), 12, 16, 4);
+        let thermocouple = crate::bits_to_i16(first_u16.get_bits(THERMOCOUPLE_BITS), 14, 4, 2);
+        let internal = crate::bits_to_i16(second_u16.get_bits(INTERNAL_BITS), 12, 16, 4);
 
         Ok(FullResultRaw {
             thermocouple,

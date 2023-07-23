@@ -6,12 +6,18 @@
 #![feature(never_type)]
 
 mod axis_peripherals;
+mod pid;
 
+use crate::axis_peripherals::ads1115::{Ads1115, AdsConfig};
+use crate::axis_peripherals::max31588::MAX31855;
+use bit_field::BitField;
 use core::future::Future;
-use defmt::{debug, info, unwrap};
+use defmt::unwrap;
+use defmt::Format;
 use embassy_executor::{Executor, InterruptExecutor};
 use embassy_rp::gpio::{Level, Output};
 use embassy_rp::interrupt::{InterruptExt, Priority};
+use embassy_rp::peripherals::I2C1;
 use embassy_rp::peripherals::USB;
 use embassy_rp::spi::Spi;
 use embassy_rp::usb::Driver;
@@ -19,22 +25,14 @@ use embassy_rp::watchdog::Watchdog;
 use embassy_rp::{bind_interrupts, interrupt};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Sender};
-use serde::{Deserialize, Serialize};
-use embassy_rp::peripherals::I2C1;
-use crate::axis_peripherals::max31588::MAX31855;
-use crate::Message::{Ping, Pong};
-use defmt::Format;
-use embassy_rp::i2c::Async;
-use embassy_time::{Duration, Timer};
+use embassy_time::Duration;
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
 use embassy_usb::Builder;
+use serde::{Deserialize, Serialize};
 use serde_json_core::heapless::String;
 use static_cell::{make_static, StaticCell};
+use Message::*;
 use {defmt_rtt as _, panic_probe as _};
-use embedded_hal_async::i2c::I2c;
-use crate::axis_peripherals::ads1115;
-use crate::axis_peripherals::ads1115::Ads1115;
-
 
 bind_interrupts!(struct Irqs {
     USBCTRL_IRQ => embassy_rp::usb::InterruptHandler<USB>;
@@ -66,8 +64,11 @@ impl<'a> Runtime<'a> {
             Pong { .. } => {
                 self.outbound_sender.send(Ping).await;
             }
-            thermocouple_reading => {
-                self.outbound_sender.send(thermocouple_reading).await;
+            reading @ ThermocoupleReading { .. } => {
+                self.outbound_sender.send(reading).await;
+            }
+            reading @ AdsReading { .. } => {
+                self.outbound_sender.send(reading).await;
             }
         }
     }
@@ -75,12 +76,14 @@ impl<'a> Runtime<'a> {
 
 pub const MAX_STRING_SIZE: usize = 64;
 pub const MAX_PACKET_SIZE: u8 = 64;
+pub const THERMOCOUPLE_SPI_FREQUENCY: u32 = 500_000;
 
 #[derive(Format, Debug, Serialize, Deserialize)]
 pub enum Message {
     Ping,
     Pong { value: String<MAX_STRING_SIZE> },
     ThermocoupleReading { temperature: f32 },
+    AdsReading { value: f32 },
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize)]
@@ -95,12 +98,6 @@ pub enum MessageError {
 static EXECUTOR_HIGH: InterruptExecutor = InterruptExecutor::new();
 static EXECUTOR_MED: InterruptExecutor = InterruptExecutor::new();
 static EXECUTOR_LOW: StaticCell<Executor> = StaticCell::new();
-
-static INTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, Message, 1>> =
-    StaticCell::new();
-
-static EXTERNAL_CHANNEL: StaticCell<Channel<CriticalSectionRawMutex, Message, 1>> =
-    StaticCell::new();
 
 #[interrupt]
 unsafe fn SWI_IRQ_1() {
@@ -119,11 +116,26 @@ pub async fn wait_with_timeout<F: Future>(
     embassy_time::with_timeout(Duration::from_millis(millis), fut).await
 }
 
+pub fn bits_to_i16(bits: u16, len: usize, divisor: i16, shift: usize) -> i16 {
+    let negative = bits.get_bit(len - 1);
+    if negative {
+        (bits << shift) as i16 / divisor
+    } else {
+        bits as i16
+    }
+}
+
+pub trait PeripheralError {}
+
+pub trait AxisPeripheral {
+    fn initialize() -> Result<(), String<MAX_STRING_SIZE>>;
+}
+
 mod tasks {
 
     use defmt::{debug, error};
-    use embassy_executor::Spawner;
 
+    use embassy_executor::Spawner;
     use embassy_futures::select::select;
     use embassy_rp::gpio::Output;
     use embassy_rp::peripherals::{PIN_7, USB};
@@ -132,16 +144,18 @@ mod tasks {
     use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
     use embassy_sync::channel::{Receiver, Sender};
     use embassy_time::{Duration, Timer};
-    use heapless::pool::Pool;
+
     use static_cell::make_static;
 
-    use crate::axis_peripherals::max31588::{Unit, MAX31855};
-    use crate::Message::*;
-    use crate::{Message, Runtime, MAX_STRING_SIZE};
     use embassy_usb::UsbDevice;
     use heapless::Vec;
     use serde_json_core::de::Error;
     use serde_json_core::{from_str, to_slice};
+
+    use crate::axis_peripherals::ads1115::Ads1115;
+    use crate::axis_peripherals::max31588::{Unit, MAX31855};
+    use crate::Message::*;
+    use crate::{Message, Runtime, MAX_STRING_SIZE};
 
     #[embassy_executor::task]
     pub async fn run_usb(usb: &'static mut UsbDevice<'static, Driver<'static, USB>>) -> ! {
@@ -199,7 +213,7 @@ mod tasks {
     ) {
         loop {
             let message = inbound_receiver.recv().await;
-            runtime.handle(message).await;
+            let _ = _spawner.spawn(handle_message(message, runtime));
         }
     }
 
@@ -217,7 +231,6 @@ mod tasks {
             } else {
                 continue;
             };
-            //debug!("Outbound message: {:?}", buff[..s]);
             let timeout = Timer::after(Duration::from_millis(1));
             select(usb_sender.write_packet(&buff[..s]), timeout).await;
         }
@@ -248,6 +261,32 @@ mod tasks {
                     temperature: reading.unwrap(),
                 })
                 .await;
+        }
+    }
+
+    #[embassy_executor::task]
+    pub async fn read_ads(mut ads: Ads1115) -> ! {
+        loop {
+            let initialize = ads.initialize();
+            if let Err(e) = initialize {
+                error!("Ads1115 initialization error: {:?}", e);
+                Timer::after(Duration::from_secs(1)).await;
+                continue;
+            }
+            loop {
+                Timer::after(Duration::from_millis(100)).await;
+                let res: Result<f32, embassy_rp::i2c::Error> = ads.read();
+                match res {
+                    Ok(v) => {
+                        debug!("{:?}", v);
+                    }
+                    Err(e) => {
+                        error!("ADS115 read error: {:?}", e);
+                        break;
+                    }
+                }
+            }
+            Timer::after(Duration::from_millis(100)).await;
         }
     }
 }
@@ -293,8 +332,8 @@ async fn main(_s: embassy_executor::Spawner) {
 
     let usb = make_static!(builder.build());
 
-    let internal_channel = INTERNAL_CHANNEL.init(Channel::new());
-    let external_channel = EXTERNAL_CHANNEL.init(Channel::new());
+    let internal_channel = make_static!(Channel::new());
+    let external_channel = make_static!(Channel::new());
 
     let inbound_sender = internal_channel.sender();
     let outbound_receiver = external_channel.receiver();
@@ -318,19 +357,31 @@ async fn main(_s: embassy_executor::Spawner) {
     let rx_dma = p.DMA_CH3;
 
     let mut config = embassy_rp::spi::Config::default();
-    config.frequency = 500_000;
+    config.frequency = THERMOCOUPLE_SPI_FREQUENCY;
     let thermocouple_spi = make_static!(Spi::new_rxonly(p.SPI1, th_clk, th_miso, rx_dma, config));
 
-    let thermocouple_pinout = Output::new(p.PIN_11, Level::High);
-    let thermocouple = make_static!(MAX31855::new(thermocouple_spi, thermocouple_pinout));
-    
+    let thermocouple_pin = Output::new(p.PIN_11, Level::High);
+    let thermocouple = make_static!(MAX31855::new(thermocouple_spi, thermocouple_pin));
+
     let sda = p.PIN_14;
     let scl = p.PIN_15;
 
-    info!("set up i2c ");
-    let mut i2c = embassy_rp::i2c::I2c::new_async(p.I2C1, scl, sda, I2cIrqs, embassy_rp::i2c::Config::default());
+    let i2c = embassy_rp::i2c::I2c::new_async(
+        p.I2C1,
+        scl,
+        sda,
+        I2cIrqs,
+        embassy_rp::i2c::Config::default(),
+    );
 
-    let mut ads = Ads1115::new(i2c);
+    let ads_config = AdsConfig {
+        sensor_min_voltage: 0.5,
+        sensor_max_voltage: 4.5,
+        sensor_min_value: 0.0,
+        sensor_max_value: 200.0,
+    };
+
+    let mut ads = Ads1115::new(i2c, ads_config);
     ads.initialize().unwrap();
 
     interrupt::SWI_IRQ_1.set_priority(Priority::P2);
@@ -339,7 +390,7 @@ async fn main(_s: embassy_executor::Spawner) {
         internal_channel.sender(),
         thermocouple,
     ));
-    let _ = spawner.spawn(read_ads(ads));
+    let _ = spawner.spawn(tasks::read_ads(ads));
 
     // Low priority executor: runs in thread mode, using WFE/SEV
     let executor = EXECUTOR_LOW.init(Executor::new());
@@ -431,15 +482,4 @@ async fn main(_s: embassy_executor::Spawner) {
     // //unwrap!(spawner.spawn(thermocouple_read(thermocouple, c2)));
     //
     // KILL_SIGNAL.wait().await;
-}
-
-
-#[embassy_executor::task]
-async fn read_ads(mut ads: Ads1115) {
-    ads.initialize().unwrap();
-    loop {
-        Timer::after(Duration::from_millis(100)).await;
-        let res = ads.read().unwrap();
-        debug!("{:?}", res);
-    }
 }

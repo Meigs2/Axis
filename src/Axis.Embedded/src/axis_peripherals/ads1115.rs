@@ -1,10 +1,12 @@
-use bitfield::bitfield;
+
+use bitfield::{bitfield, BitRange};
 use cortex_m::prelude::_embedded_hal_blocking_i2c_Write;
 use defmt::debug;
+
 use embassy_rp::i2c::{Async, Error};
 use embassy_rp::peripherals::I2C1;
+
 use {defmt_rtt as _, panic_probe as _};
-use static_cell::make_static;
 
 bitfield! {
     // Define a new type `ConfigRegister` with base type u16 (as the ADS1115 config register is 16 bits)
@@ -22,16 +24,56 @@ bitfield! {
     u8, get_comp_que, set_comp_que: 1, 0;
 }
 
+#[derive(Copy, Clone, Debug)]
+pub struct AdsConfig {
+    /// minimum voltage output of the sensor
+    pub sensor_min_voltage: f32,
+    /// maximum voltage output of the sensor
+    pub sensor_max_voltage: f32,
+    /// minimum sensor reading (e.g. 0 psi)
+    pub sensor_min_value: f32,
+    /// maximum sensor reading (e.g. 200 psi)
+    pub sensor_max_value: f32,
+}
+
+#[repr(u8)]
+#[derive(Debug, Copy, Clone, Default)]
+pub enum GainSetting {
+    V6_111 = 0b000,
+    #[default]
+    V4_096 = 0b001,
+    V2_048 = 0b010,
+    V1_024 = 0b011,
+    V0_512 = 0b100,
+    V0_256 = 0b101,
+}
+
+#[repr(u8)]
+#[derive(Debug, Copy, Clone, Default)]
+pub enum SpsConfig {
+    Sps8 = 0b000,
+    Sps16 = 0b001,
+    Sps32 = 0b010,
+    Sps64 = 0b011,
+    Sps128 = 0b100,
+    Sps250 = 0b101,
+    #[default]
+    Sps475 = 0b110,
+    Sps860 = 0b111,
+}
+
 impl ConfigRegister {
     pub fn initialize() -> ConfigRegister {
         let mut cfg = ConfigRegister(0);
+        cfg.set_mode(0);
+        cfg.set_dr(SpsConfig::default() as u8);
+        cfg.set_pga(GainSetting::default() as u8);
 
-        cfg.set_mode(0b0);
+        debug!("{:?}", cfg.0);
 
         cfg
     }
 }
-
 
 #[repr(u16)]
 #[derive(Debug, Clone, Copy)]
@@ -42,56 +84,64 @@ enum Registers {
     HiThresh = 0x03,
 }
 
-enum Addresses {
-    Write = 0b01001000,
-    Read = 0b10010001,
-}
+const ADDR: u8 = 0b1001000;
 
-impl Addresses {
-    pub fn write_config(cfg: ConfigRegister) -> [u8; 3] {
-        let mut result = [0u8; 3];
-        result[0] = Registers::Config as u8;
-
-        result[2..3].copy_from_slice(&cfg.0.to_le_bytes()[1..2]);
-        debug!("{:?}", result);
-        result
-    }
+fn write_config(_cfg: ConfigRegister) -> [u8; 3] {
+    let mut result = [0u8; 3];
+    result[0] = 0b00000001;
+    result[1] = 0b01000000;
+    result[2] = 0b11000000;
+    debug!("{:?}", result);
+    result
 }
 
 pub struct Ads1115 {
-    i2c: embassy_rp::i2c::I2c<'static, I2C1, Async>
+    i2c: embassy_rp::i2c::I2c<'static, I2C1, Async>,
+    pub config: AdsConfig,
 }
 
 impl Ads1115 {
-    pub fn new(i2c: embassy_rp::i2c::I2c<'static, I2C1, Async>) -> Self {
-        Self {
-            i2c
-        }
+    pub fn new(i2c: embassy_rp::i2c::I2c<'static, I2C1, Async>, config: AdsConfig) -> Self {
+        Self { i2c, config }
     }
 
     pub fn initialize(&mut self) -> Result<(), Error> {
-        self.i2c.write(Addresses::Write as u8, Addresses::write_config(ConfigRegister::initialize()).as_slice()).unwrap();
+        self.i2c
+            .write(ADDR, write_config(ConfigRegister::initialize()).as_slice())?;
         Ok(())
     }
 
-    pub fn read(&mut self) -> Result<u16, Error> {
-        let buff = &mut [0u8; 2];
+    pub fn read(&mut self) -> Result<f32, Error> {
         let mut s = [0u8; 1];
-        self.i2c.blocking_write(Addresses::Write as u8, s.as_slice()).unwrap();
-        self.i2c.blocking_read(Addresses::Write as u8, buff).unwrap();
-        Ok(u16::from_le_bytes(*buff))
+        let buff = &mut [0u8; 2];
+
+        s[0] = 0b00000000;
+        self.i2c.blocking_write(ADDR, s.as_slice())?;
+
+        self.i2c.blocking_read(ADDR, buff)?;
+
+        let raw_value = (buff[0] as i16) << 8 | (buff[1] as i16);
+
+        Ok(Self::scale_value(
+            raw_value as f32,
+            (-32767.0, 32767.0),
+            (-6.114, 6.114),
+        ))
     }
-}
 
-#[derive(Debug, Clone, Copy, Default)]
-pub struct Config {
-}
+    pub fn scale_value(input: f32, input_range: (f32, f32), output_range: (f32, f32)) -> f32 {
+        let (input_min, input_max) = input_range;
+        let (output_min, output_max) = output_range;
 
+        // Ensure the input is within the expected range
+        if input < input_min || input > input_max {
+            panic!("Input out of expected range");
+        }
 
-pub struct AddressField {
-    value: u8
-}
+        // Compute the scale factor between the input and output ranges
+        let scale_factor = (output_max - output_min) / (input_max - input_min);
 
-pub struct ConversionRegister {
-
+        // Scale the input value to the output range
+        (input - input_min) * scale_factor + output_min
+    }
 }

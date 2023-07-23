@@ -1,0 +1,47 @@
+@page "/Data"
+@inject IJSRuntime JS
+@using System.Reactive.Linq
+@using System.Diagnostics
+@using System.Reactive.Concurrency
+@implements IDisposable
+
+<h3>Data</h3>
+
+<div class="container" width="500" height="200"></div>
+
+@code {
+    private IJSObjectReference? jsModule;
+    private IDisposable subscription;
+    private Stopwatch _stopwatch;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _stopwatch = new Stopwatch();
+            _stopwatch.Start();
+            jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "./Pages/Data.razor.js");
+
+            await jsModule.InvokeVoidAsync("createChartInstance", ".container", 30000, 100); 
+
+            await jsModule.InvokeVoidAsync("initChart");
+
+            subscription = Observable.Interval(TimeSpan.FromMilliseconds(Random.Shared.Next(10, 30) + 500))
+                                     .AsObservable()
+                                     .Select(async l => await AppendData(Random.Shared.NextDouble() + 50.0, _stopwatch.Elapsed))
+                                     .Subscribe();
+        }
+    }
+
+    public async Task AppendData(double temperature, TimeSpan timespan)
+    {
+        await jsModule.InvokeVoidAsync("appendDataToChart", timespan.TotalMilliseconds, temperature);
+    }
+
+    public void Dispose()
+    {
+        jsModule?.DisposeAsync();
+        subscription?.Dispose();
+    }
+
+}

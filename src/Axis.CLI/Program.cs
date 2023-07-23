@@ -10,7 +10,7 @@ var builder = new AxisApplicationBuilder().ConfigureServices(s => { });
 
 var app = builder.Build();
 
-var mcu = app.Services.GetRequiredService<MicroController>();
+var mcu = app.Services.GetRequiredService<MasterControlUnit>();
 
 mcu.Observable.Subscribe(x => Console.WriteLine(x.ToString()));
 
@@ -30,20 +30,3 @@ while (true)
     mcu.Send(new Message.Ping());
     mcu.Send(new Message.Pong());
 }
-
-// Task.Run(() =>
-// {
-//     while (true)
-//     {
-//         try
-//         {
-//             //mcu.ReadMessages();
-//         }
-//         catch (Exception e)
-//         {
-//             Console.WriteLine(e);
-//         }
-//     }
-// });
-
-app.Run();

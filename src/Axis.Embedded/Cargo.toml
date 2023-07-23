@@ -50,8 +50,7 @@ serde-json-core = {version = "0.5.0", features = ["custom-error-messages"] }
 heapless = { version = "0.7.16", features = ["defmt-impl", "serde"] }
 bit_field = "0.10.2"
 bitfield = "0.14.0"
-
-[profile.dev]
+num-traits = { version = "0.2.16", default-features = false }
 # This isn't required for development builds, but makes development
 # build behavior match release builds. To enable unwinding panics
 # during development, simply remove this line.
