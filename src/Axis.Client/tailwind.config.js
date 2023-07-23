@@ -1,5 +1,5 @@
 module.exports = {
-    content: ['./**/*.{razor,html}'],
+    content: ['./**/*.{razor,html,js}'],
     darkMode: 'class',
     theme: {
         extend: {
