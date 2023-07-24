@@ -7,7 +7,7 @@
 
 <h3>Data</h3>
 
-<div class="container" width="500" height="200"></div>
+<div class="container flex h-screen flex-col"></div>
 
 @code {
     private IJSObjectReference? jsModule;
@@ -21,10 +21,6 @@
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
             jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "./Pages/Data.razor.js");
-
-            await jsModule.InvokeVoidAsync("createChartInstance", ".container", 30000, 100); 
-
-            await jsModule.InvokeVoidAsync("initChart");
 
             subscription = Observable.Interval(TimeSpan.FromMilliseconds(Random.Shared.Next(10, 30) + 500))
                                      .AsObservable()

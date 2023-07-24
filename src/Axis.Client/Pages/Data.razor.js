@@ -1,27 +1,10 @@
 // Declare the chart dimensions and margins.
 
 let chartInstance;
-
+let container = d3.select('.container')
 // re-create something like this: https://codepen.io/browles/pen/mPMBjw
-
-export function createChartInstance() {
-    return true;
-}
-
-export function appendDataToChart(time, temperature) {
-    if (chartInstance) {
-        chartInstance.appendData(time, temperature);
-    }
-}
-
-export function initChart() {
-    if (chartInstance) {
-        chartInstance.init();
-    }
-}
-
-let h = window.innerHeight;
-let w = window.innerWidth;
+let h = container.node().clientHeight;
+let w = container.node().clientWidth;
 
 let time = 0;
 let num = 300;
@@ -55,7 +38,7 @@ let line = d3.line()
   .x((d, i) => x(i + time - num))
   .y(d => y(d));
 
-let svg = d3.select('body').append('svg')
+let svg = container.append('svg')
   .attr('width', w)
   .attr('height', h)
   .append('g')
