@@ -23,18 +23,6 @@ let latestDeltas = [seed];
 let x = d3.scaleLinear().range([0, w - 40]);
 let y = d3.scaleLinear().range([h - 40, 0]);
 
-let aspect = w / h;
-d3.select(window)
-  .on("resize", function() {
-    let c = d3.select('.container').node()
-    let chart = d3.select('#chart')
-    let targetWidth = c.clientWidth
-    let targetHeight = c.clientHeight
-    chart.attr("width", targetWidth);
-    chart.attr("height", targetHeight);
-    chart.attr("viewBox", `0 0 ${targetWidth} ${targetHeight}`)
-  });
-
 let xAxis = d3.axisBottom(x)
   .tickSizeInner(-h + 40)
   .tickSizeOuter(0)
@@ -98,6 +86,46 @@ legend
   .append('text')
   .text(d => d[0])
   .attr('transform', (d, i) => `translate(10, ${i * 15 + 4})`);
+
+function setDimensions() {
+  let c = d3.select('.container').node()
+  let w = c.clientWidth;
+  let h = c.clientHeight;
+  
+  x = d3.scaleLinear().range([0, w - 40]);
+  y = d3.scaleLinear().range([h - 40, 0]);
+
+  xAxis = d3.axisBottom(x)
+    .tickSizeInner(-h + 40)
+    .tickSizeOuter(0)
+    .tickPadding(10);
+
+  yAxis = d3.axisLeft(y)
+    .tickSizeInner(-w + 40)
+    .tickSizeOuter(0)
+    .tickPadding(10);
+  
+  // Update x-axis
+  $xAxis.attr('transform', `translate(0, ${h - 40})`).call(xAxis);
+  
+  // Update vertical bars
+  $rects.attr('width', (w - 40) / num)
+        .attr('x', (d, i) => i * (w - 40) / num);
+
+  line = d3.line()
+    .x((d, i) => x(i + time - num))
+    .y(d => y(d));
+  
+  let chart = d3.select('#chart')
+  chart.attr("width", w);
+  chart.attr("height", h);
+  chart.attr("viewBox", `0 0 ${w} ${h}`);
+}
+
+// Call this function initially
+setDimensions();
+
+d3.select(window).on('resize', setDimensions);
 
 function tick() {
   time++;
