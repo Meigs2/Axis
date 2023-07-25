@@ -1,6 +1,5 @@
 // Declare the chart dimensions and margins.
 
-let chartInstance;
 let container = d3.select('.container')
 // re-create something like this: https://codepen.io/browles/pen/mPMBjw
 let h = container.node().clientHeight;
@@ -24,6 +23,18 @@ let latestDeltas = [seed];
 let x = d3.scaleLinear().range([0, w - 40]);
 let y = d3.scaleLinear().range([h - 40, 0]);
 
+let aspect = w / h;
+d3.select(window)
+  .on("resize", function() {
+    let c = d3.select('.container').node()
+    let chart = d3.select('#chart')
+    let targetWidth = c.clientWidth
+    let targetHeight = c.clientHeight
+    chart.attr("width", targetWidth);
+    chart.attr("height", targetHeight);
+    chart.attr("viewBox", `0 0 ${targetWidth} ${targetHeight}`)
+  });
+
 let xAxis = d3.axisBottom(x)
   .tickSizeInner(-h + 40)
   .tickSizeOuter(0)
@@ -38,7 +49,7 @@ let line = d3.line()
   .x((d, i) => x(i + time - num))
   .y(d => y(d));
 
-let svg = container.append('svg')
+let svg = d3.select('#chart')
   .attr('width', w)
   .attr('height', h)
   .append('g')
@@ -144,6 +155,11 @@ function tick() {
 }
 
 function update() {
+  let container = d3.select('.container')
+  // re-create something like this: https://codepen.io/browles/pen/mPMBjw
+  let h = container.node().clientHeight;
+  let w = container.node().clientWidth;
+  
   x.domain([time - num, time]);
   let yDom = d3.extent(latestData);
   yDom[0] = Math.max(yDom[0] - 1, 0);
