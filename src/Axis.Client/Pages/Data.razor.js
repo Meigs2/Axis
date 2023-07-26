@@ -1,3 +1,53 @@
+class D3Chart {
+    container: string;
+    svg: any;
+    $xAxis: any;
+    
+    constructor(containerSelector = '.container', chartSelector = '#chart') {
+        this.container = d3.select(containerSelector).node();
+        
+        this.svg = d3.select(chartSelector)
+            .attr('class', 'x axis')
+            .append('g');
+        
+        this.svg
+            .attr('transform', `translate(0, ${h - 40})`);
+        
+        setDimensions(this.container.clientWidth, this.container.clientHeight);
+    }
+    
+    init(timespan: [Number, Number] = [0, 30000], yAxes: [string, [Number, Number]] = [["Temperature", [0, 100]]]){
+    }
+
+    setDimensions(w: Number, h: Number) {
+        this.xScale = d3.scaleLinear().range([0, w - 40]);
+        
+        this.xAxis = d3.axisBottom(this.xScale)
+            .tickSizeInner(-h + 40)
+            .tickSizeOuter(0)
+            .tickPadding(10);
+
+        this.yAxis = d3.axisLeft(y)
+            .tickSizeInner(-w + 40)
+            .tickSizeOuter(0)
+            .tickPadding(10);
+            
+        // Update x-axis
+        $xAxis.attr('transform', `translate(0, ${h - 40})`);
+
+        line = d3.line()
+            .x((d, i) => x(i))
+            .y(d => y(d));
+
+        let chart = d3.select('#chart')
+        chart.attr("width", w);
+        chart.attr("height", h);
+        chart.attr("viewBox", `0 0 ${w} ${h}`);
+
+        update();
+    }
+}
+
 // re-create something like this: https://codepen.io/browles/pen/mPMBjw
 let c = d3.select('.container').node()
 let w = c.clientWidth;
