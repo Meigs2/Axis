@@ -1,6 +1,8 @@
 using System.IO.Ports;
+using System;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Threading;
 using System.Reflection;
 using System.Text;
 using Newtonsoft.Json;
@@ -42,10 +44,27 @@ public abstract class Message
     }
 }
 
-public class MasterControlUnit : IDisposable
+public interface IMasterControlUnit
 {
-    public Subject<Message> _subject = new();
-    public IObservable<Message> Observable => _subject.AsObservable();
+    IObservable<Message.AdsReading> AdsReadouts { get; }
+}
+
+public class FakeDataMasterControlUnit : IMasterControlUnit
+{
+    public IObservable<Message.AdsReading> AdsReadouts => Observable.Generate(
+        initialState: 3.0,
+        condition: value => true, // Always true, so it keeps generating values indefinitely
+        iterate: value => value + (Random.Shared.NextDouble() - 0.5) * 2, // Increment the value in each tick
+        resultSelector: value => new Message.AdsReading() { value = value }, // Select the value to be emitted
+        timeSelector: value => TimeSpan.FromMilliseconds(30) // Set the tick interval to 30 milliseconds
+    );
+}
+
+public class MasterControlUnit : IDisposable, IMasterControlUnit
+{
+    private Subject<Message> _subject = new();
+    public IObservable<Message.AdsReading> AdsReadouts => _subject.OfType<Message.AdsReading>();
+
     private SerialPort _serialPort;
     private JsonSerializerSettings _options;
 
@@ -120,6 +139,8 @@ public class MessageConverter : JsonConverter
                 return JsonConvert.DeserializeObject<Message.Ping>(token.First.ToString());
             case "ThermocoupleReading":
                 return JsonConvert.DeserializeObject<Message.ThermocoupleReading>(token.First.ToString());
+            case "AdsReading":
+                return JsonConvert.DeserializeObject<Message.AdsReading>(token.First.ToString());
         }
         var type = Assembly.GetExecutingAssembly()
                            .GetTypes()

@@ -12,8 +12,6 @@ var app = builder.Build();
 
 var mcu = app.Services.GetRequiredService<MasterControlUnit>();
 
-mcu.Observable.Subscribe(x => Console.WriteLine(x.ToString()));
-
 var task = Task.Run(() =>
 {
     while (true)

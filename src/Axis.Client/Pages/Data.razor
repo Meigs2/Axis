@@ -1,15 +1,15 @@
 @page "/Data"
 @inject IJSRuntime JS
+@inject IMasterControlUnit mcu;
 @using System.Reactive.Linq
 @using System.Diagnostics
-@using System.Reactive.Concurrency
+@using Axis.Core
 @implements IDisposable
 
 <h3>Data</h3>
 
 <div class="container h-full w-full">
-    <svg id="chart">
-    </svg>
+    <canvas id="myChart"></canvas>
 </div>
 
 @code {
@@ -25,16 +25,13 @@
             _stopwatch.Start();
             jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "./Pages/Data.razor.js");
 
-            subscription = Observable.Interval(TimeSpan.FromMilliseconds(Random.Shared.Next(10, 30) + 500))
-                                     .AsObservable()
-                                     .Select(async l => await AppendData(Random.Shared.NextDouble() + 50.0, _stopwatch.Elapsed))
-                                     .Subscribe();
+            subscription = mcu.AdsReadouts.Select(x => AppendData(x.value)).Subscribe();
         }
     }
 
-    public async Task AppendData(double temperature, TimeSpan timespan)
+    public async Task AppendData(double data)
     {
-        await jsModule.InvokeVoidAsync("appendDataToChart", timespan.TotalMilliseconds, temperature);
+        await jsModule.InvokeVoidAsync("addData", data);
     }
 
     public void Dispose()
