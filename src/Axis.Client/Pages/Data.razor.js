@@ -17,6 +17,7 @@ const config = {
     ]
   },
   options: {
+  maintainAspectRatio: false,
   animation: false,
     interaction: {
       intersect: false
