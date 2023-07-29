@@ -74,8 +74,8 @@ impl<'a> Runtime<'a> {
     }
 }
 
-pub const MAX_STRING_SIZE: usize = 64;
-pub const MAX_PACKET_SIZE: u8 = 64;
+pub const MAX_STRING_SIZE: usize = 62;
+pub const MAX_PACKET_SIZE: usize = 64;
 pub const THERMOCOUPLE_SPI_FREQUENCY: u32 = 500_000;
 
 #[derive(Format, Debug, Serialize, Deserialize)]
@@ -132,7 +132,7 @@ pub trait AxisPeripheral {
 }
 
 mod tasks {
-
+    use byte_slice_cast::AsByteSlice;
     use defmt::{debug, error};
 
     use embassy_executor::Spawner;
@@ -148,14 +148,15 @@ mod tasks {
     use static_cell::make_static;
 
     use embassy_usb::UsbDevice;
-    use heapless::Vec;
+    use embedded_io::asynch::Write;
+    use heapless::{String, Vec};
     use serde_json_core::de::Error;
-    use serde_json_core::{from_str, to_slice};
+    use serde_json_core::{from_str, to_slice, to_string};
 
     use crate::axis_peripherals::ads1115::Ads1115;
     use crate::axis_peripherals::max31588::{Unit, MAX31855};
     use crate::Message::*;
-    use crate::{Message, Runtime, MAX_STRING_SIZE};
+    use crate::{Message, Runtime, MAX_STRING_SIZE, MAX_PACKET_SIZE};
 
     #[embassy_executor::task]
     pub async fn run_usb(usb: &'static mut UsbDevice<'static, Driver<'static, USB>>) -> ! {
@@ -222,17 +223,15 @@ mod tasks {
         outbound_receiver: Receiver<'static, CriticalSectionRawMutex, Message, 1>,
         usb_sender: &'static mut embassy_usb::class::cdc_acm::Sender<'static, Driver<'static, USB>>,
     ) {
-        let buff = make_static!([0u8; MAX_STRING_SIZE]);
         loop {
             let m = outbound_receiver.recv().await;
 
-            let s = if let Ok(s) = to_slice(&m, buff) {
-                s
-            } else {
-                continue;
-            };
+            let mut a: String<MAX_STRING_SIZE> = to_string(&m).unwrap();
+            a.push_str("\r\n").unwrap();
+
+            debug!("Outbound message: {:?}", a);
             let timeout = Timer::after(Duration::from_millis(1));
-            select(usb_sender.write_packet(&buff[..s]), timeout).await;
+            select(usb_sender.write_packet(a.as_byte_slice()), timeout).await;
         }
     }
 
@@ -265,7 +264,7 @@ mod tasks {
     }
 
     #[embassy_executor::task]
-    pub async fn read_ads(mut ads: Ads1115) -> ! {
+    pub async fn read_ads(mut ads: Ads1115, runtime: &'static Runtime<'static>) -> ! {
         loop {
             let initialize = ads.initialize();
             if let Err(e) = initialize {
@@ -278,7 +277,7 @@ mod tasks {
                 let res: Result<f32, embassy_rp::i2c::Error> = ads.read();
                 match res {
                     Ok(v) => {
-                        debug!("{:?}", v);
+                        runtime.handle(AdsReading {value: v}).await;
                     }
                     Err(e) => {
                         error!("ADS115 read error: {:?}", e);
@@ -303,7 +302,7 @@ async fn main(_s: embassy_executor::Spawner) {
     config.product = Some("USB-serial logger");
     config.serial_number = Some("12345678");
     config.max_power = 100;
-    config.max_packet_size_0 = MAX_PACKET_SIZE;
+    config.max_packet_size_0 = MAX_PACKET_SIZE as u8;
 
     // Required for windows compatiblity.
     // https://developer.nordicsemi.com/nRF_Connect_SDK/doc/1.9.1/kconfig/CONFIG_CDC_ACM_IAD.html#help
@@ -390,7 +389,7 @@ async fn main(_s: embassy_executor::Spawner) {
         internal_channel.sender(),
         thermocouple,
     ));
-    let _ = spawner.spawn(tasks::read_ads(ads));
+    let _ = spawner.spawn(tasks::read_ads(ads, runtime));
 
     // Low priority executor: runs in thread mode, using WFE/SEV
     let executor = EXECUTOR_LOW.init(Executor::new());

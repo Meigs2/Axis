@@ -9,8 +9,6 @@ namespace Axis.Core;
 
 public class AxisApplication
 {
-    private SpinWait _spinWait;
-    
     public IServiceProvider Services { get; }
     
     public AxisApplication(IServiceProvider services)
@@ -28,7 +26,6 @@ public class AxisApplicationBuilder
         configureServices(_services);
         _services.AddSingleton<AxisApplication>();
         _services.AddSingleton(new GpioController(PinNumberingScheme.Board));
-        // _services.AddSingleton<BoilerThermocouple>();
         _services.AddSingleton<MasterControlUnit>();
 
         return this;

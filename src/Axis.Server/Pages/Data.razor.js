@@ -34,7 +34,7 @@ const config = {
      y: {
         type: 'linear',
         suggestedMin: 0,
-        suggestedMax: 9
+        suggestedMax: 5
       }
     }
   }

@@ -1,8 +1,6 @@
 using System.IO.Ports;
-using System;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.Threading;
 using System.Reflection;
 using System.Text;
 using Newtonsoft.Json;
@@ -47,6 +45,8 @@ public abstract class Message
 public interface IMasterControlUnit
 {
     IObservable<Message.AdsReading> AdsReadouts { get; }
+    IObservable<Message.ThermocoupleReading> ThermocoupleReadings { get; }
+    Task ReadMessagesLoop();
 }
 
 public class FakeDataMasterControlUnit : IMasterControlUnit
@@ -58,19 +58,33 @@ public class FakeDataMasterControlUnit : IMasterControlUnit
         resultSelector: value => new Message.AdsReading() { value = value }, // Select the value to be emitted
         timeSelector: value => TimeSpan.FromMilliseconds(30) // Set the tick interval to 30 milliseconds
     );
+
+    public IObservable<Message.ThermocoupleReading> ThermocoupleReadings => Observable.Generate(
+        initialState: 75.0,
+        condition: value => true, // Always true, so it keeps generating values indefinitely
+        iterate: value => value + (Random.Shared.NextDouble() - 0.5) * 2, // Increment the value in each tick
+        resultSelector: value => new Message.ThermocoupleReading() { temperature = value }, // Select the value to be emitted
+        timeSelector: value => TimeSpan.FromMilliseconds(30) // Set the tick interval to 30 milliseconds
+    );
+
+    public Task ReadMessagesLoop()
+    {
+        return Task.Delay(TimeSpan.MaxValue);
+    }
 }
 
 public class MasterControlUnit : IDisposable, IMasterControlUnit
 {
     private Subject<Message> _subject = new();
     public IObservable<Message.AdsReading> AdsReadouts => _subject.OfType<Message.AdsReading>();
+    public IObservable<Message.ThermocoupleReading> ThermocoupleReadings => _subject.OfType<Message.ThermocoupleReading>();
 
     private SerialPort _serialPort;
     private JsonSerializerSettings _options;
 
-    public MasterControlUnit(string serialPortName)
+    public MasterControlUnit()
     {
-        _serialPort = new SerialPort(serialPortName);
+        _serialPort = new SerialPort("/dev/tty.usbmodem123456781");
         _options = new JsonSerializerSettings();
         _options.Converters.Add(new MessageConverter());
     }
@@ -96,23 +110,21 @@ public class MasterControlUnit : IDisposable, IMasterControlUnit
         }
     }
 
-    public async void ReadMessages()
+    public async Task ReadMessages()
     {
         try
         {
-            Thread.Sleep(1);
+            await Task.Delay(1);
             if (!_serialPort.IsOpen) { _serialPort.Open(); }
 
-            var result = _serialPort.ReadExisting();
+            var result = _serialPort.ReadLine();
+            Console.WriteLine(result);
             if (result.Length == 0)
             {
                 return;
             }
-            var messages = JsonConvert.DeserializeObject<IEnumerable<Message>>(result, Message.ConverterSettings);
-            foreach (var message in messages!)
-            {
-                _subject.OnNext(message);
-            }
+            var message = JsonConvert.DeserializeObject<Message>(result, Message.ConverterSettings);
+            _subject.OnNext(message);
         }
         catch (Exception e)
         {
@@ -120,6 +132,15 @@ public class MasterControlUnit : IDisposable, IMasterControlUnit
             throw;
         }
     }
+
+    public Task ReadMessagesLoop() =>
+        Task.Run(async () =>
+        {
+            while (true)
+            {
+                await ReadMessages();
+            }
+        });
 
     public void Dispose() { _subject.Dispose(); }
 }
