@@ -7,12 +7,15 @@
 
 extern crate alloc;
 
-mod axis_peripherals;
+mod sensors;
 mod pid;
 mod client_communicator;
+mod peripherals;
+mod controllers;
+mod runtime;
 
-use crate::axis_peripherals::ads1115::{Ads1115, AdsConfig};
-use crate::axis_peripherals::max31588::MAX31855;
+use crate::sensors::ads1115::{Ads1115, AdsConfig};
+use crate::sensors::max31588::MAX31855;
 use bit_field::BitField;
 use core::future::Future;
 use defmt::unwrap;
@@ -38,6 +41,7 @@ use static_cell::{make_static, StaticCell};
 use Message::*;
 use {defmt_rtt as _, panic_probe as _};
 use crate::client_communicator::ClientCommunicator;
+use crate::runtime::Runtime;
 
 static mut CORE1_STACK: Stack<4096> = Stack::new();
 static EXECUTOR0: StaticCell<Executor> = StaticCell::new();
@@ -47,40 +51,10 @@ bind_interrupts!(struct I2cIrqs {
     I2C1_IRQ => embassy_rp::i2c::InterruptHandler<I2C1>;
 });
 
-#[derive(Clone)]
-pub struct Runtime<'a> {
-    outbound_sender: Sender<'a, CriticalSectionRawMutex, Message, 5>,
-}
-
-impl<'a> Runtime<'a> {
-    pub fn new(outbound_sender: Sender<'a, CriticalSectionRawMutex, Message, 5>) -> Self {
-        Self { outbound_sender }
-    }
-
-    pub async fn handle(&self, message: Message) {
-        match message {
-            Ping => {
-                self.outbound_sender
-                    .send(Pong {
-                        value: "Pong!".into(),
-                    })
-                    .await;
-            }
-            Pong { .. } => {
-                self.outbound_sender.send(Ping).await;
-            }
-            reading @ ThermocoupleReading { .. } => {
-                self.outbound_sender.send(reading).await;
-            }
-            reading @ AdsReading { .. } => {
-                self.outbound_sender.send(reading).await;
-            }
-        }
-    }
-}
-
 pub const MAX_STRING_SIZE: usize = 62;
 pub const THERMOCOUPLE_SPI_FREQUENCY: u32 = 500_000;
+pub const MAX_OUTBOUND_MESSAGES: usize = 1;
+
 
 #[derive(Format, Debug, Serialize, Deserialize)]
 pub enum Message {
@@ -158,11 +132,12 @@ mod tasks {
     use serde_json_core::de::Error;
     use serde_json_core::{from_str, to_slice, to_string};
 
-    use crate::axis_peripherals::ads1115::Ads1115;
-    use crate::axis_peripherals::max31588::{Unit, MAX31855};
+    use crate::sensors::ads1115::Ads1115;
+    use crate::sensors::max31588::{Unit, MAX31855};
     use crate::Message::*;
-    use crate::{Message, Runtime, MAX_STRING_SIZE};
+    use crate::{Message, MAX_STRING_SIZE};
     use crate::client_communicator::ClientCommunicator;
+    use crate::runtime::Runtime;
 
     #[embassy_executor::task]
     pub async fn run_usb(usb: &'static mut ClientCommunicator<'static, 5>, stop_signal: &'static mut Signal<CriticalSectionRawMutex, ()>) {
@@ -171,7 +146,7 @@ mod tasks {
 
     #[embassy_executor::task]
     pub async fn handle_message(message: Message, runtime: &'static Runtime<'static>) {
-        runtime.handle(message).await;
+        runtime.receive(message).await;
     }
 
     #[embassy_executor::task]
@@ -245,7 +220,7 @@ mod tasks {
                 let res: Result<f32, embassy_rp::i2c::Error> = ads.read();
                 match res {
                     Ok(v) => {
-                        runtime.handle(AdsReading {value: v}).await;
+                        runtime.receive(AdsReading {value: v}).await;
                     }
                     Err(e) => {
                         error!("ADS115 read error: {:?}", e);

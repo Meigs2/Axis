@@ -48,7 +48,7 @@ use bit_field::BitField;
 use core::ops::RangeInclusive;
 use {defmt_rtt as _, panic_probe as _};
 
-use crate::axis_peripherals::max31588::ThermocoupleError::*;
+use crate::sensors::max31588::ThermocoupleError::*;
 use defmt::Format;
 
 /// The bits that represent the thermocouple value when reading the first u16 from the sensor
