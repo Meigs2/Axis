@@ -1,9 +1,8 @@
-
 use bitfield::{bitfield, BitRange};
 use cortex_m::prelude::_embedded_hal_blocking_i2c_Write;
 use defmt::debug;
 
-use embassy_rp::i2c::{Async, Error};
+use embassy_rp::i2c::{Async, Error, Instance};
 use embassy_rp::peripherals::I2C1;
 
 use {defmt_rtt as _, panic_probe as _};
@@ -88,6 +87,7 @@ const ADDR: u8 = 0b1001000;
 
 fn write_config(_cfg: ConfigRegister) -> [u8; 3] {
     let mut result = [0u8; 3];
+    // I couldn't get the config above to work, so for now we're manual.
     result[0] = 0b00000001;
     result[1] = 0b01000000;
     result[2] = 0b11000000;
@@ -95,13 +95,19 @@ fn write_config(_cfg: ConfigRegister) -> [u8; 3] {
     result
 }
 
-pub struct Ads1115 {
-    i2c: embassy_rp::i2c::I2c<'static, I2C1, Async>,
+pub struct Ads1115<'a, I>
+where
+    I: Instance,
+{
+    i2c: embassy_rp::i2c::I2c<'a, I, Async>,
     pub config: AdsConfig,
 }
 
-impl Ads1115 {
-    pub fn new(i2c: embassy_rp::i2c::I2c<'static, I2C1, Async>, config: AdsConfig) -> Self {
+impl<'a, I> Ads1115<'a, I>
+where
+    I: Instance,
+{
+    pub fn new(i2c: embassy_rp::i2c::I2c<'static, I, Async>, config: AdsConfig) -> Self {
         Self { i2c, config }
     }
 

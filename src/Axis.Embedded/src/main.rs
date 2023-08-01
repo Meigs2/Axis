@@ -7,15 +7,17 @@
 
 extern crate alloc;
 
-mod sensors;
-mod pid;
 mod client_communicator;
-mod peripherals;
 mod controllers;
+mod peripherals;
+mod pid;
 mod runtime;
+mod sensors;
 
+use crate::client_communicator::ClientCommunicator;
+use crate::runtime::Runtime;
 use crate::sensors::ads1115::{Ads1115, AdsConfig};
-use crate::sensors::max31588::MAX31855;
+use crate::sensors::max31855::MAX31855;
 use bit_field::BitField;
 use core::future::Future;
 use defmt::unwrap;
@@ -23,13 +25,13 @@ use defmt::Format;
 use embassy_executor::{Executor, InterruptExecutor};
 use embassy_rp::gpio::{Level, Output};
 use embassy_rp::interrupt::{InterruptExt, Priority};
+use embassy_rp::multicore::{spawn_core1, Stack};
 use embassy_rp::peripherals::I2C1;
 use embassy_rp::peripherals::USB;
 use embassy_rp::spi::Spi;
 use embassy_rp::usb::Driver;
 use embassy_rp::watchdog::Watchdog;
 use embassy_rp::{bind_interrupts, interrupt};
-use embassy_rp::multicore::{spawn_core1, Stack};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Sender};
 use embassy_time::Duration;
@@ -40,8 +42,6 @@ use serde_json_core::heapless::String;
 use static_cell::{make_static, StaticCell};
 use Message::*;
 use {defmt_rtt as _, panic_probe as _};
-use crate::client_communicator::ClientCommunicator;
-use crate::runtime::Runtime;
 
 static mut CORE1_STACK: Stack<4096> = Stack::new();
 static EXECUTOR0: StaticCell<Executor> = StaticCell::new();
@@ -54,7 +54,6 @@ bind_interrupts!(struct I2cIrqs {
 pub const MAX_STRING_SIZE: usize = 62;
 pub const THERMOCOUPLE_SPI_FREQUENCY: u32 = 500_000;
 pub const MAX_OUTBOUND_MESSAGES: usize = 1;
-
 
 #[derive(Format, Debug, Serialize, Deserialize)]
 pub enum Message {
@@ -116,7 +115,7 @@ mod tasks {
     use embassy_executor::Spawner;
     use embassy_futures::select::select;
     use embassy_rp::gpio::Output;
-    use embassy_rp::peripherals::{PIN_7, USB};
+    use embassy_rp::peripherals::{I2C1, PIN_11, PIN_7, SPI1, USB};
     use embassy_rp::usb::Driver;
     use embassy_rp::watchdog::Watchdog;
     use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
@@ -132,15 +131,18 @@ mod tasks {
     use serde_json_core::de::Error;
     use serde_json_core::{from_str, to_slice, to_string};
 
-    use crate::sensors::ads1115::Ads1115;
-    use crate::sensors::max31588::{Unit, MAX31855};
-    use crate::Message::*;
-    use crate::{Message, MAX_STRING_SIZE};
     use crate::client_communicator::ClientCommunicator;
     use crate::runtime::Runtime;
+    use crate::sensors::ads1115::Ads1115;
+    use crate::sensors::max31855::{Unit, MAX31855};
+    use crate::Message::*;
+    use crate::{Message, MAX_STRING_SIZE};
 
     #[embassy_executor::task]
-    pub async fn run_usb(usb: &'static mut ClientCommunicator<'static, 5>, stop_signal: &'static mut Signal<CriticalSectionRawMutex, ()>) {
+    pub async fn run_usb(
+        usb: &'static mut ClientCommunicator<'static, 5>,
+        stop_signal: &'static mut Signal<CriticalSectionRawMutex, ()>,
+    ) {
         usb.run(stop_signal).await
     }
 
@@ -192,7 +194,7 @@ mod tasks {
     #[embassy_executor::task]
     pub async fn read_thermocouple(
         inbound_sender: Sender<'static, CriticalSectionRawMutex, Message, 1>,
-        thermocouple: &'static mut MAX31855,
+        thermocouple: &'static mut MAX31855<'static, SPI1, PIN_11>,
     ) {
         loop {
             Timer::after(Duration::from_millis(500)).await;
@@ -207,7 +209,7 @@ mod tasks {
     }
 
     #[embassy_executor::task]
-    pub async fn read_ads(mut ads: Ads1115, runtime: Runtime<'static>) -> ! {
+    pub async fn read_ads(mut ads: Ads1115<'static, I2C1>, runtime: Runtime<'static>) -> ! {
         loop {
             let initialize = ads.initialize();
             if let Err(e) = initialize {
@@ -220,7 +222,7 @@ mod tasks {
                 let res: Result<f32, embassy_rp::i2c::Error> = ads.read();
                 match res {
                     Ok(v) => {
-                        runtime.receive(AdsReading {value: v}).await;
+                        runtime.receive(AdsReading { value: v }).await;
                     }
                     Err(e) => {
                         error!("ADS115 read error: {:?}", e);
@@ -237,8 +239,8 @@ mod tasks {
 fn main() -> ! {
     let p = embassy_rp::init(Default::default());
 
-    let internal_channel = make_static!(Channel::new());
-    let external_channel = make_static!(Channel::new());
+    let internal_channel: &'static mut Channel<CriticalSectionRawMutex, Message, MAX_OUTBOUND_MESSAGES>  = make_static!(Channel::new());
+    let external_channel: &'static mut Channel<CriticalSectionRawMutex, Message, MAX_OUTBOUND_MESSAGES> = make_static!(Channel::new());
 
     let inbound_sender = internal_channel.sender();
     let outbound_receiver = external_channel.receiver();
@@ -252,7 +254,7 @@ fn main() -> ! {
     let watchdog = make_static!(Watchdog::new(p.WATCHDOG));
     watchdog.start(Duration::from_secs(5));
 
-    let runtime = Runtime::new(client_communicator.get_sender());
+    let runtime = make_static!(Runtime::new(client_communicator.get_sender()));
 
     let th_clk = p.PIN_10;
     let th_miso = p.PIN_12;
@@ -292,25 +294,25 @@ fn main() -> ! {
         internal_channel.sender(),
         thermocouple,
     ));
-    let _ = spawner.spawn(tasks::read_ads(ads, runtime));
+    //let _ = spawner.spawn(tasks::read_ads(ads, runtime));
 
     spawn_core1(p.CORE1, unsafe { &mut CORE1_STACK }, move || {
         let executor1 = EXECUTOR1.init(Executor::new());
         executor1.run(|spawner| {
-            unwrap!(spawner.spawn(tasks::read_usb(inbound_sender, usb_reader)));
-            unwrap!(spawner.spawn(tasks::write_usb(outbound_receiver, usb_sender)));
+            //unwrap!(spawner.spawn(tasks::read_usb(inbound_sender, usb_reader)));
+            //unwrap!(spawner.spawn(tasks::write_usb(outbound_receiver, usb_sender)));
             unwrap!(spawner.spawn(tasks::process_internal_messages(
-            inbound_receiver,
-            spawner,
-            runtime
-        )));
+                inbound_receiver,
+                spawner,
+                runtime
+            )));
             unwrap!(spawner.spawn(tasks::blink(pin, watchdog)));
         });
     });
 
     let executor0 = EXECUTOR0.init(Executor::new());
     executor0.run(|spawner| {
-        unwrap!(spawner.spawn(tasks::run_usb(usb)));
+        //unwrap!(spawner.spawn(tasks::run_usb(usb)));
     })
 
     // let c = &*EXTERNAL_CHANNEL.init(Channel::new());

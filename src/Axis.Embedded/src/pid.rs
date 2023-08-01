@@ -43,9 +43,6 @@
 //! assert_eq!(output.d, -10.0);
 //! ```
 
-
-
-
 /// A trait for any numeric type usable in the PID controller
 ///
 /// This trait is automatically implemented for all types that satisfy `PartialOrd + num_traits::Signed + Copy`. This includes all of the signed float types and builtin integer except for [isize]:
