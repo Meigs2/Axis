@@ -16,7 +16,7 @@ use static_cell::make_static;
 
 pub const MAX_PACKET_SIZE: usize = 64;
 
-bind_interrupts!(struct Irqs {
+bind_interrupts!(pub struct Irqs {
     USBCTRL_IRQ => embassy_rp::usb::InterruptHandler<USB>;
 });
 
@@ -29,51 +29,14 @@ pub struct ClientCommunicator<'a, const N: usize> {
 }
 
 impl<'a, const N: usize> ClientCommunicator<'a, N> {
-    pub fn new(usb: USB) -> Self {
-        let client: Channel<CriticalSectionRawMutex, Message, N> = Channel::new();
 
-        // Create the driver, from the HAL.
-        let driver = Driver::new(usb, Irqs);
-
-        let mut config = embassy_usb::Config::new(0xc0de, 0xcafe);
-        config.manufacturer = Some("Embassy");
-        config.product = Some("USB-serial logger");
-        config.serial_number = Some("12345678");
-        config.max_power = 100;
-        config.max_packet_size_0 = MAX_PACKET_SIZE as u8;
-
-        // Required for windows compatiblity.
-        // https://developer.nordicsemi.com/nRF_Connect_SDK/doc/1.9.1/kconfig/CONFIG_CDC_ACM_IAD.html#help
-        config.device_class = 0xEF;
-        config.device_sub_class = 0x02;
-        config.device_protocol = 0x01;
-        config.composite_with_iads = true;
-
-        let mut device_descriptor = [0; 256];
-        let mut config_descriptor = [0; 256];
-        let mut bos_descriptor = [0; 256];
-        let mut control_buf = [0; 64];
-        let mut state = State::new();
-
-        let mut builder = Builder::new(
-            driver,
-            config,
-            &mut device_descriptor,
-            &mut config_descriptor,
-            &mut bos_descriptor,
-            &mut control_buf,
-        );
-
-        // Create classes on the builder.
-        let class = CdcAcmClass::new(&mut builder, &mut state, MAX_PACKET_SIZE as u16);
-        let usb = builder.build();
-        let (mut sender, mut receiver) = class.split();
+    pub fn new(usb: UsbDevice<'a, Driver<'a, USB>>, usb_sender: &'a mut embassy_usb::class::cdc_acm::Sender<'a, Driver<'a, USB>>, usb_receiver: &'a mut embassy_usb::class::cdc_acm::Receiver<'a, Driver<'a, USB>>, sender: Sender<'a, CriticalSectionRawMutex, Message, N>, receiver: Receiver<'a, CriticalSectionRawMutex, Message, N>) -> Self {
         Self {
-            sender: client.sender(),
-            receiver: client.receiver(),
+            sender,
+            receiver,
             usb,
-            usb_sender: &mut sender,
-            usb_receiver: &mut receiver,
+            usb_sender,
+            usb_receiver,
         }
     }
 

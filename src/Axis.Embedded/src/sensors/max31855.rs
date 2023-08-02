@@ -130,7 +130,7 @@ where
     I: Instance,
     P: Pin,
 {
-    pub fn new(spi: &'static mut Spi<'static, I, Async>, dc: Output<'static, P>) -> Self {
+    pub fn new(spi: &'a mut Spi<'a, I, Async>, dc: Output<'a, P>) -> Self {
         Self { spi, dc }
     }
 

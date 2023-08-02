@@ -25,8 +25,8 @@ where
 {
     zero_cross_pin: Input<'a, T>,
     output_pin: Output<'a, T>,
-    setting: RefCell<DimmerCommand>,
-    acc: RefCell<u16>,
+    setting: &'a RefCell<DimmerCommand>,
+    acc: &'a RefCell<u16>,
     pub signal: &'a Signal<CriticalSectionRawMutex, DimmerCommand>,
 }
 
@@ -37,13 +37,16 @@ where
     pub fn new(
         zero_cross_pin: Input<'a, T>,
         output_pin: Output<'a, T>,
+        setting: &'a RefCell<DimmerCommand>,
+        acc: &'a RefCell<u16>,
+        signal: &'a Signal<CriticalSectionRawMutex, DimmerCommand>
     ) -> ZeroCrossDimmer<'a, T> {
         Self {
             zero_cross_pin,
             output_pin,
-            setting: RefCell::new(DimmerCommand::Off),
-            acc: RefCell::new(Default::default()),
-            signal: &Signal::new(),
+            setting,
+            acc,
+            signal,
         }
     }
 

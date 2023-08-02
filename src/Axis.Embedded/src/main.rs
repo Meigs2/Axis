@@ -5,8 +5,6 @@
 #![feature(async_closure)]
 #![feature(never_type)]
 
-extern crate alloc;
-
 mod client_communicator;
 mod controllers;
 mod peripherals;
@@ -14,7 +12,7 @@ mod pid;
 mod runtime;
 mod sensors;
 
-use crate::client_communicator::ClientCommunicator;
+use crate::client_communicator::{ClientCommunicator, MAX_PACKET_SIZE};
 use crate::runtime::Runtime;
 use crate::sensors::ads1115::{Ads1115, AdsConfig};
 use crate::sensors::max31855::MAX31855;
@@ -37,6 +35,7 @@ use embassy_sync::channel::{Channel, Sender};
 use embassy_time::Duration;
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
 use embassy_usb::Builder;
+use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use serde_json_core::heapless::String;
 use static_cell::{make_static, StaticCell};
@@ -249,7 +248,46 @@ fn main() -> ! {
 
     let pin = make_static!(Output::new(p.PIN_7, Level::Low));
 
-    let client_communicator = ClientCommunicator::new(p.USB);
+    let mut config = embassy_usb::Config::new(0xc0de, 0xcafe);
+    config.manufacturer = Some("Embassy");
+    config.product = Some("USB-serial logger");
+    config.serial_number = Some("12345678");
+    config.max_power = 100;
+    config.max_packet_size_0 = MAX_PACKET_SIZE as u8;
+
+    // Required for windows compatiblity.
+    // https://developer.nordicsemi.com/nRF_Connect_SDK/doc/1.9.1/kconfig/CONFIG_CDC_ACM_IAD.html#help
+    config.device_class = 0xEF;
+    config.device_sub_class = 0x02;
+    config.device_protocol = 0x01;
+    config.composite_with_iads = true;
+
+    let client: &mut Channel<CriticalSectionRawMutex, Message, MAX_OUTBOUND_MESSAGES> = make_static!(Channel::new());
+    // Create the driver, from the HAL.
+    let driver = Driver::new(p.USB, client_communicator::Irqs);
+
+    let mut device_descriptor = make_static!([0; 256]);
+    let mut config_descriptor = make_static!([0; 256]);
+    let mut bos_descriptor = make_static!([0; 256]);
+    let mut control_buf = make_static!([0; 64]);
+    let mut state = make_static!(State::new());
+
+    let mut builder = Builder::new(
+        driver,
+        config,
+        device_descriptor,
+        config_descriptor,
+        bos_descriptor,
+        control_buf,
+    );
+
+    // Create classes on the builder.
+    let class = CdcAcmClass::new(&mut builder, state, MAX_PACKET_SIZE as u16);
+    let usb = builder.build();
+
+    let (ref mut usb_sender, ref mut usb_receiver) = make_static!(class.split());
+
+    let client_communicator = ClientCommunicator::new(usb, usb_sender, usb_receiver, client.sender(), client.receiver());
 
     let watchdog = make_static!(Watchdog::new(p.WATCHDOG));
     watchdog.start(Duration::from_secs(5));
