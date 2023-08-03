@@ -140,7 +140,7 @@ mod tasks {
 
     #[embassy_executor::task]
     pub async fn run_usb(
-        usb: &'static mut ClientCommunicator<'static, 5>,
+        usb: &'static mut ClientCommunicator<'static, 1>,
         stop_signal: &'static mut Signal<CriticalSectionRawMutex, ()>,
     ) {
         usb.run(stop_signal).await
@@ -271,7 +271,7 @@ fn main() -> ! {
 
     let (ref mut usb_sender, ref mut usb_receiver) = make_static!(class.split());
 
-    let client_communicator = ClientCommunicator::new(usb, usb_sender, usb_receiver, client.sender(), client.receiver());
+    let mut client_communicator = make_static!(ClientCommunicator::new(usb, usb_sender, usb_receiver, client.sender(), client.receiver()));
 
     let watchdog = make_static!(Watchdog::new(p.WATCHDOG));
     watchdog.start(Duration::from_secs(5));
@@ -323,8 +323,6 @@ fn main() -> ! {
     spawn_core1(p.CORE1, unsafe { &mut CORE1_STACK }, move || {
         let executor1 = EXECUTOR1.init(Executor::new());
         executor1.run(|spawner| {
-            unwrap!(spawner.spawn(client_communicator::run(client_communicator, &mut signal)));
-            unwrap!(spawner.spawn(tasks::write_usb(outbound_receiver, usb_sender)));
             unwrap!(spawner.spawn(tasks::process_internal_messages(
                 inbound_receiver,
                 spawner,
@@ -334,9 +332,10 @@ fn main() -> ! {
         });
     });
 
+    let signal: &mut Signal<CriticalSectionRawMutex, ()> = make_static!(Signal::new());
     let executor0 = EXECUTOR0.init(Executor::new());
     executor0.run(|spawner| {
-        //unwrap!(spawner.spawn(tasks::run_usb(usb)));
+        unwrap!(spawner.spawn(tasks::run_usb(client_communicator, signal)));
     })
 
     // let c = &*EXTERNAL_CHANNEL.init(Channel::new());
