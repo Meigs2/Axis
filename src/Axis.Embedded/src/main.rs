@@ -32,6 +32,7 @@ use embassy_rp::watchdog::Watchdog;
 use embassy_rp::{bind_interrupts, interrupt};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Sender};
+use embassy_sync::signal::Signal;
 use embassy_time::Duration;
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
 use embassy_usb::Builder;
@@ -159,23 +160,6 @@ mod tasks {
         loop {
             let message = inbound_receiver.recv().await;
             let _ = _spawner.spawn(handle_message(message, runtime));
-        }
-    }
-
-    #[embassy_executor::task]
-    pub async fn write_usb(
-        outbound_receiver: Receiver<'static, CriticalSectionRawMutex, Message, 1>,
-        usb_sender: &'static mut embassy_usb::class::cdc_acm::Sender<'static, Driver<'static, USB>>,
-    ) {
-        loop {
-            let m = outbound_receiver.recv().await;
-
-            let mut a: String<MAX_STRING_SIZE> = to_string(&m).unwrap();
-            a.push_str("\r\n").unwrap();
-
-            debug!("Outbound message: {:?}", a);
-            let timeout = Timer::after(Duration::from_millis(1));
-            select(usb_sender.write_packet(a.as_byte_slice()), timeout).await;
         }
     }
 
@@ -334,11 +318,13 @@ fn main() -> ! {
     ));
     //let _ = spawner.spawn(tasks::read_ads(ads, runtime));
 
+    let signal: &'static mut Signal<CriticalSectionRawMutex, ()> = make_static!(Signal::new());
+
     spawn_core1(p.CORE1, unsafe { &mut CORE1_STACK }, move || {
         let executor1 = EXECUTOR1.init(Executor::new());
         executor1.run(|spawner| {
-            //unwrap!(spawner.spawn(tasks::read_usb(inbound_sender, usb_reader)));
-            //unwrap!(spawner.spawn(tasks::write_usb(outbound_receiver, usb_sender)));
+            unwrap!(spawner.spawn(client_communicator::run(client_communicator, &mut signal)));
+            unwrap!(spawner.spawn(tasks::write_usb(outbound_receiver, usb_sender)));
             unwrap!(spawner.spawn(tasks::process_internal_messages(
                 inbound_receiver,
                 spawner,
