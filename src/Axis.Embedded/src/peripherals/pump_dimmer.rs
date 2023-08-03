@@ -2,7 +2,7 @@ use core::cell::RefCell;
 use embassy_futures::select::{select, Either};
 use embassy_rp::gpio::{Input, Output, Pin};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_sync::channel::{Receiver};
+use embassy_sync::channel::Receiver;
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use thiserror_no_std::Error;
@@ -39,7 +39,7 @@ where
         output_pin: Output<'a, T>,
         setting: &'a RefCell<DimmerCommand>,
         acc: &'a RefCell<u16>,
-        signal: &'a Signal<CriticalSectionRawMutex, DimmerCommand>
+        signal: &'a Signal<CriticalSectionRawMutex, DimmerCommand>,
     ) -> ZeroCrossDimmer<'a, T> {
         Self {
             zero_cross_pin,

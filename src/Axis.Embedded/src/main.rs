@@ -222,8 +222,16 @@ mod tasks {
 fn main() -> ! {
     let p = embassy_rp::init(Default::default());
 
-    let internal_channel: &'static mut Channel<CriticalSectionRawMutex, Message, MAX_OUTBOUND_MESSAGES>  = make_static!(Channel::new());
-    let external_channel: &'static mut Channel<CriticalSectionRawMutex, Message, MAX_OUTBOUND_MESSAGES> = make_static!(Channel::new());
+    let internal_channel: &'static mut Channel<
+        CriticalSectionRawMutex,
+        Message,
+        MAX_OUTBOUND_MESSAGES,
+    > = make_static!(Channel::new());
+    let external_channel: &'static mut Channel<
+        CriticalSectionRawMutex,
+        Message,
+        MAX_OUTBOUND_MESSAGES,
+    > = make_static!(Channel::new());
 
     let inbound_sender = internal_channel.sender();
     let outbound_receiver = external_channel.receiver();
@@ -246,7 +254,8 @@ fn main() -> ! {
     config.device_protocol = 0x01;
     config.composite_with_iads = true;
 
-    let client: &mut Channel<CriticalSectionRawMutex, Message, MAX_OUTBOUND_MESSAGES> = make_static!(Channel::new());
+    let client: &mut Channel<CriticalSectionRawMutex, Message, MAX_OUTBOUND_MESSAGES> =
+        make_static!(Channel::new());
     // Create the driver, from the HAL.
     let driver = Driver::new(p.USB, client_communicator::Irqs);
 
@@ -271,7 +280,13 @@ fn main() -> ! {
 
     let (ref mut usb_sender, ref mut usb_receiver) = make_static!(class.split());
 
-    let mut client_communicator = make_static!(ClientCommunicator::new(usb, usb_sender, usb_receiver, client.sender(), client.receiver()));
+    let mut client_communicator = make_static!(ClientCommunicator::new(
+        usb,
+        usb_sender,
+        usb_receiver,
+        client.sender(),
+        client.receiver()
+    ));
 
     let watchdog = make_static!(Watchdog::new(p.WATCHDOG));
     watchdog.start(Duration::from_secs(5));
