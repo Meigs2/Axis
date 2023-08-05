@@ -40,7 +40,7 @@ pub enum Command {
 }
 
 use Command::*;
-use Profile::*;
+
 pub use State::*;
 
 #[derive(Clone)]

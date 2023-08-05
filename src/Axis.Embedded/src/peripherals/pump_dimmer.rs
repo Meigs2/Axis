@@ -2,14 +2,14 @@ use core::cell::RefCell;
 use embassy_futures::select::{select, Either};
 use embassy_rp::gpio::{Input, Output, Pin};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_sync::channel::Receiver;
+
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use thiserror_no_std::Error;
 
 #[derive(Error, Debug)]
 pub enum DimmerError {
-    #[error("The pin did not receive a zero-cross signal within ")]
+    #[error("The pin did not receive a zero-cross signal.")]
     NoZeroCross,
 }
 
@@ -23,8 +23,8 @@ pub struct ZeroCrossDimmer<'a, T>
 where
     T: Pin,
 {
-    zero_cross_pin: Input<'a, T>,
-    output_pin: Output<'a, T>,
+    zero_cross: Input<'a, T>,
+    output: Output<'a, T>,
     setting: &'a RefCell<DimmerCommand>,
     acc: &'a RefCell<u16>,
     pub signal: &'a Signal<CriticalSectionRawMutex, DimmerCommand>,
@@ -42,8 +42,8 @@ where
         signal: &'a Signal<CriticalSectionRawMutex, DimmerCommand>,
     ) -> ZeroCrossDimmer<'a, T> {
         Self {
-            zero_cross_pin,
-            output_pin,
+            zero_cross: zero_cross_pin,
+            output: output_pin,
             setting,
             acc,
             signal,
@@ -51,44 +51,55 @@ where
     }
 
     pub async fn run(&mut self) -> Result<(), DimmerError> {
-        self.output_pin.set_low();
-        let max = u16::MAX as f32;
-        loop {
-            if let Either::First(_) = select(
-                Timer::after(Duration::from_millis(500)),
-                self.zero_cross_pin.wait_for_rising_edge(),
-            )
-            .await
-            {
-                self.output_pin.set_low();
-                return Err(DimmerError::NoZeroCross);
-            }
+        self.output.set_low();
 
-            match self.setting.borrow().clone() {
-                DimmerCommand::Off => {
-                    self.output_pin.set_low();
+        let run_future = async {
+            let max = u16::MAX as f32;
+            loop {
+                if let Either::First(_) = select(
+                    Timer::after(Duration::from_millis(500)),
+                    self.zero_cross.wait_for_rising_edge(),
+                )
+                .await
+                {
+                    self.output.set_low();
+                    return Err(DimmerError::NoZeroCross);
                 }
-                DimmerCommand::PercentOn(p) => {
-                    let add = (p * max) as u16;
-                    let (val, overflow) = self.acc.borrow().overflowing_add(add);
-                    self.acc.replace(val);
-                    match overflow {
-                        true => {
-                            self.output_pin.set_high();
-                        }
-                        false => {
-                            self.output_pin.set_low();
+
+                match *self.setting.borrow() {
+                    DimmerCommand::Off => {
+                        self.output.set_low();
+                    }
+                    DimmerCommand::PercentOn(p) => {
+                        let add = (p * max) as u16;
+                        let (val, overflow) = self.acc.borrow().overflowing_add(add);
+                        self.acc.replace(val);
+                        match overflow {
+                            true => {
+                                self.output.set_high();
+                            }
+                            false => {
+                                self.output.set_low();
+                            }
                         }
                     }
                 }
             }
+        };
+
+        match select(Self::read_command(self.setting, self.signal), run_future).await {
+            Either::First(res) => res,
+            Either::Second(res) => res,
         }
     }
 
-    async fn read_command(&mut self) {
+    async fn read_command(
+        state: &RefCell<DimmerCommand>,
+        signal: &Signal<CriticalSectionRawMutex, DimmerCommand>,
+    ) -> Result<(), DimmerError> {
         loop {
-            let a = self.signal.wait().await;
-            self.setting.replace(a);
+            let a = signal.wait().await;
+            state.replace(a);
         }
     }
 }

@@ -1,18 +1,18 @@
 use crate::{Message, MAX_STRING_SIZE};
 use byte_slice_cast::AsByteSlice;
 use core::cell::{RefCell, RefMut};
-use core::ops::DerefMut;
+
 use defmt::{debug, error};
-use embassy_futures::select::{select, Either, Select};
+use embassy_futures::select::select;
 use embassy_rp::bind_interrupts;
 use embassy_rp::peripherals::USB;
 use embassy_rp::usb::Driver;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_sync::channel::{Channel, Receiver, Sender};
+use embassy_sync::channel::{Receiver, Sender};
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
-use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
-use embassy_usb::{Builder, UsbDevice};
+
+use embassy_usb::UsbDevice;
 use heapless::{String, Vec};
 use serde_json_core::de::Error;
 use serde_json_core::{from_str, to_string};
@@ -56,7 +56,7 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
             embassy_futures::select::select4(
                 stop_signal.wait(),
                 self.usb.run(),
-                Self::receive(self.usb_receiver.borrow_mut(), self.sender.clone()),
+                Self::receive_incoming_packets(self.usb_receiver.borrow_mut(), self.sender.clone()),
                 Self::write_outgoing_packets(self.usb_sender.borrow_mut(), self.receiver.clone()),
             )
             .await;
@@ -91,7 +91,7 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
         }
     }
 
-    async fn receive(
+    async fn receive_incoming_packets(
         mut usb_receiver: RefMut<
             'a,
             &'a mut embassy_usb::class::cdc_acm::Receiver<'a, Driver<'a, USB>>,

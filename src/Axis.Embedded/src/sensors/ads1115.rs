@@ -3,7 +3,6 @@ use cortex_m::prelude::_embedded_hal_blocking_i2c_Write;
 use defmt::debug;
 
 use embassy_rp::i2c::{Async, Error, Instance};
-use embassy_rp::peripherals::I2C1;
 
 use {defmt_rtt as _, panic_probe as _};
 

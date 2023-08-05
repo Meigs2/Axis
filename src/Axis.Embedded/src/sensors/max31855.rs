@@ -1,5 +1,5 @@
 use embassy_rp::gpio::{Output, Pin};
-use embassy_rp::peripherals::{PIN_11, SPI1};
+
 use embassy_rp::spi::{Async, Instance, Spi};
 
 use bit_field::BitField;
