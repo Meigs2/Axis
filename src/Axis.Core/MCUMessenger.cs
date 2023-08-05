@@ -46,6 +46,7 @@ public interface IMasterControlUnit
 {
     IObservable<Message.AdsReading> AdsReadouts { get; }
     IObservable<Message.ThermocoupleReading> ThermocoupleReadings { get; }
+    IObservable<Message> Messages { get; }
     Task ReadMessagesLoop();
 }
 
@@ -67,6 +68,8 @@ public class FakeDataMasterControlUnit : IMasterControlUnit
         timeSelector: value => TimeSpan.FromMilliseconds(30) // Set the tick interval to 30 milliseconds
     );
 
+    public IObservable<Message> Messages => throw new NotImplementedException();
+
     public Task ReadMessagesLoop()
     {
         return Task.Delay(TimeSpan.MaxValue);
@@ -76,6 +79,8 @@ public class FakeDataMasterControlUnit : IMasterControlUnit
 public class MasterControlUnit : IDisposable, IMasterControlUnit
 {
     private Subject<Message> _subject = new();
+
+    public IObservable<Message> Messages => _subject.AsObservable();
     public IObservable<Message.AdsReading> AdsReadouts => _subject.OfType<Message.AdsReading>();
     public IObservable<Message.ThermocoupleReading> ThermocoupleReadings => _subject.OfType<Message.ThermocoupleReading>();
 

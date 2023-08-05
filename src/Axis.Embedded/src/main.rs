@@ -51,7 +51,7 @@ bind_interrupts!(struct I2cIrqs {
     I2C1_IRQ => embassy_rp::i2c::InterruptHandler<I2C1>;
 });
 
-pub const MAX_STRING_SIZE: usize = 256;
+pub const MAX_STRING_SIZE: usize = 62;
 pub const THERMOCOUPLE_SPI_FREQUENCY: u32 = 500_000;
 pub const MAX_OUTBOUND_MESSAGES: usize = 1;
 
@@ -261,9 +261,6 @@ fn main() -> ! {
     // Core 1's entire job is to act as the serializer/deserializer between the MCU and the client.
     // This way, core 0 only ever deals with the important tasks, managing the system.
     let stop_signal: &mut Signal<CriticalSectionRawMutex, ()> = make_static!(Signal::new());
-    let runtime_sender: RefCell<
-        Option<Sender<'static, CriticalSectionRawMutex, Message, MAX_OUTBOUND_MESSAGES>>,
-    > = RefCell::new(None);
 
     let client_messaging_channel: &mut Channel<
         CriticalSectionRawMutex,
@@ -328,6 +325,8 @@ fn main() -> ! {
             receiver,
         ));
 
+        debug!("Does this show up?");
+
         let executor1 = CORE1_EXECUTOR.init(Executor::new());
         executor1.run(|spawner| {
             unwrap!(spawner.spawn(tasks::run_usb(client_communicator, stop_signal)));
@@ -341,9 +340,6 @@ fn main() -> ! {
     });
 
     let watchdog = make_static!(Watchdog::new(p.WATCHDOG));
-    watchdog.start(Duration::from_secs(5));
-
-    let _runtime = make_static!(Runtime::new(runtime_sender.take().unwrap()));
 
     let th_clk = p.PIN_10;
     let th_miso = p.PIN_12;
@@ -410,6 +406,7 @@ fn main() -> ! {
     let executor0 = EXECUTOR_LOW.init(Executor::new());
     executor0.run(|_spawner| {
         let runtime = make_static!(Runtime::new(client_messaging_channel.sender()));
+        watchdog.start(Duration::from_secs(5));
         unwrap!(_spawner.spawn(tasks::blink(blink_pin, watchdog)));
         unwrap!(_spawner.spawn(tasks::run_runtime(
             client_messaging_channel.receiver(),
