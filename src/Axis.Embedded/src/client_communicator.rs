@@ -87,8 +87,8 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
         loop {
             embassy_futures::select::select3(
                 self.usb.run(),
-                Self::receive_incoming_packets(self.usb_receiver, self.channel.sender().clone()),
-                Self::write_outgoing_packets(self.usb_sender, self.channel.receiver().clone()),
+                Self::receive_incoming_packets(&mut self.usb_receiver, self.channel.sender().clone()),
+                Self::write_outgoing_packets(&mut self.usb_sender, self.channel.receiver().clone()),
             )
             .await;
             self.usb.disable().await;
@@ -103,9 +103,9 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
         self.channel.sender().clone()
     }
 
-    async fn write_outgoing_packets(
-        mut usb_sender:
-            embassy_usb::class::cdc_acm::Sender<'a, Driver<'a, USB>>,
+    async fn write_outgoing_packets<'b>(
+        usb_sender:
+            &'b mut embassy_usb::class::cdc_acm::Sender<'a, Driver<'a, USB>>,
         receiver: Receiver<'a, CriticalSectionRawMutex, Message, N>,
     ) {
         loop {
@@ -120,9 +120,9 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
         }
     }
 
-    async fn receive_incoming_packets(
-        mut usb_receiver:
-            embassy_usb::class::cdc_acm::Receiver<'a, Driver<'a, USB>,>,
+    async fn receive_incoming_packets<'b>(
+        usb_receiver:
+            &'b mut embassy_usb::class::cdc_acm::Receiver<'a, Driver<'a, USB>,>,
         sender: Sender<'a, CriticalSectionRawMutex, Message, N>,
     ) {
         let buff = make_static!([0u8; crate::MAX_STRING_SIZE]);
