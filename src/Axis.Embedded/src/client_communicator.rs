@@ -8,15 +8,16 @@ use embassy_rp::bind_interrupts;
 use embassy_rp::peripherals::USB;
 use embassy_rp::usb::Driver;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_sync::channel::{Receiver, Sender};
+use embassy_sync::channel::{Channel, Receiver, Sender};
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
+use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
 
-use embassy_usb::UsbDevice;
+use embassy_usb::{Builder, UsbDevice};
 use heapless::{String, Vec};
 use serde_json_core::de::Error;
 use serde_json_core::{from_str, to_string};
-use static_cell::make_static;
+use static_cell::{make_static, StaticCell};
 
 pub const MAX_PACKET_SIZE: usize = 64;
 
@@ -25,39 +26,69 @@ bind_interrupts!(pub struct Irqs {
 });
 
 pub struct ClientCommunicator<'a, const N: usize> {
-    sender: Sender<'a, CriticalSectionRawMutex, Message, N>,
-    receiver: Receiver<'a, CriticalSectionRawMutex, Message, N>,
     usb: UsbDevice<'a, Driver<'a, USB>>,
-    usb_sender: RefCell<&'a mut embassy_usb::class::cdc_acm::Sender<'a, Driver<'a, USB>>>,
-    usb_receiver: RefCell<&'a mut embassy_usb::class::cdc_acm::Receiver<'a, Driver<'a, USB>>>,
+    usb_sender: embassy_usb::class::cdc_acm::Sender<'a, Driver<'a, USB>>,
+    usb_receiver: embassy_usb::class::cdc_acm::Receiver<'a, Driver<'a, USB>>,
+    channel: Channel<CriticalSectionRawMutex, Message, N>
 }
 
 impl<'a, const N: usize> ClientCommunicator<'a, N> {
-    pub fn new(
-        usb: UsbDevice<'a, Driver<'a, USB>>,
-        usb_sender: &'a mut embassy_usb::class::cdc_acm::Sender<'a, Driver<'a, USB>>,
-        usb_receiver: &'a mut embassy_usb::class::cdc_acm::Receiver<'a, Driver<'a, USB>>,
-        sender: Sender<'a, CriticalSectionRawMutex, Message, N>,
-        receiver: Receiver<'a, CriticalSectionRawMutex, Message, N>,
+    pub fn new(usb: USB,
     ) -> Self {
-        let rec = RefCell::new(usb_receiver);
-        let sen = RefCell::new(usb_sender);
+        // Create the driver, from the HAL.
+        let driver = Driver::new(usb, Irqs);
+
+        let mut config = embassy_usb::Config::new(0xc0de, 0xcafe);
+        config.manufacturer = Some("Embassy");
+        config.product = Some("USB-serial logger");
+        config.serial_number = Some("12345678");
+        config.max_power = 100;
+        config.max_packet_size_0 = MAX_PACKET_SIZE as u8;
+
+        // Required for windows compatiblity.
+        // https://developer.nordicsemi.com/nRF_Connect_SDK/doc/1.9.1/kconfig/CONFIG_CDC_ACM_IAD.html#help
+        config.device_class = 0xEF;
+        config.device_sub_class = 0x02;
+        config.device_protocol = 0x01;
+        config.composite_with_iads = true;
+
+        let mut device_descriptor = [0; 256];
+        let mut config_descriptor = [0; 256];
+        let mut bos_descriptor = [0; 256];
+        let mut control_buf = [0; 64];
+        let mut state = State::new();
+
+        let mut builder = Builder::new(
+            driver,
+            config,
+            &mut device_descriptor,
+            &mut config_descriptor,
+            &mut bos_descriptor,
+            &mut control_buf,
+        );
+
+        // Create classes on the builder.
+        let class = CdcAcmClass::new(&mut builder, &mut state, MAX_PACKET_SIZE as u16);
+
+        let usb = builder.build();
+
+        let (sender, receiver) = class.split();
+
+        let channel: Channel<CriticalSectionRawMutex, Message, N> = Channel::new();
         Self {
-            sender,
-            receiver,
             usb,
-            usb_sender: sen,
-            usb_receiver: rec,
+            usb_sender: sender,
+            usb_receiver: receiver,
+            channel,
         }
     }
 
-    pub async fn run(&'a mut self, stop_signal: &'a mut Signal<CriticalSectionRawMutex, ()>) {
+    pub async fn run(&'a mut self) {
         loop {
-            embassy_futures::select::select4(
-                stop_signal.wait(),
+            embassy_futures::select::select3(
                 self.usb.run(),
-                Self::receive_incoming_packets(self.usb_receiver.borrow_mut(), self.sender.clone()),
-                Self::write_outgoing_packets(self.usb_sender.borrow_mut(), self.receiver.clone()),
+                Self::receive_incoming_packets(self.usb_receiver, self.channel.sender().clone()),
+                Self::write_outgoing_packets(self.usb_sender, self.channel.receiver().clone()),
             )
             .await;
             self.usb.disable().await;
@@ -65,18 +96,16 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
     }
 
     pub fn get_receiver(&self) -> Receiver<'a, CriticalSectionRawMutex, Message, N> {
-        self.receiver.clone()
+        self.channel.receiver().clone()
     }
 
     pub fn get_sender(&self) -> Sender<'a, CriticalSectionRawMutex, Message, N> {
-        self.sender.clone()
+        self.channel.sender().clone()
     }
 
     async fn write_outgoing_packets(
-        mut usb_sender: RefMut<
-            'a,
-            &'a mut embassy_usb::class::cdc_acm::Sender<'a, Driver<'a, USB>>,
-        >,
+        mut usb_sender:
+            embassy_usb::class::cdc_acm::Sender<'a, Driver<'a, USB>>,
         receiver: Receiver<'a, CriticalSectionRawMutex, Message, N>,
     ) {
         loop {
@@ -92,10 +121,8 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
     }
 
     async fn receive_incoming_packets(
-        mut usb_receiver: RefMut<
-            'a,
-            &'a mut embassy_usb::class::cdc_acm::Receiver<'a, Driver<'a, USB>>,
-        >,
+        mut usb_receiver:
+            embassy_usb::class::cdc_acm::Receiver<'a, Driver<'a, USB>,>,
         sender: Sender<'a, CriticalSectionRawMutex, Message, N>,
     ) {
         let buff = make_static!([0u8; crate::MAX_STRING_SIZE]);

@@ -21,13 +21,13 @@ use defmt::Format;
 use embassy_executor::{Executor, InterruptExecutor};
 use embassy_rp::gpio::{Level, Output};
 use embassy_rp::interrupt::{InterruptExt, Priority};
+use embassy_rp::multicore::{spawn_core1, Stack};
 use embassy_rp::peripherals::I2C1;
 use embassy_rp::peripherals::USB;
 use embassy_rp::spi::Spi;
 use embassy_rp::usb::Driver;
 use embassy_rp::watchdog::Watchdog;
 use embassy_rp::{bind_interrupts, interrupt};
-use embassy_rp::multicore::{spawn_core1, Stack};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Sender};
 use embassy_time::Duration;
@@ -38,6 +38,7 @@ use serde_json_core::heapless::String;
 use static_cell::{make_static, StaticCell};
 use Message::*;
 use {defmt_rtt as _, panic_probe as _};
+use crate::client_communicator::ClientCommunicator;
 
 bind_interrupts!(struct Irqs {
     USBCTRL_IRQ => embassy_rp::usb::InterruptHandler<USB>;
@@ -164,12 +165,13 @@ mod tasks {
     use crate::sensors::ads1115::Ads1115;
     use crate::sensors::max31855::{Unit, MAX31855};
     use crate::Message::*;
-    use crate::{Message, Runtime, MAX_STRING_SIZE, MAX_PACKET_SIZE};
+    use crate::{Message, Runtime, MAX_PACKET_SIZE, MAX_STRING_SIZE};
+    use crate::client_communicator::ClientCommunicator;
 
     #[embassy_executor::task]
-    pub async fn run_usb(usb: &'static mut UsbDevice<'static, Driver<'static, USB>>) -> ! {
+    pub async fn run_usb(usb: &'static mut ClientCommunicator<'static, 1>) {
         debug!("Running USB");
-        usb.run().await
+        usb.run().await;
     }
 
     #[embassy_executor::task]
@@ -289,7 +291,7 @@ mod tasks {
                 let res: Result<f32, embassy_rp::i2c::Error> = ads.read();
                 match res {
                     Ok(v) => {
-                        inbound_sender.send(Message::AdsReading {value: v}).await;
+                        inbound_sender.send(Message::AdsReading { value: v }).await;
                     }
                     Err(e) => {
                         error!("ADS115 read error: {:?}", e);
@@ -306,55 +308,14 @@ mod tasks {
 fn main() -> ! {
     let p = embassy_rp::init(Default::default());
 
-    // Create the driver, from the HAL.
-    let driver = Driver::new(p.USB, Irqs);
-
-    let mut config = embassy_usb::Config::new(0xc0de, 0xcafe);
-    config.manufacturer = Some("Embassy");
-    config.product = Some("USB-serial logger");
-    config.serial_number = Some("12345678");
-    config.max_power = 100;
-    config.max_packet_size_0 = MAX_PACKET_SIZE as u8;
-
-    // Required for windows compatiblity.
-    // https://developer.nordicsemi.com/nRF_Connect_SDK/doc/1.9.1/kconfig/CONFIG_CDC_ACM_IAD.html#help
-    config.device_class = 0xEF;
-    config.device_sub_class = 0x02;
-    config.device_protocol = 0x01;
-    config.composite_with_iads = true;
-
-    let device_descriptor = make_static!([0; 256]);
-    let config_descriptor = make_static!([0; 256]);
-    let bos_descriptor = make_static!([0; 256]);
-    let control_buf = make_static!([0; 64]);
-    let state = make_static!(State::new());
-
-    let mut builder = Builder::new(
-        driver,
-        config,
-        device_descriptor,
-        config_descriptor,
-        bos_descriptor,
-        control_buf,
-    );
-
-    // Create classes on the builder.
-    let class = CdcAcmClass::new(&mut builder, state, MAX_PACKET_SIZE as u16);
-
-    let usb = make_static!(builder.build());
+    let client: &mut ClientCommunicator<1> = make_static!(ClientCommunicator::new(p.USB));
 
     let internal_channel = make_static!(Channel::new());
-    let external_channel = make_static!(Channel::new());
 
     let inbound_sender = internal_channel.sender();
-    let outbound_receiver = external_channel.receiver();
-    let outbound_sender = external_channel.sender();
+    let outbound_receiver = client.receiver();
+    let outbound_sender = client.sender();
     let inbound_receiver = internal_channel.receiver();
-
-    let (sender, reader) = class.split();
-
-    let usb_sender = make_static!(sender);
-    let usb_reader = make_static!(reader);
 
     let pin = make_static!(Output::new(p.PIN_7, Level::Low));
 
@@ -407,7 +368,6 @@ fn main() -> ! {
     interrupt::SWI_IRQ_1.set_priority(Priority::P2);
     let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);
 
-    let send = external_channel.sender();
     unwrap!(spawner.spawn(tasks::run_usb(usb)));
     spawn_core1(p.CORE1, unsafe { &mut CORE1_STACK }, move || {
         let executor1 = EXECUTOR_CORE1.init(Executor::new());
