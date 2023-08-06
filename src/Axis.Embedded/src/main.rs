@@ -76,7 +76,7 @@ impl<'a> Runtime<'a> {
     }
 }
 
-pub const MAX_STRING_SIZE: usize = 62;
+pub const MAX_STRING_SIZE: usize = 64;
 pub const MAX_PACKET_SIZE: usize = 64;
 pub const THERMOCOUPLE_SPI_FREQUENCY: u32 = 500_000;
 
@@ -101,7 +101,7 @@ static EXECUTOR_HIGH: InterruptExecutor = InterruptExecutor::new();
 static EXECUTOR_MED: InterruptExecutor = InterruptExecutor::new();
 static EXECUTOR_LOW: StaticCell<Executor> = StaticCell::new();
 
-static mut CORE1_STACK: Stack<4096> = Stack::new();
+static mut CORE1_STACK: Stack<8192> = Stack::new();
 static EXECUTOR_CORE1: StaticCell<Executor> = StaticCell::new();
 
 #[interrupt]
@@ -149,8 +149,10 @@ mod tasks {
     use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
     use embassy_sync::channel::{Receiver, Sender};
     use embassy_time::{Duration, Timer};
+    use embassy_usb::UsbDevice;
 
     use heapless::String;
+    use lorawan_device::Device;
 
     use serde_json_core::to_string;
 
@@ -162,6 +164,12 @@ mod tasks {
 
     #[embassy_executor::task]
     pub async fn run_usb(usb: &'static mut ClientCommunicator<'static, 1>) {
+        debug!("Running USB");
+        usb.run().await;
+    }
+
+    #[embassy_executor::task]
+    pub async fn run_usb_literal(usb: &'static mut UsbDevice<'static, Driver<'static, USB>>) {
         debug!("Running USB");
         usb.run().await;
     }
@@ -259,15 +267,19 @@ fn main() -> ! {
         state,
     };
 
+    let internal_channel = make_static!(Channel::new());
     let external_channel = make_static!(Channel::new());
-    let client = make_static!(ClientCommunicator::new(
+
+    let client_tuple = make_static!(ClientCommunicator::new(
         p.USB,
         data,
-        external_channel.sender(),
+        internal_channel.sender(),
         external_channel.receiver()
     ));
 
-    let internal_channel = make_static!(Channel::new());
+    let usb = &mut client_tuple.1;
+    let client = &mut client_tuple.0;
+
 
     let pin = make_static!(Output::new(p.PIN_7, Level::Low));
 
@@ -310,6 +322,7 @@ fn main() -> ! {
 
     interrupt::SWI_IRQ_1.set_priority(Priority::P2);
     let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);
+    unwrap!(spawner.spawn(tasks::run_usb_literal(usb)));
 
     spawn_core1(p.CORE1, unsafe { &mut CORE1_STACK }, move || {
         let executor1 = EXECUTOR_CORE1.init(Executor::new());

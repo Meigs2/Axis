@@ -25,7 +25,6 @@ bind_interrupts!(pub struct Irqs {
 });
 
 pub struct ClientCommunicator<'a, const N: usize> {
-    usb: UsbDevice<'a, Driver<'a, USB>>,
     usb_sender: embassy_usb::class::cdc_acm::Sender<'a, Driver<'a, USB>>,
     usb_receiver: embassy_usb::class::cdc_acm::Receiver<'a, Driver<'a, USB>>,
     sender: Sender<'a, CriticalSectionRawMutex, Message, N>,
@@ -41,12 +40,12 @@ pub struct UsbData<'a> {
 }
 
 impl<'a, const N: usize> ClientCommunicator<'a, N> {
-    pub fn new(
+    pub fn new<'b>(
         usb: USB,
         data: UsbData<'a>,
-        sender: Sender<'a, CriticalSectionRawMutex, Message, N>,
-        receiver: Receiver<'a, CriticalSectionRawMutex, Message, N>,
-    ) -> Self {
+        internal_sender: Sender<'a, CriticalSectionRawMutex, Message, N>,
+        external_receiver: Receiver<'a, CriticalSectionRawMutex, Message, N>,
+    ) -> (Self, UsbDevice<'a, Driver<'a, USB>>) {
         // Create the driver, from the HAL.
         let driver = Driver::new(usb, Irqs);
 
@@ -80,24 +79,21 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
 
         let (usb_sender, usb_receiver) = class.split();
 
-        Self {
-            usb,
+        (Self {
             usb_sender,
             usb_receiver,
-            sender,
-            receiver,
-        }
+            sender: internal_sender,
+            receiver: external_receiver,
+        }, usb)
     }
 
     pub async fn run(&'a mut self) {
         loop {
-            embassy_futures::select::select3(
-                self.usb.run(),
+            select(
                 Self::receive_incoming_packets(&mut self.usb_receiver, self.sender.clone()),
                 Self::write_outgoing_packets(&mut self.usb_sender, self.receiver.clone()),
             )
             .await;
-            self.usb.disable().await;
         }
     }
 
@@ -105,10 +101,11 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
         usb_sender: &'b mut embassy_usb::class::cdc_acm::Sender<'a, Driver<'a, USB>>,
         receiver: Receiver<'a, CriticalSectionRawMutex, Message, N>,
     ) {
+        let mut a: String<MAX_STRING_SIZE> = String::new();
         loop {
+            a.clear();
             let m = receiver.recv().await;
-
-            let mut a: String<MAX_STRING_SIZE> = to_string(&m).unwrap();
+            a = to_string(&m).unwrap();
             a.push_str("\r\n").unwrap();
 
             debug!("Outbound message: {:?}", a);
@@ -121,34 +118,28 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
         usb_receiver: &'b mut embassy_usb::class::cdc_acm::Receiver<'a, Driver<'a, USB>>,
         sender: Sender<'a, CriticalSectionRawMutex, Message, N>,
     ) {
-        let buff = make_static!([0u8; crate::MAX_STRING_SIZE]);
+        let buff = make_static!([0u8; MAX_STRING_SIZE]);
+        debug!("Waiting for USB connection");
         usb_receiver.wait_connection().await;
+        debug!("Connected to host");
         loop {
             match usb_receiver.read_packet(&mut buff[..]).await {
                 Ok(s) => {
-                    #[cfg(debug_assertions)]
-                    let stopwatch = embassy_time::Instant::now();
-
+                    debug!("Read packet!");
                     let string = core::str::from_utf8(&buff[..s]).unwrap();
-                    let result: Result<(Vec<Message, MAX_STRING_SIZE>, _), Error> =
+                    debug!("Got String!: {:?}", string);
+                    let result: Result<(Message, _), Error> =
                         from_str(string);
-                    let msgs = match result {
+                    debug!("Deserialized!");
+                    let message = match result {
                         Ok(m) => m.0,
                         Err(_e) => {
                             error!("Error deserializing packet(s).");
-                            Vec::new()
+                            continue;
                         }
                     };
 
-                    for msg in msgs {
-                        sender.send(msg).await;
-                    }
-
-                    #[cfg(debug_assertions)]
-                    {
-                        let a = stopwatch.elapsed().as_micros();
-                        debug!("Read/Write Operation Elapsed: {:?} microseconds", a);
-                    }
+                    sender.send(message).await;
                 }
                 Err(e) => {
                     error!("Error reading packet: {:?}", e)

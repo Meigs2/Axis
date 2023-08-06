@@ -102,8 +102,7 @@ public class MasterControlUnit : IDisposable, IMasterControlUnit
         }
         try
         {
-            var messages = new List<Message>(1){message};
-            var json = JsonConvert.SerializeObject(messages, Message.ConverterSettings);
+            var json = JsonConvert.SerializeObject(message, Message.ConverterSettings);
             var bytes = Encoding.UTF8.GetBytes(json);
             Console.WriteLine(json);
             _serialPort.Write(bytes, 0, bytes.Length);

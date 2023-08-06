@@ -12,19 +12,19 @@ var app = builder.Build();
 
 var mcu = app.Services.GetRequiredService<MasterControlUnit>();
 
-var task = Task.Run(() =>
+var task = Task.Run(async () =>
 {
     while (true)
     {
-        mcu.ReadMessages();
+        await mcu.ReadMessages();
     }
 });
 
+Console.WriteLine("Press Key to send message");
+Console.ReadKey();
+
 while (true)
 {
-    Console.WriteLine("Press Key to send message");
-    Console.ReadKey();
-
     mcu.Send(new Message.Ping());
-    mcu.Send(new Message.Pong());
+    Console.ReadKey();
 }
