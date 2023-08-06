@@ -29,7 +29,8 @@ pub struct ClientCommunicator<'a, const N: usize> {
     usb: UsbDevice<'a, Driver<'a, USB>>,
     usb_sender: embassy_usb::class::cdc_acm::Sender<'a, Driver<'a, USB>>,
     usb_receiver: embassy_usb::class::cdc_acm::Receiver<'a, Driver<'a, USB>>,
-    channel: Channel<CriticalSectionRawMutex, Message, N>
+    channel: Channel<CriticalSectionRawMutex, Message, N>,
+    builder: Builder<'a, Driver<'a, USB>>
 }
 
 impl<'a, const N: usize> ClientCommunicator<'a, N> {
@@ -80,6 +81,7 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
             usb_sender: sender,
             usb_receiver: receiver,
             channel,
+            builder
         }
     }
 
@@ -130,7 +132,9 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
         loop {
             match usb_receiver.read_packet(&mut buff[..]).await {
                 Ok(s) => {
+                    #[cfg(debug_assertions)]
                     let stopwatch = embassy_time::Instant::now();
+
                     let string = core::str::from_utf8(&buff[..s]).unwrap();
                     let result: Result<(Vec<Message, MAX_STRING_SIZE>, _), Error> =
                         from_str(string);
@@ -145,8 +149,12 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
                     for msg in msgs {
                         sender.send(msg).await;
                     }
-                    let a = stopwatch.elapsed().as_micros();
-                    debug!("Read/Write Operation Elapsed: {:?} microseconds", a);
+
+                    #[cfg(debug_assertions)]
+                    {
+                        let a = stopwatch.elapsed().as_micros();
+                        debug!("Read/Write Operation Elapsed: {:?} microseconds", a);
+                    }
                 }
                 Err(e) => {
                     error!("Error reading packet: {:?}", e)

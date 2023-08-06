@@ -175,44 +175,6 @@ mod tasks {
     }
 
     #[embassy_executor::task]
-    pub async fn read_usb(
-        inbound_sender: Sender<'static, CriticalSectionRawMutex, Message, 1>,
-        usb_reader: &'static mut embassy_usb::class::cdc_acm::Receiver<
-            'static,
-            Driver<'static, USB>,
-        >,
-    ) {
-        let buff = make_static!([0u8; MAX_STRING_SIZE]);
-        usb_reader.wait_connection().await;
-        loop {
-            match usb_reader.read_packet(&mut buff[..]).await {
-                Ok(s) => {
-                    let stopwatch = embassy_time::Instant::now();
-                    let string = core::str::from_utf8(&buff[..s]).unwrap();
-                    let result: Result<(Vec<Message, MAX_STRING_SIZE>, _), Error> =
-                        from_str(string);
-                    let msgs = match result {
-                        Ok(m) => m.0,
-                        Err(_e) => {
-                            error!("Error deserializing packet(s).");
-                            Vec::new()
-                        }
-                    };
-
-                    for msg in msgs {
-                        inbound_sender.send(msg).await;
-                    }
-                    let a = stopwatch.elapsed().as_micros();
-                    debug!("Read/Write Operation Elapsed: {:?} microseconds", a);
-                }
-                Err(e) => {
-                    error!("Error reading packet: {:?}", e)
-                }
-            }
-        }
-    }
-
-    #[embassy_executor::task]
     pub async fn handle_message(message: Message, runtime: &'static Runtime<'static>) {
         runtime.handle(message).await;
     }
@@ -313,8 +275,8 @@ fn main() -> ! {
     let internal_channel = make_static!(Channel::new());
 
     let inbound_sender = internal_channel.sender();
-    let outbound_receiver = client.receiver();
-    let outbound_sender = client.sender();
+    let outbound_receiver = client.get_receiver();
+    let outbound_sender = client.get_sender();
     let inbound_receiver = internal_channel.receiver();
 
     let pin = make_static!(Output::new(p.PIN_7, Level::Low));
@@ -368,11 +330,10 @@ fn main() -> ! {
     interrupt::SWI_IRQ_1.set_priority(Priority::P2);
     let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);
 
-    unwrap!(spawner.spawn(tasks::run_usb(usb)));
     spawn_core1(p.CORE1, unsafe { &mut CORE1_STACK }, move || {
         let executor1 = EXECUTOR_CORE1.init(Executor::new());
         executor1.run(|spawner| {
-            unwrap!(spawner.spawn(tasks::write_usb(outbound_receiver, usb_sender)));
+            unwrap!(spawner.spawn(tasks::run_usb(client)));
         });
     });
 
@@ -380,8 +341,8 @@ fn main() -> ! {
         internal_channel.sender(),
         thermocouple,
     ));
-    unwrap!(spawner.spawn(tasks::read_usb(inbound_sender, usb_reader)));
-    unwrap!(spawner.spawn(tasks::read_ads(ads, send)));
+
+    unwrap!(spawner.spawn(tasks::read_ads(ads, inbound_sender)));
 
     // Low priority executor: runs in thread mode, using WFE/SEV
     let executor = EXECUTOR_LOW.init(Executor::new());

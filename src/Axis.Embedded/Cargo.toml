@@ -5,17 +5,17 @@ version = "0.1.0"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-embassy-embedded-hal = { git = "https://github.com/embassy-rs/embassy", rev = "6b5df4523aa1c4902f02e803450ae4b418e0e3ca", features = ["defmt"] }
-embassy-sync = { git = "https://github.com/embassy-rs/embassy", rev = "6b5df4523aa1c4902f02e803450ae4b418e0e3ca", features = ["defmt"] }
-embassy-executor = { git = "https://github.com/embassy-rs/embassy", rev = "6b5df4523aa1c4902f02e803450ae4b418e0e3ca", features = ["nightly", "arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers"] }
-embassy-time = { git = "https://github.com/embassy-rs/embassy", rev = "6b5df4523aa1c4902f02e803450ae4b418e0e3ca", features = ["nightly", "unstable-traits", "defmt", "defmt-timestamp-uptime"] }
-embassy-rp = { git = "https://github.com/embassy-rs/embassy", rev = "6b5df4523aa1c4902f02e803450ae4b418e0e3ca", features = ["defmt", "unstable-traits", "nightly", "unstable-pac", "time-driver", "critical-section-impl"] }
-embassy-usb = { git = "https://github.com/embassy-rs/embassy", rev = "6b5df4523aa1c4902f02e803450ae4b418e0e3ca", features = ["defmt"] }
-embassy-futures = { git = "https://github.com/embassy-rs/embassy", rev = "6b5df4523aa1c4902f02e803450ae4b418e0e3ca" }
-embassy-usb-logger = { git = "https://github.com/embassy-rs/embassy", rev = "6b5df4523aa1c4902f02e803450ae4b418e0e3ca" }
-embassy-lora = { git = "https://github.com/embassy-rs/embassy", rev = "6b5df4523aa1c4902f02e803450ae4b418e0e3ca", features = ["time", "defmt"] }
-cyw43 = { git = "https://github.com/embassy-rs/embassy", rev = "6b5df4523aa1c4902f02e803450ae4b418e0e3ca", features = ["defmt", "firmware-logs"] }
-cyw43-pio = { git = "https://github.com/embassy-rs/embassy", rev = "6b5df4523aa1c4902f02e803450ae4b418e0e3ca", features = ["defmt", "overclock"] }
+embassy-embedded-hal = { git = "https://github.com/Meigs2/embassy", branch = "fix_usb_device", features = ["defmt"] }
+embassy-sync = { git = "https://github.com/Meigs2/embassy", branch = "fix_usb_device", features = ["defmt"] }
+embassy-executor = { git = "https://github.com/Meigs2/embassy", branch = "fix_usb_device", features = ["nightly", "arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers"] }
+embassy-time = { git = "https://github.com/Meigs2/embassy", branch = "fix_usb_device", features = ["nightly", "unstable-traits", "defmt", "defmt-timestamp-uptime"] }
+embassy-rp = { git = "https://github.com/Meigs2/embassy", branch = "fix_usb_device", features = ["defmt", "unstable-traits", "nightly", "unstable-pac", "time-driver", "critical-section-impl"] }
+embassy-usb = { git = "https://github.com/Meigs2/embassy", branch = "fix_usb_device", features = ["defmt"] }
+embassy-futures = { git = "https://github.com/Meigs2/embassy", branch = "fix_usb_device" }
+embassy-usb-logger = { git = "https://github.com/Meigs2/embassy", branch = "fix_usb_device" }
+embassy-lora = { git = "https://github.com/Meigs2/embassy", branch = "fix_usb_device", features = ["time", "defmt"] }
+cyw43 = { git = "https://github.com/Meigs2/embassy", branch = "fix_usb_device", features = ["defmt", "firmware-logs"] }
+cyw43-pio = { git = "https://github.com/Meigs2/embassy", branch = "fix_usb_device", features = ["defmt", "overclock"] }
 
 lora-phy = { version = "1" }
 lorawan-device = { version = "0.10.0", default-features = false, features = ["async", "external-lora-phy"] }
