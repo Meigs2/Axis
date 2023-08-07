@@ -1,3 +1,3 @@
-mod pump_dimmer;
-mod solenoid_relay;
-mod solid_state_relay;
+pub mod pump_dimmer;
+pub mod solenoid_relay;
+pub mod solid_state_relay;

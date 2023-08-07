@@ -1,7 +1,9 @@
 use core::cell::RefCell;
+use defmt::error;
 use embassy_futures::select::{select, Either};
 use embassy_rp::gpio::{Input, Output, Pin};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_sync::channel::{Channel, Receiver};
 
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
@@ -19,40 +21,39 @@ pub enum DimmerCommand {
     PercentOn(f32),
 }
 
-pub struct ZeroCrossDimmer<'a, T>
+pub struct ZeroCrossDimmer<'a, Tzc, To>
 where
-    T: Pin,
+    Tzc: Pin,
+    To: Pin
 {
-    zero_cross: Input<'a, T>,
-    output: Output<'a, T>,
-    setting: &'a RefCell<DimmerCommand>,
-    acc: &'a RefCell<u16>,
-    pub signal: &'a Signal<CriticalSectionRawMutex, DimmerCommand>,
+    zero_cross: Input<'a, Tzc>,
+    output: Output<'a, To>,
+    setting: RefCell<DimmerCommand>,
+    acc: RefCell<u16>,
+    pub signal: &'a Channel<CriticalSectionRawMutex, DimmerCommand, 1>,
 }
 
-impl<'a, T> ZeroCrossDimmer<'a, T>
-where
-    T: Pin,
+impl<'a, Tzc, To> ZeroCrossDimmer<'a, Tzc, To>
+    where
+        Tzc: Pin,
+        To: Pin
 {
     pub fn new(
-        zero_cross_pin: Input<'a, T>,
-        output_pin: Output<'a, T>,
-        setting: &'a RefCell<DimmerCommand>,
-        acc: &'a RefCell<u16>,
-        signal: &'a Signal<CriticalSectionRawMutex, DimmerCommand>,
-    ) -> ZeroCrossDimmer<'a, T> {
+        zero_cross_pin: Input<'a, Tzc>,
+        output_pin: Output<'a, To>,
+        signal: &'a Channel<CriticalSectionRawMutex, DimmerCommand, 1>,
+    ) -> ZeroCrossDimmer<'a, Tzc, To> {
         Self {
             zero_cross: zero_cross_pin,
             output: output_pin,
-            setting,
-            acc,
+            setting: RefCell::new(DimmerCommand::Off),
+            acc: RefCell::new(0),
             signal,
         }
     }
 
     pub async fn run(&mut self) -> Result<(), DimmerError> {
         self.output.set_low();
-
         let run_future = async {
             let max = u16::MAX as f32;
             loop {
@@ -63,6 +64,7 @@ where
                 .await
                 {
                     self.output.set_low();
+                    error!("No Zero Cross Detected.");
                     return Err(DimmerError::NoZeroCross);
                 }
 
@@ -87,18 +89,18 @@ where
             }
         };
 
-        match select(Self::read_command(self.setting, self.signal), run_future).await {
+        match select(Self::read_command(&self.setting, self.signal.receiver().clone()), run_future).await {
             Either::First(res) => res,
             Either::Second(res) => res,
         }
     }
 
-    async fn read_command(
+    async fn read_command<'b>(
         state: &RefCell<DimmerCommand>,
-        signal: &Signal<CriticalSectionRawMutex, DimmerCommand>,
+        signal: Receiver<'b, CriticalSectionRawMutex, DimmerCommand, 1>,
     ) -> Result<(), DimmerError> {
         loop {
-            let a = signal.wait().await;
+            let a = signal.recv().await;
             state.replace(a);
         }
     }
