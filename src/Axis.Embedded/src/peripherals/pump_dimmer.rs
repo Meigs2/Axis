@@ -5,7 +5,6 @@ use embassy_rp::gpio::{Input, Output, Pin};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Receiver};
 
-use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use thiserror_no_std::Error;
 
@@ -24,7 +23,7 @@ pub enum DimmerCommand {
 pub struct ZeroCrossDimmer<'a, Tzc, To>
 where
     Tzc: Pin,
-    To: Pin
+    To: Pin,
 {
     zero_cross: Input<'a, Tzc>,
     output: Output<'a, To>,
@@ -34,9 +33,9 @@ where
 }
 
 impl<'a, Tzc, To> ZeroCrossDimmer<'a, Tzc, To>
-    where
-        Tzc: Pin,
-        To: Pin
+where
+    Tzc: Pin,
+    To: Pin,
 {
     pub fn new(
         zero_cross_pin: Input<'a, Tzc>,
@@ -91,7 +90,12 @@ impl<'a, Tzc, To> ZeroCrossDimmer<'a, Tzc, To>
             }
         };
 
-        match select(Self::read_command(&self.setting, self.signal.receiver().clone()), run_future).await {
+        match select(
+            Self::read_command(&self.setting, self.signal.receiver().clone()),
+            run_future,
+        )
+        .await
+        {
             Either::First(res) => res,
             Either::Second(res) => res,
         }

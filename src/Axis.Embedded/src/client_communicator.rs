@@ -13,7 +13,7 @@ use embassy_time::{Duration, Timer};
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
 
 use embassy_usb::{Builder, UsbDevice};
-use heapless::{String, Vec};
+use heapless::String;
 use serde_json_core::de::Error;
 use serde_json_core::{from_str, to_string};
 use static_cell::make_static;
@@ -79,12 +79,15 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
 
         let (usb_sender, usb_receiver) = class.split();
 
-        (Self {
-            usb_sender,
-            usb_receiver,
-            sender: internal_sender,
-            receiver: external_receiver,
-        }, usb)
+        (
+            Self {
+                usb_sender,
+                usb_receiver,
+                sender: internal_sender,
+                receiver: external_receiver,
+            },
+            usb,
+        )
     }
 
     pub async fn run(&'a mut self) {
@@ -128,8 +131,7 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
                     debug!("Read packet!");
                     let string = core::str::from_utf8(&buff[..s]).unwrap();
                     debug!("Got String!: {:?}", string);
-                    let result: Result<(Message, _), Error> =
-                        from_str(string);
+                    let result: Result<(Message, _), Error> = from_str(string);
                     debug!("Deserialized!");
                     let message = match result {
                         Ok(m) => m.0,

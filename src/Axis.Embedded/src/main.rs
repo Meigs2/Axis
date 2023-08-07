@@ -35,12 +35,12 @@ use embassy_sync::channel::{Channel, Sender};
 use embassy_time::{Duration, Timer};
 use embassy_usb::class::cdc_acm::State;
 
+use crate::peripherals::pump_dimmer::DimmerCommand;
 use serde::{Deserialize, Serialize};
 use serde_json_core::heapless::String;
 use static_cell::{make_static, StaticCell};
 use Message::*;
 use {defmt_rtt as _, panic_probe as _};
-use crate::peripherals::pump_dimmer::DimmerCommand;
 
 bind_interrupts!(struct I2cIrqs {
     I2C1_IRQ => embassy_rp::i2c::InterruptHandler<I2C1>;
@@ -138,9 +138,10 @@ pub trait AxisPeripheral {
     fn initialize() -> Result<(), String<MAX_STRING_SIZE>>;
 }
 
-
 #[embassy_executor::task]
-pub async fn dimmer_test(dimmer: &'static mut peripherals::pump_dimmer::ZeroCrossDimmer<'static, PIN_16, PIN_17>) {
+pub async fn dimmer_test(
+    dimmer: &'static mut peripherals::pump_dimmer::ZeroCrossDimmer<'static, PIN_16, PIN_17>,
+) {
     let sender = dimmer.signal.sender().clone();
     let run = async {
         loop {
@@ -154,11 +155,11 @@ pub async fn dimmer_test(dimmer: &'static mut peripherals::pump_dimmer::ZeroCros
 }
 
 mod tasks {
-    use byte_slice_cast::AsByteSlice;
+
     use defmt::{debug, error};
 
     use embassy_executor::Spawner;
-    use embassy_futures::select::select;
+
     use embassy_rp::gpio::Output;
     use embassy_rp::peripherals::{I2C1, PIN_11, PIN_7, SPI1, USB};
     use embassy_rp::usb::Driver;
@@ -168,16 +169,11 @@ mod tasks {
     use embassy_time::{Duration, Timer};
     use embassy_usb::UsbDevice;
 
-    use heapless::String;
-    use lorawan_device::Device;
-
-    use serde_json_core::to_string;
-
     use crate::client_communicator::ClientCommunicator;
     use crate::sensors::ads1115::Ads1115;
     use crate::sensors::max31855::{Unit, MAX31855};
     use crate::Message::*;
-    use crate::{Message, Runtime, MAX_STRING_SIZE};
+    use crate::{Message, Runtime};
 
     #[embassy_executor::task]
     pub async fn run_usb(usb: &'static mut ClientCommunicator<'static, 1>) {
@@ -297,7 +293,6 @@ fn main() -> ! {
     let usb = &mut client_tuple.1;
     let client = &mut client_tuple.0;
 
-
     let pin = make_static!(Output::new(p.PIN_7, Level::Low));
 
     let watchdog = make_static!(Watchdog::new(p.WATCHDOG));
@@ -354,10 +349,15 @@ fn main() -> ! {
     ));
 
     unwrap!(spawner.spawn(tasks::read_ads(ads, internal_channel.sender())));
-    let signal_channel: &mut Channel<CriticalSectionRawMutex, DimmerCommand, 1> = make_static!(Channel::new());
+    let signal_channel: &mut Channel<CriticalSectionRawMutex, DimmerCommand, 1> =
+        make_static!(Channel::new());
     let zero_cross_pin = Input::new(p.PIN_16, Pull::None);
     let output_pin = Output::new(p.PIN_17, Level::Low);
-    let dimmer = make_static!(peripherals::pump_dimmer::ZeroCrossDimmer::new(zero_cross_pin, output_pin, signal_channel));
+    let dimmer = make_static!(peripherals::pump_dimmer::ZeroCrossDimmer::new(
+        zero_cross_pin,
+        output_pin,
+        signal_channel
+    ));
     unwrap!(spawner.spawn(dimmer_test(dimmer)));
 
     // Low priority executor: runs in thread mode, using WFE/SEV
