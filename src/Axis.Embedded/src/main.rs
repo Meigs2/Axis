@@ -143,10 +143,12 @@ pub trait AxisPeripheral {
 pub async fn dimmer_test(dimmer: &'static mut peripherals::pump_dimmer::ZeroCrossDimmer<'static, PIN_16, PIN_17>) {
     let sender = dimmer.signal.sender().clone();
     let run = async {
-        Timer::after(Duration::from_secs(1)).await;
-        sender.send(DimmerCommand::PercentOn(1.0)).await;
-        Timer::after(Duration::from_secs(1)).await;
-        sender.send(DimmerCommand::Off).await;
+        loop {
+            Timer::after(Duration::from_secs(1)).await;
+            sender.send(DimmerCommand::PercentOn(1.0)).await;
+            Timer::after(Duration::from_secs(1)).await;
+            sender.send(DimmerCommand::Off).await;
+        }
     };
     select(dimmer.run(), run).await;
 }

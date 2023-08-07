@@ -1,5 +1,5 @@
 use core::cell::RefCell;
-use defmt::error;
+use defmt::{debug, error, Format};
 use embassy_futures::select::{select, Either};
 use embassy_rp::gpio::{Input, Output, Pin};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
@@ -15,7 +15,7 @@ pub enum DimmerError {
     NoZeroCross,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Format)]
 pub enum DimmerCommand {
     Off,
     PercentOn(f32),
@@ -70,9 +70,11 @@ impl<'a, Tzc, To> ZeroCrossDimmer<'a, Tzc, To>
 
                 match *self.setting.borrow() {
                     DimmerCommand::Off => {
+                        debug!("Setting: Off");
                         self.output.set_low();
                     }
                     DimmerCommand::PercentOn(p) => {
+                        debug!("Setting Percent On: {:?}", p);
                         let add = (p * max) as u16;
                         let (val, overflow) = self.acc.borrow().overflowing_add(add);
                         self.acc.replace(val);
@@ -101,6 +103,7 @@ impl<'a, Tzc, To> ZeroCrossDimmer<'a, Tzc, To>
     ) -> Result<(), DimmerError> {
         loop {
             let a = signal.recv().await;
+            debug!("Setting new setting value: {:?}", a);
             state.replace(a);
         }
     }
