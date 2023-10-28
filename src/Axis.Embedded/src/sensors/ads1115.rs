@@ -1,6 +1,7 @@
 use bitfield::{bitfield, BitRange};
 use cortex_m::prelude::_embedded_hal_blocking_i2c_Write;
 use defmt::debug;
+use embassy_rp::gpio::Pin;
 
 use embassy_rp::i2c::{Async, Error, Instance};
 
@@ -108,6 +109,17 @@ where
 {
     pub fn new(i2c: embassy_rp::i2c::I2c<'static, I, Async>, config: AdsConfig) -> Self {
         Self { i2c, config }
+    }
+
+    pub fn new_new<TSda, TScl, TIrqs>(i2c: I, scl_pin: TScl, sda_pin: TSda, config: AdsConfig) where TSda: Pin, TScl: Pin, TIrqs:  -> Self {
+        let i2c = embassy_rp::i2c::I2c::new_async(
+            i2c,
+            scl_pin,
+            sda_pin,
+            I2cIrqs,
+            embassy_rp::i2c::Config::default(),
+        );
+
     }
 
     pub fn initialize(&mut self) -> Result<(), Error> {

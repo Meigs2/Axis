@@ -233,7 +233,7 @@ mod tasks {
     }
 
     #[embassy_executor::task]
-    pub async fn read_ads(
+    pub async fn read_task(
         mut ads: Ads1115<'static, I2C1>,
         inbound_sender: Sender<'static, CriticalSectionRawMutex, Message, 1>,
     ) -> ! {
@@ -314,14 +314,6 @@ fn main() -> ! {
     let sda = p.PIN_14;
     let scl = p.PIN_15;
 
-    let i2c = embassy_rp::i2c::I2c::new_async(
-        p.I2C1,
-        scl,
-        sda,
-        I2cIrqs,
-        embassy_rp::i2c::Config::default(),
-    );
-
     let ads_config = AdsConfig {
         sensor_min_voltage: 0.5,
         sensor_max_voltage: 4.5,
@@ -330,7 +322,6 @@ fn main() -> ! {
     };
 
     let mut ads = Ads1115::new(i2c, ads_config);
-    ads.initialize().unwrap();
 
     interrupt::SWI_IRQ_1.set_priority(Priority::P2);
     let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);
@@ -348,7 +339,7 @@ fn main() -> ! {
         thermocouple,
     ));
 
-    unwrap!(spawner.spawn(tasks::read_ads(ads, internal_channel.sender())));
+    unwrap!(spawner.spawn(tasks::read_task(ads, internal_channel.sender())));
     let signal_channel: &mut Channel<CriticalSectionRawMutex, DimmerCommand, 1> =
         make_static!(Channel::new());
     let zero_cross_pin = Input::new(p.PIN_16, Pull::None);
