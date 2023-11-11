@@ -175,6 +175,7 @@
         0.0,
         0.254,
         0.508,
+        0.6,
         1.27,
         1.778,
         2.54
@@ -403,7 +404,7 @@
       "no_connect_dangling": "warning",
       "pin_not_connected": "error",
       "pin_not_driven": "error",
-      "pin_to_pin": "warning",
+      "pin_to_pin": "error",
       "power_pin_not_driven": "error",
       "similar_labels": "warning",
       "simulation_model_issue": "ignore",
