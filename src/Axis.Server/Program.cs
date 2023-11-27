@@ -1,4 +1,5 @@
 using Axis.Core;
+using Axis.Core.Messaging;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Axis.Server.Data;
@@ -10,7 +11,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
 
-builder.Services.AddSingleton<IMasterControlUnit, MasterControlUnit>();
+builder.Services.AddSingleton<IMicrocontroller, Rp2040>();
 
 var app = builder.Build();
 
@@ -31,7 +32,7 @@ app.UseRouting();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
-var mcu = app.Services.GetRequiredService<IMasterControlUnit>();
+var mcu = app.Services.GetRequiredService<IMicrocontroller>();
 
 Task.Run(async () => await mcu.ReadMessagesLoop());
 

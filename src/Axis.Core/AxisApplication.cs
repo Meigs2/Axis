@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Device.Gpio;
-using System.Reflection;
-using Axis.Core.Peripherals;
+using Axis.Core.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Axis.Core;
@@ -25,8 +21,7 @@ public class AxisApplicationBuilder
     {
         configureServices(_services);
         _services.AddSingleton<AxisApplication>();
-        _services.AddSingleton(new GpioController(PinNumberingScheme.Board));
-        _services.AddSingleton<MasterControlUnit>();
+        _services.AddSingleton<Rp2040>();
 
         return this;
     }

@@ -1,10 +1,10 @@
 @page "/Data"
-@inject IJSRuntime JS
-@inject IMasterControlUnit mcu;
 @using System.Reactive.Linq
-@using System.Diagnostics
-@using Axis.Core
+@using Axis.Core.Messaging
 @implements IDisposable
+
+@inject IJSRuntime JS
+@inject IMicrocontroller mcu;
 
 <h3>Data</h3>
 <div class="grid container h-full w-full">
@@ -14,14 +14,11 @@
 @code {
     private IJSObjectReference? jsModule;
     private IDisposable subscription;
-    private Stopwatch _stopwatch;
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            _stopwatch = new Stopwatch();
-            _stopwatch.Start();
             jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "./Pages/Data.razor.js");
 
             subscription = mcu.AdsReadouts.Select(x => AppendData(x.value)).Subscribe();
@@ -38,5 +35,4 @@
         jsModule?.DisposeAsync();
         subscription?.Dispose();
     }
-
 }

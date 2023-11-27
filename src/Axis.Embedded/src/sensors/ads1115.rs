@@ -102,24 +102,12 @@ where
     i2c: embassy_rp::i2c::I2c<'a, I, Async>,
     pub config: AdsConfig,
 }
-
 impl<'a, I> Ads1115<'a, I>
 where
     I: Instance,
 {
     pub fn new(i2c: embassy_rp::i2c::I2c<'static, I, Async>, config: AdsConfig) -> Self {
         Self { i2c, config }
-    }
-
-    pub fn new_new<TSda, TScl, TIrqs>(i2c: I, scl_pin: TScl, sda_pin: TSda, config: AdsConfig) where TSda: Pin, TScl: Pin, TIrqs:  -> Self {
-        let i2c = embassy_rp::i2c::I2c::new_async(
-            i2c,
-            scl_pin,
-            sda_pin,
-            I2cIrqs,
-            embassy_rp::i2c::Config::default(),
-        );
-
     }
 
     pub fn initialize(&mut self) -> Result<(), Error> {

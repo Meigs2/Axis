@@ -2,6 +2,7 @@
 
 using System.Reactive.Linq;
 using Axis.Core;
+using Axis.Core.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 
 Console.WriteLine("Hello, World!");
@@ -10,9 +11,9 @@ var builder = new AxisApplicationBuilder().ConfigureServices(s => { });
 
 var app = builder.Build();
 
-var mcu = app.Services.GetRequiredService<MasterControlUnit>();
+var mcu = app.Services.GetRequiredService<Rp2040>();
 
-var task = Task.Run(async () =>
+Task.Run(async () =>
 {
     while (true)
     {
@@ -25,6 +26,6 @@ Console.ReadKey();
 
 while (true)
 {
-    mcu.Send(new Message.Ping());
+    mcu.Send(new Ping());
     Console.ReadKey();
 }
