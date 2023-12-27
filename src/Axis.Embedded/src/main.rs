@@ -163,7 +163,7 @@ mod tasks {
     use embassy_executor::Spawner;
 
     use embassy_rp::gpio::Output;
-    use embassy_rp::peripherals::{I2C1, PIN_11, PIN_7, SPI1, USB};
+    use embassy_rp::peripherals::{I2C1, PIN_11, PIN_3, PIN_7, SPI0, SPI1, USB};
     use embassy_rp::usb::Driver;
     use embassy_rp::watchdog::Watchdog;
     use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
@@ -220,7 +220,7 @@ mod tasks {
     #[embassy_executor::task]
     pub async fn read_thermocouple(
         inbound_sender: Sender<'static, CriticalSectionRawMutex, Message, 1>,
-        thermocouple: &'static mut MAX31855<'static, SPI1, PIN_11>,
+        thermocouple: &'static mut MAX31855<'static, SPI0, PIN_3>,
     ) {
         loop {
             Timer::after(Duration::from_millis(500)).await;
@@ -300,19 +300,20 @@ fn main() -> ! {
 
     let runtime = make_static!(Runtime::new(external_channel.sender()));
 
-    //let th_clk = p.PIN_10;
-    //let th_miso = p.PIN_12;
-    //let rx_dma = p.DMA_CH3;
+    let max_scl = p.PIN_2;
+    let max_cs = Output::new(p.PIN_3, Level::High);
+    let max_miso = p.PIN_4;
+
+    let max_rx_dma = p.DMA_CH3;
 
     let mut config = embassy_rp::spi::Config::default();
     config.frequency = THERMOCOUPLE_SPI_FREQUENCY;
-    //let thermocouple_spi = make_static!(Spi::new_rxonly(p.SPI1, th_clk, th_miso, rx_dma, config));
+    let th_spi = make_static!(Spi::new_rxonly(p.SPI0, max_scl, max_miso, max_rx_dma, config));
 
-    //let thermocouple_pin = Output::new(p.PIN_11, Level::High);
-    //let thermocouple = make_static!(MAX31855::new(thermocouple_spi, thermocouple_pin));
+    let thermocouple = make_static!(MAX31855::new(th_spi, max_cs));
 
-    let sda = p.PIN_14;
-    let scl = p.PIN_15;
+    let ads_sda = p.PIN_14;
+    let ads_scl = p.PIN_15;
 
     let ads_config = AdsConfig {
         sensor_min_voltage: 0.5,
@@ -323,14 +324,14 @@ fn main() -> ! {
 
     let i2c = embassy_rp::i2c::I2c::new_async(
         p.I2C1,
-        scl,
-        sda,
+        ads_scl,
+        ads_sda,
         I2cIrqs,
         embassy_rp::i2c::Config::default(),
     );
 
-    //let mut ads = Ads1115::new(i2c, ads_config);
-    //ads.initialize().unwrap();
+    let mut ads = Ads1115::new(i2c, ads_config);
+    ads.initialize().unwrap();
 
     interrupt::SWI_IRQ_1.set_priority(Priority::P2);
     let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);
@@ -343,12 +344,12 @@ fn main() -> ! {
         });
     });
 
-/*    let _ = spawner.spawn(tasks::read_thermocouple(
+    let _ = spawner.spawn(tasks::read_thermocouple(
         internal_channel.sender(),
         thermocouple,
     ));
-*/
-    //unwrap!(spawner.spawn(tasks::read_task(ads, internal_channel.sender())));
+
+    unwrap!(spawner.spawn(tasks::read_ads_task(ads, internal_channel.sender())));
 
     let signal_channel: &mut Channel<CriticalSectionRawMutex, DimmerCommand, 1> =
         make_static!(Channel::new());

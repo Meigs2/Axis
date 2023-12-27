@@ -86,6 +86,9 @@ impl<'a> Runtime<'a> {
             reading @ AdsReading { .. } => {
                 self.outbound_sender.send(reading).await;
             }
+            BrewSwitch { .. } => {
+                // Nothing for now
+            }
         }
     }
 }
