@@ -1,0 +1,7 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "MCU_RaspberryPi_and_Boards")(type "KiCad")(uri "${KIPRJMOD}/Libraries/MCU_RaspberryPi_and_Boards.pretty")(options "")(descr ""))
+  (lib (name "RPi_Hat")(type "KiCad")(uri "${KIPRJMOD}/Libraries/RPi_Hat.pretty")(options "")(descr ""))
+  (lib (name "Buttons")(type "KiCad")(uri "${KIPRJMOD}/Libraries/buttons.pretty")(options "")(descr ""))
+  (lib (name "Footprints")(type "KiCad")(uri "${KIPRJMOD}/Libraries/Footprints")(options "")(descr ""))
+)

@@ -1,0 +1,7 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "MCU_RaspberryPi_and_Boards")(type "KiCad")(uri "${KIPRJMOD}/Libraries/MCU_RaspberryPi_and_Boards.kicad_sym")(options "")(descr ""))
+  (lib (name "RPi_Hat")(type "KiCad")(uri "${KIPRJMOD}/Libraries/RPi_Hat.kicad_sym")(options "")(descr ""))
+  (lib (name "Buttons")(type "KiCad")(uri "${KIPRJMOD}/Libraries/Buttons.kicad_sym")(options "")(descr ""))
+  (lib (name "Sleep-lib")(type "KiCad")(uri "${KIPRJMOD}/Libraries/Sleep-lib/Sleep-lib.kicad_sym")(options "")(descr ""))
+)

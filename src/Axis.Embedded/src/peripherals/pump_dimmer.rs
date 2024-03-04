@@ -79,9 +79,11 @@ where
                         self.acc.replace(val);
                         match overflow {
                             true => {
+                                debug!("Setting Output High");
                                 self.output.set_high();
                             }
                             false => {
+                                debug!("Setting Output Low");
                                 self.output.set_low();
                             }
                         }

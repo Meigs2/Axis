@@ -32,8 +32,10 @@ use embassy_rp::watchdog::Watchdog;
 use embassy_rp::{bind_interrupts, interrupt};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Sender};
+use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use embassy_usb::class::cdc_acm::State;
+use log::debug;
 
 use crate::peripherals::pump_dimmer::DimmerCommand;
 use serde::{Deserialize, Serialize};
@@ -50,6 +52,8 @@ bind_interrupts!(struct I2cIrqs {
 pub struct Runtime<'a> {
     outbound_sender: Sender<'a, CriticalSectionRawMutex, Message, 1>,
 }
+
+pub enum SignalFlag {}
 
 impl<'a> Runtime<'a> {
     pub fn new(outbound_sender: Sender<'a, CriticalSectionRawMutex, Message, 1>) -> Self {
@@ -107,6 +111,7 @@ static EXECUTOR_LOW: StaticCell<Executor> = StaticCell::new();
 
 static mut CORE1_STACK: Stack<8192> = Stack::new();
 static EXECUTOR_CORE1: StaticCell<Executor> = StaticCell::new();
+static KILL_SIGNAL: Signal<CriticalSectionRawMutex, SignalFlag> = Signal::new();
 
 #[interrupt]
 unsafe fn SWI_IRQ_1() {
@@ -144,6 +149,7 @@ pub trait AxisPeripheral {
 pub async fn dimmer_test(
     dimmer: &'static mut peripherals::pump_dimmer::ZeroCrossDimmer<'static, PIN_16, PIN_17>,
 ) {
+    debug!("Starting Dimmer Loop");
     let sender = dimmer.signal.sender().clone();
     let run = async {
         loop {
@@ -163,7 +169,8 @@ mod tasks {
     use embassy_executor::Spawner;
 
     use embassy_rp::gpio::Output;
-    use embassy_rp::peripherals::{I2C1, PIN_11, PIN_3, PIN_7, SPI0, SPI1, USB};
+    use embassy_rp::peripherals::{I2C1, PIN_11, PIN_21, PIN_25, PIN_3, PIN_7, SPI0, SPI1, USB};
+    use embassy_rp::spi::Spi;
     use embassy_rp::usb::Driver;
     use embassy_rp::watchdog::Watchdog;
     use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
@@ -207,7 +214,7 @@ mod tasks {
     }
 
     #[embassy_executor::task]
-    pub async fn blink(pin: &'static mut Output<'static, PIN_7>, watchdog: &'static mut Watchdog) {
+    pub async fn blink(pin: &'static mut Output<'static, PIN_25>, watchdog: &'static mut Watchdog) {
         loop {
             pin.set_high();
             Timer::after(Duration::from_millis(500)).await;
@@ -220,17 +227,23 @@ mod tasks {
     #[embassy_executor::task]
     pub async fn read_thermocouple(
         inbound_sender: Sender<'static, CriticalSectionRawMutex, Message, 1>,
-        thermocouple: &'static mut MAX31855<'static, SPI0, PIN_3>,
+        thermocouple: &'static mut MAX31855<'static, SPI0, PIN_21>,
     ) {
         loop {
-            Timer::after(Duration::from_millis(500)).await;
+            Timer::after(Duration::from_millis(100)).await;
             let reading = thermocouple.read_thermocouple(Unit::Fahrenheit).await;
-            debug!("{:?}", reading);
-            inbound_sender
-                .send(ThermocoupleReading {
-                    value: reading.unwrap(),
-                })
-                .await;
+
+            if let Ok(reading) = reading {
+                debug!("{:?}", reading);
+                inbound_sender
+                    .send(ThermocoupleReading {
+                        value: reading,
+                    })
+                    .await;
+            }
+            else {
+                //debug!("No Thermocouple Readout. Disconnected?")
+            }
         }
     }
 
@@ -264,9 +277,13 @@ mod tasks {
     }
 }
 
+
+
 #[cortex_m_rt::entry]
 fn main() -> ! {
     let p = embassy_rp::init(Default::default());
+
+    let blink_pin = make_static!(Output::new(p.PIN_25, Level::Low));
 
     let device_descriptor = make_static!([0u8; 256]);
     let config_descriptor = make_static!([0u8; 256]);
@@ -300,9 +317,9 @@ fn main() -> ! {
 
     let runtime = make_static!(Runtime::new(external_channel.sender()));
 
-    let max_scl = p.PIN_2;
-    let max_cs = Output::new(p.PIN_3, Level::High);
-    let max_miso = p.PIN_4;
+    let max_scl = p.PIN_18;
+    let max_cs = Output::new(p.PIN_21, Level::High);
+    let max_miso = p.PIN_20;
 
     let max_rx_dma = p.DMA_CH3;
 
@@ -349,7 +366,7 @@ fn main() -> ! {
         thermocouple,
     ));
 
-    unwrap!(spawner.spawn(tasks::read_ads_task(ads, internal_channel.sender())));
+    // unwrap!(spawner.spawn(tasks::read_ads_task(ads, internal_channel.sender())));
 
     let signal_channel: &mut Channel<CriticalSectionRawMutex, DimmerCommand, 1> =
         make_static!(Channel::new());
@@ -360,6 +377,7 @@ fn main() -> ! {
         output_pin,
         signal_channel
     ));
+    debug!("Loop");
     unwrap!(spawner.spawn(dimmer_test(dimmer)));
 
     // Low priority executor: runs in thread mode, using WFE/SEV
@@ -370,8 +388,8 @@ fn main() -> ! {
             spawner,
             runtime
         )));
-        //unwrap!(spawner.spawn(tasks::blink(pin, watchdog)));
-    })
+        unwrap!(spawner.spawn(tasks::blink(blink_pin, watchdog)));
+    });
 
     // let c = &*EXTERNAL_CHANNEL.init(Channel::new());
     //
