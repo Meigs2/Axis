@@ -107,7 +107,7 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
         let mut a: String<MAX_STRING_SIZE> = String::new();
         loop {
             a.clear();
-            let m = receiver.recv().await;
+            let m = receiver.receive().await;
             a = to_string(&m).unwrap();
             a.push_str("\r\n").unwrap();
 

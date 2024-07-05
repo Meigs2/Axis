@@ -116,21 +116,19 @@ pub struct FullResult {
 
 const CLOCK_FRQ: u32 = 500_000;
 
-pub struct MAX31855<'a, I, P>
+pub struct MAX31855<'a, I>
 where
     I: Instance,
-    P: Pin,
 {
     spi: &'a mut Spi<'a, I, Async>,
-    dc: Output<'a, P>,
+    dc: Output<'a>,
 }
 
-impl<'a, I, P> MAX31855<'a, I, P>
+impl<'a, I> MAX31855<'a, I>
 where
     I: Instance,
-    P: Pin,
 {
-    pub fn new(spi: &'a mut Spi<'a, I, Async>, dc: Output<'a, P>) -> Self {
+    pub fn new(spi: &'a mut Spi<'a, I, Async>, dc: Output<'a>) -> Self {
         Self { spi, dc }
     }
 

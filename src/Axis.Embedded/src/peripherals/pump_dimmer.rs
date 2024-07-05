@@ -20,28 +20,23 @@ pub enum DimmerCommand {
     PercentOn(f32),
 }
 
-pub struct ZeroCrossDimmer<'a, Tzc, To>
+pub struct ZeroCrossDimmer<'a>
 where
-    Tzc: Pin,
-    To: Pin,
 {
-    zero_cross: Input<'a, Tzc>,
-    output: Output<'a, To>,
+    zero_cross: Input<'a>,
+    output: Output<'a>,
     setting: RefCell<DimmerCommand>,
     acc: RefCell<u16>,
     pub signal: &'a Channel<CriticalSectionRawMutex, DimmerCommand, 1>,
 }
 
-impl<'a, Tzc, To> ZeroCrossDimmer<'a, Tzc, To>
-where
-    Tzc: Pin,
-    To: Pin,
+impl<'a> ZeroCrossDimmer<'a>
 {
     pub fn new(
-        zero_cross_pin: Input<'a, Tzc>,
-        output_pin: Output<'a, To>,
+        zero_cross_pin: Input<'a>,
+        output_pin: Output<'a>,
         signal: &'a Channel<CriticalSectionRawMutex, DimmerCommand, 1>,
-    ) -> ZeroCrossDimmer<'a, Tzc, To> {
+    ) -> ZeroCrossDimmer<'a> {
         Self {
             zero_cross: zero_cross_pin,
             output: output_pin,
@@ -108,7 +103,7 @@ where
         signal: Receiver<'b, CriticalSectionRawMutex, DimmerCommand, 1>,
     ) -> Result<(), DimmerError> {
         loop {
-            let a = signal.recv().await;
+            let a = signal.receive().await;
             debug!("Setting new setting value: {:?}", a);
             state.replace(a);
         }

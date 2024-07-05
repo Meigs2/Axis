@@ -6,7 +6,7 @@
 #![feature(never_type)]
 
 mod client_communicator;
-mod controllers;
+mod systems;
 mod peripherals;
 mod pid;
 mod runtime;
@@ -147,7 +147,7 @@ pub trait AxisPeripheral {
 
 #[embassy_executor::task]
 pub async fn dimmer_test(
-    dimmer: &'static mut peripherals::pump_dimmer::ZeroCrossDimmer<'static, PIN_16, PIN_17>,
+    dimmer: &'static mut peripherals::pump_dimmer::ZeroCrossDimmer<'static>,
 ) {
     debug!("Starting Dimmer Loop");
     let sender = dimmer.signal.sender().clone();
@@ -208,13 +208,13 @@ mod tasks {
         runtime: &'static Runtime<'static>,
     ) {
         loop {
-            let message = inbound_receiver.recv().await;
+            let message = inbound_receiver.receive().await;
             let _ = _spawner.spawn(handle_message(message, runtime));
         }
     }
 
     #[embassy_executor::task]
-    pub async fn blink(pin: &'static mut Output<'static, PIN_25>, watchdog: &'static mut Watchdog) {
+    pub async fn blink(pin: &'static mut Output<'static>, watchdog: &'static mut Watchdog) {
         loop {
             pin.set_high();
             Timer::after(Duration::from_millis(500)).await;
@@ -227,7 +227,7 @@ mod tasks {
     #[embassy_executor::task]
     pub async fn read_thermocouple(
         inbound_sender: Sender<'static, CriticalSectionRawMutex, Message, 1>,
-        thermocouple: &'static mut MAX31855<'static, SPI0, PIN_21>,
+        thermocouple: &'static mut MAX31855<'static, SPI0>,
     ) {
         loop {
             Timer::after(Duration::from_millis(100)).await;

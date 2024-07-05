@@ -7,19 +7,14 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 embassy-embedded-hal = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt"] }
 embassy-sync = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt"] }
-embassy-executor = { git = "https://github.com/Meigs2/embassy.git", features = ["nightly", "arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers"] }
-embassy-time = { git = "https://github.com/Meigs2/embassy.git", features = ["nightly", "unstable-traits", "defmt", "defmt-timestamp-uptime"] }
-embassy-rp = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt", "unstable-traits", "nightly", "unstable-pac", "time-driver", "critical-section-impl"] }
+embassy-executor = { version = "0.5.0", git = "https://github.com/Meigs2/embassy.git", features = ["task-arena-size-98304", "arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers"] }
+embassy-time = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt", "defmt-timestamp-uptime"] }
+embassy-rp = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt", "unstable-pac", "time-driver", "critical-section-impl"] }
 embassy-usb = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt"] }
 embassy-futures = { git = "https://github.com/Meigs2/embassy.git" }
 embassy-usb-logger = { git = "https://github.com/Meigs2/embassy.git" }
-embassy-lora = { git = "https://github.com/Meigs2/embassy.git", features = ["time", "defmt"] }
 cyw43 = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt", "firmware-logs"] }
 cyw43-pio = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt", "overclock"] }
-
-lora-phy = { version = "1" }
-lorawan-device = { version = "0.10.0", default-features = false, features = ["async", "external-lora-phy"] }
-lorawan = { version = "0.7.3", default-features = false, features = ["default-crypto"] }
 
 defmt = "0.3"
 defmt-rtt = "0.4"
@@ -35,15 +30,18 @@ display-interface-spi = "0.4.1"
 byte-slice-cast = { version = "1.2.0", default-features = false }
 smart-leds = "0.3.0"
 
-embedded-hal-1 = { package = "embedded-hal", version = "=1.0.0-alpha.11" }
-embedded-hal-async = "0.2.0-alpha.2"
-embedded-io = { version = "0.4.0", features = ["async", "defmt"] }
+embedded-hal-1 = { package = "embedded-hal", version = "1.0" }
+embedded-hal-async = "1.0"
+embedded-hal-bus = { version = "0.1", features = ["async"] }
+embedded-io-async = { version = "0.6.1", features = ["defmt-03"] }
 embedded-storage = { version = "0.3" }
-static_cell = { version = "1.1", features = ["nightly"]}
+static_cell = { version = "2", features = ["nightly"] }
+portable-atomic = { version = "1.5", features = ["critical-section"] }
 log = "0.4"
 pio-proc = "0.2"
 pio = "0.2.1"
 rand = { version = "0.8.5", default-features = false }
+embedded-sdmmc = "0.7.0"
 thiserror-no-std = "2.0.2"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde-json-core = {version = "0.5.0", features = ["custom-error-messages"] }
