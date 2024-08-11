@@ -1,4 +1,4 @@
-use embassy_rp::gpio::{Output, Pin};
+use embassy_rp::gpio::{Output};
 
 use embassy_rp::spi::{Async, Instance, Spi};
 

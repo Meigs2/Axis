@@ -1,7 +1,7 @@
 use core::cell::RefCell;
 use defmt::{debug, error, Format};
 use embassy_futures::select::{select, Either};
-use embassy_rp::gpio::{Input, Output, Pin};
+use embassy_rp::gpio::{Input, Output};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::channel::{Channel, Receiver};
 

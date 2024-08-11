@@ -1,3 +1,5 @@
 pub mod pump_dimmer;
-pub mod solenoid_relay;
-pub mod solid_state_relay;
+pub mod ads1115;
+pub mod max31855;
+
+pub mod tca9534;

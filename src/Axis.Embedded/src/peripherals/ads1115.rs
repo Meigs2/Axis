@@ -1,14 +1,11 @@
-use bitfield::{bitfield, BitRange};
+use bitfield::bitfield;
 use cortex_m::prelude::_embedded_hal_blocking_i2c_Write;
 use defmt::debug;
-use embassy_rp::gpio::Pin;
-
 use embassy_rp::i2c::{Async, Error, Instance};
-
-use {defmt_rtt as _, panic_probe as _};
 
 bitfield! {
     // Define a new type `ConfigRegister` with base type u16 (as the ADS1115 config register is 16 bits)
+    #[derive(Clone, Copy)]
     pub struct ConfigRegister(u16);
     impl Debug;
 
