@@ -1,0 +1,5 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "Project_Library")(type "KiCad")(uri "${KIPRJMOD}/libs/Project_Library.kicad_sym")(options "")(descr ""))
+  (lib (name "MCU_RaspebbyPi_and_Boards")(type "KiCad")(uri "${KIPRJMOD}/libs/MCU_RaspberryPi_and_Boards.kicad_sym")(options "")(descr ""))
+)
