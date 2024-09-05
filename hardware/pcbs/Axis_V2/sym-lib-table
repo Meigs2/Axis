@@ -2,4 +2,5 @@
   (version 7)
   (lib (name "Project_Library")(type "KiCad")(uri "${KIPRJMOD}/libs/Project_Library.kicad_sym")(options "")(descr ""))
   (lib (name "MCU_RaspebbyPi_and_Boards")(type "KiCad")(uri "${KIPRJMOD}/libs/MCU_RaspberryPi_and_Boards.kicad_sym")(options "")(descr ""))
+  (lib (name "Button Cell")(type "KiCad")(uri "${KIPRJMOD}/libs/BU2032SM-BT-GTR.kicad_sym")(options "")(descr ""))
 )
