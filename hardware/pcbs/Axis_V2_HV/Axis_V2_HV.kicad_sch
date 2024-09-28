@@ -6092,6 +6092,16 @@
 		)
 		(uuid "98965a72-9ad9-407a-840c-126a6280e650")
 	)
+	(text "Fuse Holders:\n\n	\nSCHURTER 0031.8201"
+		(exclude_from_sim no)
+		(at 254.254 108.204 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "c3225654-f386-4f71-bcd2-2466292bf0fd")
+	)
 	(text "Snubber Caps are X2 Rated\n\nB32921C3104M289"
 		(exclude_from_sim no)
 		(at 172.72 84.582 0)
