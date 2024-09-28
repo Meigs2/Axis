@@ -1777,7 +1777,7 @@
 				)
 			)
 		)
-		(symbol "Interface_Expansion:PCA9544AD"
+		(symbol "Interface_Expansion:PCA9544APW"
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
@@ -1789,16 +1789,16 @@
 					)
 				)
 			)
-			(property "Value" "PCA9544AD"
-				(at 6.35 21.59 0)
+			(property "Value" "PCA9544APW"
+				(at 7.62 21.59 0)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
 				)
 			)
-			(property "Footprint" "Package_SO:SOIC-20W_7.5x12.8mm_P1.27mm"
-				(at 25.4 -21.59 0)
+			(property "Footprint" "Package_SO:TSSOP-20_4.4x6.5mm_P0.65mm"
+				(at 27.94 -21.59 0)
 				(effects
 					(font
 						(size 1.27 1.27)
@@ -1815,7 +1815,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "4-channel I2C-bus multiplexer with interrupt logic, SOIC-20"
+			(property "Description" "4-channel I2C-bus multiplexer with interrupt logic, TSSOP-20"
 				(at 0 0 0)
 				(effects
 					(font
@@ -1833,7 +1833,7 @@
 					(hide yes)
 				)
 			)
-			(property "ki_fp_filters" "SOIC*7.5x12.8mm*P1.27mm*"
+			(property "ki_fp_filters" "TSSOP*4.4x6.5mm*P0.65mm*"
 				(at 0 0 0)
 				(effects
 					(font
@@ -1842,7 +1842,7 @@
 					(hide yes)
 				)
 			)
-			(symbol "PCA9544AD_0_1"
+			(symbol "PCA9544APW_0_1"
 				(rectangle
 					(start 10.16 20.32)
 					(end -10.16 -20.32)
@@ -1855,7 +1855,7 @@
 					)
 				)
 			)
-			(symbol "PCA9544AD_1_1"
+			(symbol "PCA9544APW_1_1"
 				(pin input line
 					(at -12.7 -12.7 0)
 					(length 2.54)
@@ -5451,6 +5451,12 @@
 		(uuid "9ab75de8-b346-48e0-a9c4-16629f418550")
 	)
 	(junction
+		(at 264.16 180.34)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "9cfcedc1-8149-4640-af0a-8de25a07b5ad")
+	)
+	(junction
 		(at 119.38 147.32)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -5485,6 +5491,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "c4972971-f1b4-4c26-ae41-6a91991e1edd")
+	)
+	(junction
+		(at 257.81 167.64)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c9c9c691-a08d-433a-b998-c88839ed924a")
 	)
 	(junction
 		(at 101.6 72.39)
@@ -5541,10 +5553,6 @@
 		(uuid "fb390fb5-14cc-4f78-98fe-55bff44777a9")
 	)
 	(no_connect
-		(at 270.51 146.05)
-		(uuid "2484f7fe-2734-4c14-bb80-4ed137bfdd51")
-	)
-	(no_connect
 		(at 74.93 92.71)
 		(uuid "24fb3920-47eb-4d52-9d8a-e7abfa43e686")
 	)
@@ -5573,7 +5581,7 @@
 		(uuid "7d62ab16-0345-405a-890c-b1c83a82de19")
 	)
 	(no_connect
-		(at 162.56 194.31)
+		(at 162.56 151.13)
 		(uuid "8ebb354e-635f-4b41-b474-41e544f33d78")
 	)
 	(no_connect
@@ -5581,7 +5589,7 @@
 		(uuid "9e362bf3-3591-4756-bb3c-34b1734354e8")
 	)
 	(no_connect
-		(at 187.96 184.15)
+		(at 187.96 140.97)
 		(uuid "f6bb15ff-6d0e-47e9-be01-aef15d628bb4")
 	)
 	(no_connect
@@ -5600,7 +5608,7 @@
 	)
 	(wire
 		(pts
-			(xy 177.8 179.07) (xy 175.26 179.07)
+			(xy 177.8 135.89) (xy 175.26 135.89)
 		)
 		(stroke
 			(width 0)
@@ -5667,16 +5675,6 @@
 			(type default)
 		)
 		(uuid "06bf050a-d6e9-41a1-baee-a94d75c02728")
-	)
-	(wire
-		(pts
-			(xy 152.4 137.16) (xy 165.1 137.16)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "07d775fd-5ab8-4abd-99b0-f67346998b0d")
 	)
 	(wire
 		(pts
@@ -5870,16 +5868,6 @@
 	)
 	(wire
 		(pts
-			(xy 152.4 139.7) (xy 165.1 139.7)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "1d5c9e91-5770-4d98-bbe4-fbe67d81d329")
-	)
-	(wire
-		(pts
 			(xy 74.93 62.23) (xy 88.9 62.23)
 		)
 		(stroke
@@ -5990,7 +5978,7 @@
 	)
 	(wire
 		(pts
-			(xy 257.81 177.8) (xy 270.51 177.8)
+			(xy 257.81 177.8) (xy 276.86 177.8)
 		)
 		(stroke
 			(width 0)
@@ -6230,7 +6218,7 @@
 	)
 	(wire
 		(pts
-			(xy 170.18 179.07) (xy 172.72 179.07)
+			(xy 170.18 135.89) (xy 172.72 135.89)
 		)
 		(stroke
 			(width 0)
@@ -6290,7 +6278,7 @@
 	)
 	(wire
 		(pts
-			(xy 149.86 186.69) (xy 162.56 186.69)
+			(xy 149.86 143.51) (xy 162.56 143.51)
 		)
 		(stroke
 			(width 0)
@@ -6340,7 +6328,7 @@
 	)
 	(wire
 		(pts
-			(xy 177.8 177.8) (xy 177.8 179.07)
+			(xy 177.8 134.62) (xy 177.8 135.89)
 		)
 		(stroke
 			(width 0)
@@ -6360,13 +6348,13 @@
 	)
 	(wire
 		(pts
-			(xy 200.66 143.51) (xy 200.66 144.78)
+			(xy 264.16 173.99) (xy 264.16 180.34)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "49521b4c-5d3f-4c7e-abc7-e8228a7c0375")
+		(uuid "4a833870-a75a-4c81-b7da-00d4c54a97ae")
 	)
 	(wire
 		(pts
@@ -6480,16 +6468,6 @@
 	)
 	(wire
 		(pts
-			(xy 185.42 144.78) (xy 200.66 144.78)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "5475064b-5daf-4497-a3cd-04190da72a18")
-	)
-	(wire
-		(pts
 			(xy 311.15 167.64) (xy 317.5 167.64)
 		)
 		(stroke
@@ -6520,7 +6498,7 @@
 	)
 	(wire
 		(pts
-			(xy 187.96 191.77) (xy 200.66 191.77)
+			(xy 187.96 148.59) (xy 200.66 148.59)
 		)
 		(stroke
 			(width 0)
@@ -6537,6 +6515,16 @@
 			(type default)
 		)
 		(uuid "5960feab-c588-449c-870b-db436fa30c2f")
+	)
+	(wire
+		(pts
+			(xy 264.16 180.34) (xy 276.86 180.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5993a8e3-0eb9-4c24-b469-54dd813f541a")
 	)
 	(wire
 		(pts
@@ -6667,16 +6655,6 @@
 			(type default)
 		)
 		(uuid "61775717-046f-424c-b791-ec77111456e2")
-	)
-	(wire
-		(pts
-			(xy 175.26 130.81) (xy 175.26 132.08)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "621816e9-930d-40a7-8810-c4e9db901203")
 	)
 	(wire
 		(pts
@@ -7120,16 +7098,6 @@
 	)
 	(wire
 		(pts
-			(xy 152.4 144.78) (xy 165.1 144.78)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7c49aba6-1c06-44ff-837b-7f2ce7e1ac80")
-	)
-	(wire
-		(pts
 			(xy 105.41 189.23) (xy 116.84 189.23)
 		)
 		(stroke
@@ -7140,7 +7108,7 @@
 	)
 	(wire
 		(pts
-			(xy 210.82 182.88) (xy 210.82 184.15)
+			(xy 210.82 139.7) (xy 210.82 140.97)
 		)
 		(stroke
 			(width 0)
@@ -7300,6 +7268,16 @@
 	)
 	(wire
 		(pts
+			(xy 241.3 180.34) (xy 264.16 180.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "89f6d591-1125-4b57-9983-a2b436d2415e")
+	)
+	(wire
+		(pts
 			(xy 265.43 71.12) (xy 265.43 72.39)
 		)
 		(stroke
@@ -7380,16 +7358,6 @@
 	)
 	(wire
 		(pts
-			(xy 200.66 140.97) (xy 200.66 139.7)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "922d2106-2754-4b8e-838b-62d947f01455")
-	)
-	(wire
-		(pts
 			(xy 119.38 147.32) (xy 130.81 147.32)
 		)
 		(stroke
@@ -7400,7 +7368,7 @@
 	)
 	(wire
 		(pts
-			(xy 140.97 190.5) (xy 140.97 193.04)
+			(xy 140.97 147.32) (xy 140.97 149.86)
 		)
 		(stroke
 			(width 0)
@@ -7450,7 +7418,7 @@
 	)
 	(wire
 		(pts
-			(xy 210.82 191.77) (xy 210.82 193.04)
+			(xy 210.82 148.59) (xy 210.82 149.86)
 		)
 		(stroke
 			(width 0)
@@ -7610,6 +7578,16 @@
 	)
 	(wire
 		(pts
+			(xy 264.16 168.91) (xy 264.16 167.64)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9ed23b98-7e5d-4603-a6eb-f960eb5bca54")
+	)
+	(wire
+		(pts
 			(xy 34.29 110.49) (xy 34.29 113.03)
 		)
 		(stroke
@@ -7650,7 +7628,7 @@
 	)
 	(wire
 		(pts
-			(xy 140.97 182.88) (xy 140.97 185.42)
+			(xy 140.97 139.7) (xy 140.97 142.24)
 		)
 		(stroke
 			(width 0)
@@ -7770,7 +7748,7 @@
 	)
 	(wire
 		(pts
-			(xy 251.46 175.26) (xy 270.51 175.26)
+			(xy 251.46 175.26) (xy 276.86 175.26)
 		)
 		(stroke
 			(width 0)
@@ -7900,6 +7878,16 @@
 	)
 	(wire
 		(pts
+			(xy 264.16 167.64) (xy 257.81 167.64)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b6c8bd13-4294-4e18-b469-cbaaea182e52")
+	)
+	(wire
+		(pts
 			(xy 34.29 110.49) (xy 36.83 110.49)
 		)
 		(stroke
@@ -7947,16 +7935,6 @@
 			(type default)
 		)
 		(uuid "bd5b633a-7562-4697-b41a-d60b0190ed8b")
-	)
-	(wire
-		(pts
-			(xy 143.51 137.16) (xy 143.51 138.43)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c1ad0cd8-4572-45f9-b269-ba021fcd8db2")
 	)
 	(wire
 		(pts
@@ -8010,23 +7988,13 @@
 	)
 	(wire
 		(pts
-			(xy 175.26 199.39) (xy 175.26 200.66)
+			(xy 175.26 156.21) (xy 175.26 157.48)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "c3a797ca-7fcc-4575-a05d-6c5dc3178158")
-	)
-	(wire
-		(pts
-			(xy 185.42 139.7) (xy 200.66 139.7)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c598726c-6c5f-43de-b716-54ee587a5b8f")
 	)
 	(wire
 		(pts
@@ -8250,7 +8218,7 @@
 	)
 	(wire
 		(pts
-			(xy 170.18 177.8) (xy 170.18 179.07)
+			(xy 170.18 134.62) (xy 170.18 135.89)
 		)
 		(stroke
 			(width 0)
@@ -8490,13 +8458,13 @@
 	)
 	(wire
 		(pts
-			(xy 143.51 143.51) (xy 143.51 144.78)
+			(xy 270.51 146.05) (xy 285.75 146.05)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "f3c23700-1777-4b51-b8c5-c95916bf1cc1")
+		(uuid "f3c928ff-5dae-46e1-b0e0-76e3443add52")
 	)
 	(wire
 		(pts
@@ -8530,7 +8498,7 @@
 	)
 	(wire
 		(pts
-			(xy 149.86 184.15) (xy 162.56 184.15)
+			(xy 149.86 140.97) (xy 162.56 140.97)
 		)
 		(stroke
 			(width 0)
@@ -8567,16 +8535,6 @@
 			(type default)
 		)
 		(uuid "f95fe363-5150-4589-a3be-d3a939168792")
-	)
-	(wire
-		(pts
-			(xy 175.26 152.4) (xy 175.26 153.67)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "f9bc4c94-cf72-489f-98b2-4fc92ffe1a0a")
 	)
 	(wire
 		(pts
@@ -8661,8 +8619,8 @@
 		(uuid 02b3c9c0-4bf1-4db5-b056-3854e801ecea)
 	)
 	(rectangle
-		(start 132.715 165.1)
-		(end 226.06 208.28)
+		(start 132.715 121.92)
+		(end 226.06 165.1)
 		(stroke
 			(width 0)
 			(type default)
@@ -8745,8 +8703,8 @@
 		(uuid dd3ecb46-07dd-4a99-8e45-168d3d1cc743)
 	)
 	(rectangle
-		(start 132.715 70.485)
-		(end 226.06 165.1)
+		(start 132.715 69.215)
+		(end 226.06 121.92)
 		(stroke
 			(width 0)
 			(type default)
@@ -8844,7 +8802,7 @@
 	)
 	(text "Real-Time Clock"
 		(exclude_from_sim no)
-		(at 179.07 166.878 0)
+		(at 179.07 123.698 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -8894,19 +8852,21 @@
 		)
 		(uuid "d3b77938-059d-46de-9f8c-ba570947fcb6")
 	)
-	(label "~{SPI0_CS1}"
-		(at 152.4 144.78 0)
-		(fields_autoplaced yes)
+	(text "SM03B-SRSS-TB"
+		(exclude_from_sim no)
+		(at 112.268 21.844 0)
 		(effects
 			(font
 				(size 1.27 1.27)
+				(thickness 0.254)
+				(bold yes)
 			)
-			(justify left bottom)
+			(justify top)
 		)
-		(uuid "0072c0cc-3274-4066-bf71-6100e40fbd00")
+		(uuid "e946ae86-1e6b-4f1e-8bb3-2aa03fbff3ee")
 	)
 	(label "~{TIMER_INT}"
-		(at 200.66 191.77 180)
+		(at 200.66 148.59 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -9004,19 +8964,8 @@
 		)
 		(uuid "13846abf-d1be-44ff-a2af-73f35efcc621")
 	)
-	(label "THCPL2_NEG"
-		(at 199.39 144.78 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "15944eff-c8ae-4248-9810-1c7a7bd7b9b2")
-	)
 	(label "HV_SCL"
-		(at 270.51 177.8 180)
+		(at 276.86 177.8 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -9257,17 +9206,6 @@
 		)
 		(uuid "358efecc-c01d-475d-bf62-9c8d22d8c3f4")
 	)
-	(label "SPI0_RX"
-		(at 152.4 139.7 0)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "390d4ec7-900b-4bb1-92f9-286da418302e")
-	)
 	(label "ADC_0"
 		(at 316.23 45.72 0)
 		(fields_autoplaced yes)
@@ -9313,7 +9251,7 @@
 		(uuid "473730e8-5a0b-4cc9-87cb-88d14c0bed0d")
 	)
 	(label "HV_SDA"
-		(at 270.51 175.26 180)
+		(at 276.86 175.26 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -9411,17 +9349,6 @@
 		)
 		(uuid "5c63569f-355f-47a2-89db-79e5758719ef")
 	)
-	(label "THCPL2_POS"
-		(at 199.39 139.7 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "5f5b32db-5f22-4e69-9a10-7af5fcacf82f")
-	)
 	(label "GPIO5"
 		(at 80.01 189.23 0)
 		(fields_autoplaced yes)
@@ -9488,6 +9415,17 @@
 		)
 		(uuid "6446f1e6-80c6-4595-a069-850d8bf20bca")
 	)
+	(label "~{INT_3}"
+		(at 285.75 146.05 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "65a63e16-49d7-43f4-923f-5d321ba50f28")
+	)
 	(label "IO_1"
 		(at 191.77 35.56 180)
 		(fields_autoplaced yes)
@@ -9531,6 +9469,28 @@
 			(justify right bottom)
 		)
 		(uuid "6e7b2b60-3d60-48a0-b136-2f07c963d512")
+	)
+	(label "~{INT_3}"
+		(at 276.86 180.34 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "71167b5d-c685-4056-a01c-1b8e0e94fbd2")
+	)
+	(label "~{INT_3}"
+		(at 241.3 180.34 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "72e00282-2b63-4fb4-a5a3-84f235057452")
 	)
 	(label "UART_TX"
 		(at 102.87 52.07 0)
@@ -9984,7 +9944,7 @@
 		(uuid "c767bf92-8da6-4bfd-a5de-90185d53a953")
 	)
 	(label "TIMER_SCL"
-		(at 149.86 184.15 0)
+		(at 149.86 140.97 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -10061,7 +10021,7 @@
 		(uuid "dc8d8ab3-9d1e-480c-b93b-728108e97054")
 	)
 	(label "TIMER_SDA"
-		(at 149.86 186.69 0)
+		(at 149.86 143.51 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -10103,17 +10063,6 @@
 			(justify left bottom)
 		)
 		(uuid "e5db0256-c4ca-49b8-a767-c3d5e1a4bd69")
-	)
-	(label "SPI0_SCK"
-		(at 152.4 137.16 0)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "eb290823-303f-4f48-82a7-0310c60a662c")
 	)
 	(label "GPIO3"
 		(at 88.9 46.99 180)
@@ -10250,7 +10199,7 @@
 			(uuid "d6476201-e1d9-44dd-8521-881e64cda5c7")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR045")
 					(unit 1)
@@ -10316,7 +10265,7 @@
 			(uuid "a3bbc088-ea74-4dec-8c22-b7d53be61495")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR058")
 					(unit 1)
@@ -10352,7 +10301,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
 			(at 22.86 147.32 0)
 			(effects
 				(font
@@ -10386,7 +10335,7 @@
 			(uuid "c1ef2fb9-271f-4019-bca7-4266534776e9")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "C7")
 					(unit 1)
@@ -10422,7 +10371,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
 			(at 237.49 114.3 0)
 			(effects
 				(font
@@ -10456,7 +10405,7 @@
 			(uuid "33eb0535-3682-4616-a228-623c511057c4")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "C5")
 					(unit 1)
@@ -10492,7 +10441,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
 			(at 255.27 31.75 0)
 			(effects
 				(font
@@ -10526,7 +10475,7 @@
 			(uuid "dc44f71d-6d83-494c-82c3-eb3203f5d6a0")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "C2")
 					(unit 1)
@@ -10592,7 +10541,7 @@
 			(uuid "a634d1b0-a85d-462c-b54d-6d20a0a76f8b")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR048")
 					(unit 1)
@@ -10666,7 +10615,7 @@
 			(uuid "3acc8f1e-0d2a-4f47-ac48-aa7e95e32cda")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "U7")
 					(unit 1)
@@ -10731,7 +10680,7 @@
 			(uuid "619bf980-f5be-4b23-af66-2bbc264453d9")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR052")
 					(unit 1)
@@ -10741,7 +10690,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 175.26 200.66 0)
+		(at 175.26 157.48 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -10749,7 +10698,7 @@
 		(dnp no)
 		(uuid "0e3d0a7a-2c88-49f2-9ca4-7cffa01f803d")
 		(property "Reference" "#PWR072"
-			(at 175.26 207.01 0)
+			(at 175.26 163.83 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10758,7 +10707,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 175.387 205.0542 0)
+			(at 175.387 161.8742 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10766,7 +10715,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 175.26 200.66 0)
+			(at 175.26 157.48 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10775,7 +10724,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 175.26 200.66 0)
+			(at 175.26 157.48 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10784,7 +10733,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 175.26 200.66 0)
+			(at 175.26 157.48 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10796,7 +10745,7 @@
 			(uuid "310e640f-e756-4591-aa80-bd959ce384b8")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR072")
 					(unit 1)
@@ -10806,7 +10755,7 @@
 	)
 	(symbol
 		(lib_id "Device:Battery_Cell")
-		(at 210.82 189.23 0)
+		(at 210.82 146.05 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -10815,7 +10764,7 @@
 		(fields_autoplaced yes)
 		(uuid "0f22b84f-058e-4f98-92d8-d597f719a005")
 		(property "Reference" "BT1"
-			(at 214.63 186.1184 0)
+			(at 214.63 142.9384 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10824,7 +10773,7 @@
 			)
 		)
 		(property "Value" "BA2032"
-			(at 214.63 188.6584 0)
+			(at 214.63 145.4784 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10833,7 +10782,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 210.82 187.706 90)
+			(at 210.82 144.526 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10842,7 +10791,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.digikey.com/en/products/detail/mpd-memory-protection-devices/BU2032SM-BT-GTR/2439521"
-			(at 210.82 187.706 90)
+			(at 210.82 144.526 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10851,7 +10800,7 @@
 			)
 		)
 		(property "Description" "Single-cell battery"
-			(at 210.82 189.23 0)
+			(at 210.82 146.05 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10866,7 +10815,7 @@
 			(uuid "62c9ab16-f04f-4429-8a9d-5cfa6f5808e0")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "BT1")
 					(unit 1)
@@ -10933,7 +10882,7 @@
 			(uuid "4312395d-397e-4f72-a2ed-c041a2f217b0")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR029")
 					(unit 1)
@@ -10943,7 +10892,7 @@
 	)
 	(symbol
 		(lib_id "power:+BATT")
-		(at 210.82 182.88 0)
+		(at 210.82 139.7 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -10952,7 +10901,7 @@
 		(fields_autoplaced yes)
 		(uuid "13736eaa-1133-435f-bc06-2f1d4e36c50c")
 		(property "Reference" "#PWR065"
-			(at 210.82 186.69 0)
+			(at 210.82 143.51 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10961,7 +10910,7 @@
 			)
 		)
 		(property "Value" "+BATT"
-			(at 210.82 177.8 0)
+			(at 210.82 134.62 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10969,7 +10918,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 210.82 182.88 0)
+			(at 210.82 139.7 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10978,7 +10927,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 210.82 182.88 0)
+			(at 210.82 139.7 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10987,7 +10936,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+BATT\""
-			(at 210.82 182.88 0)
+			(at 210.82 139.7 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10999,7 +10948,7 @@
 			(uuid "1106e5a0-e183-4087-9625-f720ac194cd4")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR065")
 					(unit 1)
@@ -11034,7 +10983,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 318.77 138.43 0)
 			(effects
 				(font
@@ -11068,7 +11017,7 @@
 			(uuid "9b6255e5-f155-4f08-b8a2-a05d8e5dab49")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R11")
 					(unit 1)
@@ -11149,7 +11098,7 @@
 			(uuid "cd58bbfe-2411-4611-9d06-19e245c7ea58")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "J8")
 					(unit 1)
@@ -11214,7 +11163,7 @@
 			(uuid "e1d3ac77-7d03-432c-b143-12d1a6508942")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR017")
 					(unit 1)
@@ -11249,7 +11198,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 312.42 138.43 0)
 			(effects
 				(font
@@ -11283,7 +11232,7 @@
 			(uuid "294e7fe8-de5a-4ada-9c5f-5fdaaf76d270")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R10")
 					(unit 1)
@@ -11318,7 +11267,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 311.15 171.45 0)
 			(effects
 				(font
@@ -11352,7 +11301,7 @@
 			(uuid "f168a322-d43c-4f22-ab80-7a8fa9ad521d")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R16")
 					(unit 1)
@@ -11433,7 +11382,7 @@
 			(uuid "793c3dd3-e522-4bae-9b48-23a035041951")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "J7")
 					(unit 1)
@@ -11443,7 +11392,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 140.97 193.04 0)
+		(at 140.97 149.86 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -11451,7 +11400,7 @@
 		(dnp no)
 		(uuid "2201c5e4-44c3-4de7-92fb-de4539a44b83")
 		(property "Reference" "#PWR066"
-			(at 140.97 199.39 0)
+			(at 140.97 156.21 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11460,7 +11409,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 141.097 197.4342 0)
+			(at 141.097 154.2542 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11468,7 +11417,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 140.97 193.04 0)
+			(at 140.97 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11477,7 +11426,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 140.97 193.04 0)
+			(at 140.97 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11486,7 +11435,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 140.97 193.04 0)
+			(at 140.97 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11498,7 +11447,7 @@
 			(uuid "a2ee9e02-fc5e-4779-bee4-19da685d9e43")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR066")
 					(unit 1)
@@ -11534,7 +11483,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
 			(at 246.38 31.75 0)
 			(effects
 				(font
@@ -11568,7 +11517,7 @@
 			(uuid "bcb0512b-7f2a-4664-b506-30415ff1acb1")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "C1")
 					(unit 1)
@@ -11633,7 +11582,7 @@
 			(uuid "babb0395-d11e-4d78-83f4-7dcea7a860be")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR043")
 					(unit 1)
@@ -11699,7 +11648,7 @@
 			(uuid "46049fcf-2e3f-4122-a50e-d6989d649f41")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR041")
 					(unit 1)
@@ -11765,7 +11714,7 @@
 			(uuid "d2866e86-4b49-4bfb-bc16-b7753b869573")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR062")
 					(unit 1)
@@ -11830,74 +11779,9 @@
 			(uuid "1b33272e-44df-4209-abe3-3ca86f1774d4")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR018")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND")
-		(at 143.51 144.78 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "3190e6db-847a-48cb-b96d-0e4f42fa1905")
-		(property "Reference" "#PWR044"
-			(at 143.51 151.13 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "GND"
-			(at 143.637 149.1742 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 143.51 144.78 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 143.51 144.78 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 143.51 144.78 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "a90a8813-fcad-4a13-a873-dae9165b2831")
-		)
-		(instances
-			(project "Axis_V2"
-				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
-					(reference "#PWR044")
 					(unit 1)
 				)
 			)
@@ -11930,7 +11814,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 107.95 91.44 0)
 			(effects
 				(font
@@ -11964,7 +11848,7 @@
 			(uuid "15d01dbb-eab9-4e08-8ed0-d1160915e1cb")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R6")
 					(unit 1)
@@ -12029,7 +11913,7 @@
 			(uuid "cd448cb6-af19-4afb-bdfb-32faeb907b3f")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR046")
 					(unit 1)
@@ -12039,7 +11923,7 @@
 	)
 	(symbol
 		(lib_id "Mechanical:MountingHole")
-		(at 19.05 222.25 0)
+		(at 158.75 180.34 0)
 		(unit 1)
 		(exclude_from_sim yes)
 		(in_bom no)
@@ -12048,7 +11932,7 @@
 		(fields_autoplaced yes)
 		(uuid "364c835f-62b7-45f8-90ad-1f33262a0bce")
 		(property "Reference" "H2"
-			(at 21.59 220.9799 0)
+			(at 161.29 179.0699 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12057,7 +11941,7 @@
 			)
 		)
 		(property "Value" "MountingHole"
-			(at 21.59 223.5199 0)
+			(at 161.29 181.6099 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12066,7 +11950,7 @@
 			)
 		)
 		(property "Footprint" "MountingHole:MountingHole_2.7mm_M2.5"
-			(at 19.05 222.25 0)
+			(at 158.75 180.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12075,7 +11959,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 19.05 222.25 0)
+			(at 158.75 180.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12084,7 +11968,7 @@
 			)
 		)
 		(property "Description" "Mounting Hole without connection"
-			(at 19.05 222.25 0)
+			(at 158.75 180.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12093,7 +11977,7 @@
 			)
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "H2")
 					(unit 1)
@@ -12128,7 +12012,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 251.46 171.45 0)
 			(effects
 				(font
@@ -12162,7 +12046,7 @@
 			(uuid "fc28074d-fc21-4d77-b3f3-67d347daac8e")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R13")
 					(unit 1)
@@ -12197,7 +12081,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 323.85 171.45 0)
 			(effects
 				(font
@@ -12231,7 +12115,7 @@
 			(uuid "ba521652-f6a7-403f-b457-6814fa1f591f")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R18")
 					(unit 1)
@@ -12319,7 +12203,7 @@
 			(uuid "94c7c0a7-6f72-4416-b28b-c998660b4894")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "J9")
 					(unit 1)
@@ -12386,7 +12270,7 @@
 			(uuid "df6e9bd3-9a2c-48a7-822a-52edb4682c1f")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR057")
 					(unit 1)
@@ -12453,7 +12337,7 @@
 			(uuid "58d48a49-25ac-4c78-97ee-3b64a8b3475f")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR042")
 					(unit 1)
@@ -12518,7 +12402,7 @@
 			(uuid "61fe9613-25c8-4a6f-ace5-b77fed959f3b")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR015")
 					(unit 1)
@@ -12584,7 +12468,7 @@
 			(uuid "5078c569-6102-44d5-8812-8d1cd6f4110d")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR063")
 					(unit 1)
@@ -12619,7 +12503,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 95.25 66.04 0)
 			(effects
 				(font
@@ -12653,7 +12537,7 @@
 			(uuid "182b657d-b6d0-4e6c-b832-3174d0685b24")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R1")
 					(unit 1)
@@ -12688,7 +12572,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 317.5 171.45 0)
 			(effects
 				(font
@@ -12722,79 +12606,9 @@
 			(uuid "1ae0f974-f937-4342-a3d2-3e39ed459c87")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R17")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:C_Small")
-		(at 143.51 140.97 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "4c17a829-27ce-42e9-8623-74281436cb1e")
-		(property "Reference" "C6"
-			(at 146.05 139.7062 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "0.1u"
-			(at 146.05 142.2462 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
-			(at 143.51 140.97 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 143.51 140.97 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Unpolarized capacitor, small symbol"
-			(at 143.51 140.97 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "ec938c62-a972-450b-9e2e-993cdc11cb75")
-		)
-		(pin "2"
-			(uuid "2d9c315d-ebff-49e0-a7d4-d5119b18e8de")
-		)
-		(instances
-			(project "Axis_V2"
-				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
-					(reference "C6")
 					(unit 1)
 				)
 			)
@@ -12828,7 +12642,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
 			(at 119.38 151.13 0)
 			(effects
 				(font
@@ -12862,7 +12676,7 @@
 			(uuid "30ce2888-e50f-44da-8ff2-d1f4ad4d6600")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "C9")
 					(unit 1)
@@ -12948,7 +12762,7 @@
 			(uuid "b8104f81-100b-4973-894b-740e8d6280c7")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "U4")
 					(unit 1)
@@ -13034,7 +12848,7 @@
 			(uuid "f7bbb7d0-1e42-4a67-b98b-ce7560cb1431")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "SW1")
 					(unit 1)
@@ -13069,7 +12883,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 257.81 171.45 0)
 			(effects
 				(font
@@ -13103,7 +12917,7 @@
 			(uuid "8f58e3af-79e9-489d-ba38-7ffe40d7baa1")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R14")
 					(unit 1)
@@ -13138,7 +12952,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 317.5 107.95 0)
 			(effects
 				(font
@@ -13172,79 +12986,9 @@
 			(uuid "e8e3e753-f712-4440-a9cb-a5b04fdde65c")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R8")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector_Generic:Conn_01x02")
-		(at 205.74 140.97 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "5cd58f2e-3aab-4a64-a648-06aef4bf6201")
-		(property "Reference" "J6"
-			(at 208.28 140.9699 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "Conn_01x02"
-			(at 208.28 143.5099 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
-			(at 205.74 140.97 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 205.74 140.97 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 205.74 140.97 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "f702dd6d-99a2-4711-aa34-47564e508097")
-		)
-		(pin "2"
-			(uuid "0c76e56e-0226-45a8-8a42-ddd737337702")
-		)
-		(instances
-			(project "Axis_V2"
-				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
-					(reference "J6")
 					(unit 1)
 				)
 			)
@@ -13307,7 +13051,7 @@
 			(uuid "923583d2-3de2-4d18-a553-746c62b34f24")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR010")
 					(unit 1)
@@ -13373,7 +13117,7 @@
 			(uuid "eea6ee09-5a2c-4620-b4e9-ca271eb1c6c8")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR068")
 					(unit 1)
@@ -13382,75 +13126,8 @@
 		)
 	)
 	(symbol
-		(lib_name "+3V3_1")
-		(lib_id "power:+3V3")
-		(at 175.26 130.81 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "68615d40-b276-4830-baa0-c1659bf91c52")
-		(property "Reference" "#PWR037"
-			(at 175.26 134.62 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "+3V3"
-			(at 175.26 125.73 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 175.26 130.81 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 175.26 130.81 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"+3V3\""
-			(at 175.26 130.81 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "f475a5c6-17f4-43d6-9abc-65ae5ca9906f")
-		)
-		(instances
-			(project "Axis_V2"
-				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
-					(reference "#PWR037")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Timer_RTC:DS3231MZ")
-		(at 175.26 189.23 0)
+		(at 175.26 146.05 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -13458,7 +13135,7 @@
 		(dnp no)
 		(uuid "68e864e8-4d46-41e9-8542-71e5ad6ae5b1")
 		(property "Reference" "U9"
-			(at 179.07 177.8 0)
+			(at 179.07 134.62 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13467,7 +13144,7 @@
 			)
 		)
 		(property "Value" "DS3231MZ"
-			(at 179.07 179.832 0)
+			(at 179.07 136.652 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13476,7 +13153,7 @@
 			)
 		)
 		(property "Footprint" "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
-			(at 175.26 201.93 0)
+			(at 175.26 158.75 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13485,7 +13162,7 @@
 			)
 		)
 		(property "Datasheet" "http://datasheets.maximintegrated.com/en/ds/DS3231M.pdf"
-			(at 175.26 204.47 0)
+			(at 175.26 161.29 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13494,7 +13171,7 @@
 			)
 		)
 		(property "Description" "±5ppm, I2C Real-Time Clock SOIC-8"
-			(at 175.26 189.23 0)
+			(at 175.26 146.05 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13527,7 +13204,7 @@
 			(uuid "f2ac19ea-f1a0-4ad7-b624-a2dbb19bc81b")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "U9")
 					(unit 1)
@@ -13592,7 +13269,7 @@
 			(uuid "371e4acc-404f-4989-99b8-07064cc91b06")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR071")
 					(unit 1)
@@ -13602,7 +13279,7 @@
 	)
 	(symbol
 		(lib_id "Device:C_Small")
-		(at 140.97 187.96 0)
+		(at 140.97 144.78 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -13611,7 +13288,7 @@
 		(fields_autoplaced yes)
 		(uuid "6e290844-d103-4992-8601-dcc69ef82bbb")
 		(property "Reference" "C10"
-			(at 143.51 186.6962 0)
+			(at 143.51 143.5162 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13620,7 +13297,7 @@
 			)
 		)
 		(property "Value" "0.1u"
-			(at 143.51 189.2362 0)
+			(at 143.51 146.0562 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13628,8 +13305,8 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
-			(at 140.97 187.96 0)
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+			(at 140.97 144.78 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13638,7 +13315,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 140.97 187.96 0)
+			(at 140.97 144.78 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13647,7 +13324,7 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor, small symbol"
-			(at 140.97 187.96 0)
+			(at 140.97 144.78 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13662,7 +13339,7 @@
 			(uuid "019c3430-d5c4-4a64-b9cf-ee32f8c89398")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "C10")
 					(unit 1)
@@ -13697,7 +13374,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 95.25 91.44 0)
 			(effects
 				(font
@@ -13731,7 +13408,7 @@
 			(uuid "7e08ac95-fff9-4926-ade4-5f7eed861458")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R4")
 					(unit 1)
@@ -13798,133 +13475,9 @@
 			(uuid "c97a2e97-60ea-4946-baa5-d67e1fa99382")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR07")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Interface_Expansion:PCA9544AD")
-		(at 257.81 128.27 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "719ca46d-6652-4200-874d-01524098a6aa")
-		(property "Reference" "U5"
-			(at 260.0041 102.87 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "PCA9544AD"
-			(at 260.0041 105.41 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Package_SO:SOIC-20W_7.5x12.8mm_P1.27mm"
-			(at 283.21 149.86 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "http://www.nxp.com/docs/en/data-sheet/PCA9544A.pdf"
-			(at 252.73 156.21 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "4-channel I2C-bus multiplexer with interrupt logic, SOIC-20"
-			(at 257.81 128.27 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "2d5fb2da-832b-40e4-8e17-20fa9e3db8e0")
-		)
-		(pin "20"
-			(uuid "f865c1fd-3cfa-48ec-a188-7f080f7d62d6")
-		)
-		(pin "3"
-			(uuid "73c44041-62b2-4186-bf0c-5100bf7ee60b")
-		)
-		(pin "11"
-			(uuid "e348590e-82d7-4b1d-95fe-e275af00926e")
-		)
-		(pin "4"
-			(uuid "51142a87-0b93-4728-84c5-b45fe51f9d67")
-		)
-		(pin "5"
-			(uuid "84715126-cc3b-42ec-90b9-3bf0b4dcf60e")
-		)
-		(pin "12"
-			(uuid "fd914006-e8a3-42d6-bd6b-90d9535858e1")
-		)
-		(pin "10"
-			(uuid "53a9eb97-1d9b-4120-9066-723ea3e975e5")
-		)
-		(pin "17"
-			(uuid "ffa2f4f0-41e4-4eb2-82dd-8a3b7ca973b0")
-		)
-		(pin "18"
-			(uuid "fc45336d-9559-4022-b057-8398f2d29456")
-		)
-		(pin "8"
-			(uuid "3ba52fe9-3200-4f36-b04e-752dd7fc7f08")
-		)
-		(pin "9"
-			(uuid "7a814d10-5597-44c4-948a-6800acacd1a8")
-		)
-		(pin "19"
-			(uuid "8824d976-0ea7-4816-8045-804941874f3d")
-		)
-		(pin "2"
-			(uuid "8e0fadba-d169-4668-a0d6-605155bbf090")
-		)
-		(pin "6"
-			(uuid "285638a2-e3cd-4941-9b0e-639419949520")
-		)
-		(pin "7"
-			(uuid "d25c87ba-cfc8-4131-934a-736385ab2823")
-		)
-		(pin "15"
-			(uuid "fcc0d538-143c-4fe5-ac01-6459aaeba80a")
-		)
-		(pin "16"
-			(uuid "5cb02351-76dd-43bc-9e7a-d29fe4ff6579")
-		)
-		(pin "13"
-			(uuid "4895e718-b90b-4a56-9b40-677cef58a82b")
-		)
-		(pin "14"
-			(uuid "a8eeda80-5a09-4c2a-9a12-53c5e1dff2f1")
-		)
-		(instances
-			(project "Axis_V2"
-				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
-					(reference "U5")
 					(unit 1)
 				)
 			)
@@ -13988,7 +13541,7 @@
 			(uuid "7c61e695-2b5d-4ef4-9bc6-80ae407ce889")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR03")
 					(unit 1)
@@ -14024,7 +13577,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
 			(at 97.79 147.32 0)
 			(effects
 				(font
@@ -14058,7 +13611,7 @@
 			(uuid "17e9d909-a2d0-4363-809e-6f67f01df90d")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "C8")
 					(unit 1)
@@ -14094,7 +13647,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
 			(at 144.78 44.45 0)
 			(effects
 				(font
@@ -14128,7 +13681,7 @@
 			(uuid "c0faa834-60e1-4ba3-b4d0-2566bcad1316")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "C3")
 					(unit 1)
@@ -14193,7 +13746,7 @@
 			(uuid "640909cd-cd60-4290-be70-b8a51c5479cb")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR019")
 					(unit 1)
@@ -14260,7 +13813,7 @@
 			(uuid "550c4f68-2f02-4b68-bbf1-cbf1fa264527")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR01")
 					(unit 1)
@@ -14328,7 +13881,7 @@
 			(uuid "4484ff26-a938-4ecd-a9e5-f6bdcc13bcbf")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR027")
 					(unit 1)
@@ -14361,7 +13914,7 @@
 				)
 			)
 		)
-		(property "Footprint" "MCU_RaspberryPi_and_Boards:RPi_Pico_SMD_TH"
+		(property "Footprint" "MCU_RaspberryPi_and_Boards:RPi_Pico_SMD_TH_No_Silkscreen"
 			(at 55.88 119.634 0)
 			(effects
 				(font
@@ -14518,7 +14071,7 @@
 			(uuid "9b7e4c15-d586-48c4-afdc-a2523282071c")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "U1")
 					(unit 1)
@@ -14585,7 +14138,7 @@
 			(uuid "a9d912bd-c0f5-422a-8330-48386d8f88fd")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR06")
 					(unit 1)
@@ -14652,7 +14205,7 @@
 			(uuid "65390d95-38f2-4bf5-babc-1c840728205a")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR061")
 					(unit 1)
@@ -14718,7 +14271,7 @@
 			(uuid "6106400b-6f68-4d3c-ab4d-2fa6128fa05b")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR05")
 					(unit 1)
@@ -14785,7 +14338,7 @@
 			(uuid "0c654200-0607-4d40-b9cf-f18500971481")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR02")
 					(unit 1)
@@ -14861,7 +14414,7 @@
 			(uuid "838c609e-6f58-4cf4-bce4-0ee675e9ea0e")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "J3")
 					(unit 1)
@@ -14926,7 +14479,7 @@
 			(uuid "b22bd420-943a-4af9-9d93-ab72896f0d86")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR036")
 					(unit 1)
@@ -14993,7 +14546,7 @@
 			(uuid "ece97764-e81f-49c1-b381-52ab12b896ff")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR056")
 					(unit 1)
@@ -15058,7 +14611,7 @@
 			(uuid "d2954034-8f2f-4de2-82a9-f5524fee6789")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR023")
 					(unit 1)
@@ -15127,7 +14680,7 @@
 			(uuid "02d51910-6b1e-43f9-a103-6cd1d92e5cb6")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "D1")
 					(unit 1)
@@ -15162,7 +14715,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 107.95 66.04 0)
 			(effects
 				(font
@@ -15196,7 +14749,7 @@
 			(uuid "602e5ff6-6ba8-4a92-8935-e4421a37a3b6")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R3")
 					(unit 1)
@@ -15206,7 +14759,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 210.82 193.04 0)
+		(at 210.82 149.86 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -15214,7 +14767,7 @@
 		(dnp no)
 		(uuid "9a9431a2-3995-4d65-a233-fb4fd7cb28e3")
 		(property "Reference" "#PWR067"
-			(at 210.82 199.39 0)
+			(at 210.82 156.21 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15223,7 +14776,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 210.947 197.4342 0)
+			(at 210.947 154.2542 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15231,7 +14784,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 210.82 193.04 0)
+			(at 210.82 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15240,7 +14793,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 210.82 193.04 0)
+			(at 210.82 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15249,7 +14802,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 210.82 193.04 0)
+			(at 210.82 149.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15261,7 +14814,7 @@
 			(uuid "84372b13-53c1-4612-a93e-105df0a93ac0")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR067")
 					(unit 1)
@@ -15297,7 +14850,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
 			(at 143.51 96.52 0)
 			(effects
 				(font
@@ -15331,7 +14884,7 @@
 			(uuid "9cecbf5b-8829-4aa8-9941-c2fb4f8f8b6a")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "C4")
 					(unit 1)
@@ -15396,7 +14949,7 @@
 			(uuid "9456551d-e4e5-4e06-8a94-b14c7cbdc1eb")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR070")
 					(unit 1)
@@ -15461,95 +15014,9 @@
 			(uuid "d3632f47-aa1f-4c38-9cd3-7f15393b4d68")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR035")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Sensor_Temperature:MAX31855EASA")
-		(at 175.26 142.24 0)
-		(mirror y)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "a58480cb-35a9-4783-a5e5-0d2da7a14420")
-		(property "Reference" "U6"
-			(at 173.0659 129.54 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "MAX31855EASA"
-			(at 173.0659 132.08 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
-			(at 149.86 151.13 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-					(italic yes)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "http://datasheets.maximintegrated.com/en/ds/MAX31855.pdf"
-			(at 175.26 142.24 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Cold Junction E-type Termocouple Interface, SPI, SO8"
-			(at 175.26 142.24 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "2"
-			(uuid "a77f8946-3aeb-4b0f-86a8-d539d93866dc")
-		)
-		(pin "6"
-			(uuid "9368e77d-c812-4c76-af07-49d2cac40471")
-		)
-		(pin "4"
-			(uuid "0014b1bf-7e6a-407e-9866-9322ca3edcb9")
-		)
-		(pin "3"
-			(uuid "6ac44285-d846-43df-8599-2c95480ca094")
-		)
-		(pin "5"
-			(uuid "d8d484d8-0c80-4be2-b65b-d054d432c64a")
-		)
-		(pin "1"
-			(uuid "b6460883-522a-406e-bccb-b1edbb6efb6f")
-		)
-		(pin "7"
-			(uuid "5a32584a-e05a-460e-a3f2-e1d65a5ded63")
-		)
-		(instances
-			(project "Axis_V2"
-				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
-					(reference "U6")
 					(unit 1)
 				)
 			)
@@ -15612,7 +15079,7 @@
 			(uuid "cf007808-8d55-42ec-9e80-40145222f76b")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR047")
 					(unit 1)
@@ -15678,7 +15145,7 @@
 			(uuid "fb0ae166-8f22-4847-aadc-589051c8f057")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR049")
 					(unit 1)
@@ -15745,7 +15212,7 @@
 			(uuid "f79133d2-cdca-43a9-9154-60d8b6955fbf")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR012")
 					(unit 1)
@@ -15811,7 +15278,7 @@
 			(uuid "0218646d-59ef-458a-8de3-2ed84667024e")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR053")
 					(unit 1)
@@ -15876,7 +15343,7 @@
 			(uuid "c3aebf32-7b99-4fbe-898f-7529df3409c1")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR021")
 					(unit 1)
@@ -15942,7 +15409,7 @@
 			(uuid "a49c70f9-531d-40d5-81ae-6053ecd9e3f3")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR054")
 					(unit 1)
@@ -16008,9 +15475,78 @@
 			(uuid "4445b6fb-ef3f-4083-8d00-b598b0cd186c")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR055")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Small")
+		(at 264.16 171.45 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "ad92afa4-d7a1-4e3b-b838-6aa6bd9f27b6")
+		(property "Reference" "R15"
+			(at 265.43 170.18 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "1k"
+			(at 265.43 172.72 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
+			(at 264.16 171.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 264.16 171.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Resistor, small symbol"
+			(at 264.16 171.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "5bbb425d-e838-4c8a-9f4c-16261832e868")
+		)
+		(pin "2"
+			(uuid "777ab908-96f1-4409-ba2b-aaa20cc223a5")
+		)
+		(instances
+			(project "Axis_MCU_V3"
+				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
+					(reference "R15")
 					(unit 1)
 				)
 			)
@@ -16121,76 +15657,9 @@
 			(uuid "4ec9135f-4f08-48c4-99f7-2113c40ac4a7")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "U2")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_name "+3V3_1")
-		(lib_id "power:+3V3")
-		(at 143.51 137.16 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "afca1d2c-1ac2-42f4-9a32-2984ee5c1230")
-		(property "Reference" "#PWR039"
-			(at 143.51 140.97 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "+3V3"
-			(at 143.51 132.08 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 143.51 137.16 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 143.51 137.16 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"+3V3\""
-			(at 143.51 137.16 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "12886888-ceb6-49b6-bd68-1c0c7e299ce5")
-		)
-		(instances
-			(project "Axis_V2"
-				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
-					(reference "#PWR039")
 					(unit 1)
 				)
 			)
@@ -16276,7 +15745,7 @@
 			(uuid "fe19851e-8c8d-4831-893c-479e27938922")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "J10")
 					(unit 1)
@@ -16311,7 +15780,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 325.12 138.43 0)
 			(effects
 				(font
@@ -16345,7 +15814,7 @@
 			(uuid "dbdc31a6-dde1-4449-a0e4-fdb295a2a109")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R12")
 					(unit 1)
@@ -16433,7 +15902,7 @@
 			(uuid "056292f7-3e30-463a-8372-44a8a48f13ec")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "J2")
 					(unit 1)
@@ -16443,7 +15912,7 @@
 	)
 	(symbol
 		(lib_id "Mechanical:MountingHole")
-		(at 44.45 215.9 0)
+		(at 184.15 173.99 0)
 		(unit 1)
 		(exclude_from_sim yes)
 		(in_bom no)
@@ -16452,7 +15921,7 @@
 		(fields_autoplaced yes)
 		(uuid "b885a058-2c90-4f98-a497-2690f498a330")
 		(property "Reference" "H3"
-			(at 46.99 214.6299 0)
+			(at 186.69 172.7199 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16461,7 +15930,7 @@
 			)
 		)
 		(property "Value" "MountingHole"
-			(at 46.99 217.1699 0)
+			(at 186.69 175.2599 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16470,7 +15939,7 @@
 			)
 		)
 		(property "Footprint" "MountingHole:MountingHole_2.7mm_M2.5"
-			(at 44.45 215.9 0)
+			(at 184.15 173.99 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16479,7 +15948,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 44.45 215.9 0)
+			(at 184.15 173.99 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16488,7 +15957,7 @@
 			)
 		)
 		(property "Description" "Mounting Hole without connection"
-			(at 44.45 215.9 0)
+			(at 184.15 173.99 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16497,7 +15966,7 @@
 			)
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "H3")
 					(unit 1)
@@ -16507,7 +15976,7 @@
 	)
 	(symbol
 		(lib_id "power:+BATT")
-		(at 170.18 177.8 0)
+		(at 170.18 134.62 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -16516,7 +15985,7 @@
 		(fields_autoplaced yes)
 		(uuid "ba2b0aba-1b00-4d56-a2a5-f144413b8cb2")
 		(property "Reference" "#PWR059"
-			(at 170.18 181.61 0)
+			(at 170.18 138.43 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16525,7 +15994,7 @@
 			)
 		)
 		(property "Value" "+BATT"
-			(at 170.18 172.72 0)
+			(at 170.18 129.54 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16533,7 +16002,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 170.18 177.8 0)
+			(at 170.18 134.62 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16542,7 +16011,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 170.18 177.8 0)
+			(at 170.18 134.62 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16551,7 +16020,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+BATT\""
-			(at 170.18 177.8 0)
+			(at 170.18 134.62 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16563,7 +16032,7 @@
 			(uuid "86938233-36f0-42ed-986c-cb38ebb3395c")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR059")
 					(unit 1)
@@ -16630,7 +16099,7 @@
 			(uuid "7b9efcae-7e02-41de-859e-0b1fbaf1d7bb")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR014")
 					(unit 1)
@@ -16697,7 +16166,7 @@
 			(uuid "e56641a8-3b98-4667-ac84-8047f7429022")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR04")
 					(unit 1)
@@ -16803,7 +16272,7 @@
 			(uuid "87fcead5-8544-4d26-af89-d68a79ea2a32")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "U8")
 					(unit 1)
@@ -16915,7 +16384,7 @@
 			(uuid "41153e6b-bfcc-4792-bd88-27b54a0bdf09")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "U3")
 					(unit 1)
@@ -16982,7 +16451,7 @@
 			(uuid "70dc2ed7-33fa-4933-af9e-3a542a889872")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR028")
 					(unit 1)
@@ -17017,7 +16486,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 323.85 107.95 0)
 			(effects
 				(font
@@ -17051,7 +16520,7 @@
 			(uuid "ac2a66c9-2e22-46c4-8c18-7720c0dc50ba")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R9")
 					(unit 1)
@@ -17062,7 +16531,7 @@
 	(symbol
 		(lib_name "+3V3_1")
 		(lib_id "power:+3V3")
-		(at 140.97 182.88 0)
+		(at 140.97 139.7 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -17071,7 +16540,7 @@
 		(fields_autoplaced yes)
 		(uuid "c5bcf76d-ef6d-47ca-8cfb-93c21663d725")
 		(property "Reference" "#PWR064"
-			(at 140.97 186.69 0)
+			(at 140.97 143.51 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17080,7 +16549,7 @@
 			)
 		)
 		(property "Value" "+3V3"
-			(at 140.97 177.8 0)
+			(at 140.97 134.62 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17088,7 +16557,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 140.97 182.88 0)
+			(at 140.97 139.7 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17097,7 +16566,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 140.97 182.88 0)
+			(at 140.97 139.7 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17106,7 +16575,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+3V3\""
-			(at 140.97 182.88 0)
+			(at 140.97 139.7 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17118,7 +16587,7 @@
 			(uuid "5a47b200-3159-4b16-8dd7-fc57d2ebe092")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR064")
 					(unit 1)
@@ -17184,7 +16653,7 @@
 			(uuid "5b6ff739-3f5b-4b36-8edf-2ebd8fd922b0")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR013")
 					(unit 1)
@@ -17250,7 +16719,7 @@
 			(uuid "5926d009-eef8-463c-b9fc-85d5cb46bcdb")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR038")
 					(unit 1)
@@ -17320,7 +16789,7 @@
 			(uuid "183df0a7-52ec-427e-ba6d-68737db7c9bf")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "J5")
 					(unit 1)
@@ -17385,7 +16854,7 @@
 			(uuid "98aad8d9-7008-4d32-b7ca-561e96a44a9d")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR024")
 					(unit 1)
@@ -17450,7 +16919,7 @@
 			(uuid "3af8f9f0-243f-4c13-8b95-2b5996cfa19d")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR09")
 					(unit 1)
@@ -17485,7 +16954,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 311.15 107.95 0)
 			(effects
 				(font
@@ -17519,7 +16988,7 @@
 			(uuid "f3112090-7ada-4ee1-a4f2-d8d0db552eb9")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R7")
 					(unit 1)
@@ -17584,7 +17053,7 @@
 			(uuid "80a29f4a-4cb5-4bd1-a7d4-33961c6fab96")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR033")
 					(unit 1)
@@ -17649,7 +17118,7 @@
 			(uuid "7954acae-ec30-4831-a7a9-3e966f9b6ce8")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR026")
 					(unit 1)
@@ -17714,7 +17183,7 @@
 			(uuid "a2675d17-aba8-4825-83de-00795b248b60")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR020")
 					(unit 1)
@@ -17781,7 +17250,7 @@
 			(uuid "45e77f7d-cadb-475a-aff5-75464afe6e2e")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR032")
 					(unit 1)
@@ -17848,7 +17317,7 @@
 			(uuid "14f2a281-8243-4288-ae30-6b10b66e9ae2")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR031")
 					(unit 1)
@@ -17918,7 +17387,7 @@
 			(uuid "5f3a0392-73f9-454f-a5f4-c73a4ec5f3bb")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "J1")
 					(unit 1)
@@ -17983,7 +17452,7 @@
 			(uuid "b00cd15b-cdc4-44b7-9f56-df30b88f1771")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR016")
 					(unit 1)
@@ -18048,7 +17517,7 @@
 			(uuid "c948c220-cd9d-401e-9f32-26798ac5c486")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR069")
 					(unit 1)
@@ -18058,7 +17527,7 @@
 	)
 	(symbol
 		(lib_id "Mechanical:MountingHole")
-		(at 19.05 215.9 0)
+		(at 158.75 173.99 0)
 		(unit 1)
 		(exclude_from_sim yes)
 		(in_bom no)
@@ -18067,7 +17536,7 @@
 		(fields_autoplaced yes)
 		(uuid "e25f56b0-ed16-4b45-9781-3f7ee68eb42b")
 		(property "Reference" "H1"
-			(at 21.59 214.6299 0)
+			(at 161.29 172.7199 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18076,7 +17545,7 @@
 			)
 		)
 		(property "Value" "MountingHole"
-			(at 21.59 217.1699 0)
+			(at 161.29 175.2599 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18085,7 +17554,7 @@
 			)
 		)
 		(property "Footprint" "MountingHole:MountingHole_2.7mm_M2.5"
-			(at 19.05 215.9 0)
+			(at 158.75 173.99 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18094,7 +17563,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 19.05 215.9 0)
+			(at 158.75 173.99 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18103,7 +17572,7 @@
 			)
 		)
 		(property "Description" "Mounting Hole without connection"
-			(at 19.05 215.9 0)
+			(at 158.75 173.99 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18112,7 +17581,7 @@
 			)
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "H1")
 					(unit 1)
@@ -18179,7 +17648,7 @@
 			(uuid "aa7320bd-0764-41b6-b3f9-4ff63cc47b4a")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR034")
 					(unit 1)
@@ -18244,7 +17713,7 @@
 			(uuid "2f35957e-b839-4b8e-ba9a-0528b8dc1d3d")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR025")
 					(unit 1)
@@ -18309,7 +17778,7 @@
 			(uuid "b3c6bf2c-c798-4340-9fe1-7c35826aeb1f")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR051")
 					(unit 1)
@@ -18375,7 +17844,7 @@
 			(uuid "15bda398-56d1-4a5c-aab1-3e7a4640329b")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR08")
 					(unit 1)
@@ -18445,7 +17914,7 @@
 			(uuid "42c2b8e1-96fa-43ac-abfc-65e00f71b97b")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "D2")
 					(unit 1)
@@ -18511,7 +17980,7 @@
 			(uuid "9a766f58-e44a-4b04-8115-b4fb514d549f")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR022")
 					(unit 1)
@@ -18546,7 +18015,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 101.6 91.44 0)
 			(effects
 				(font
@@ -18580,7 +18049,7 @@
 			(uuid "8e395c85-0184-4551-bcff-ef68cee5ee4a")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R5")
 					(unit 1)
@@ -18590,7 +18059,7 @@
 	)
 	(symbol
 		(lib_id "Mechanical:MountingHole")
-		(at 44.45 222.25 0)
+		(at 184.15 180.34 0)
 		(unit 1)
 		(exclude_from_sim yes)
 		(in_bom no)
@@ -18599,7 +18068,7 @@
 		(fields_autoplaced yes)
 		(uuid "f09c5f6a-a57b-4c86-aaea-0dcd176cabc4")
 		(property "Reference" "H4"
-			(at 46.99 220.9799 0)
+			(at 186.69 179.0699 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18608,7 +18077,7 @@
 			)
 		)
 		(property "Value" "MountingHole"
-			(at 46.99 223.5199 0)
+			(at 186.69 181.6099 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18617,7 +18086,7 @@
 			)
 		)
 		(property "Footprint" "MountingHole:MountingHole_2.7mm_M2.5"
-			(at 44.45 222.25 0)
+			(at 184.15 180.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18626,7 +18095,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 44.45 222.25 0)
+			(at 184.15 180.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18635,7 +18104,7 @@
 			)
 		)
 		(property "Description" "Mounting Hole without connection"
-			(at 44.45 222.25 0)
+			(at 184.15 180.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18644,7 +18113,7 @@
 			)
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "H4")
 					(unit 1)
@@ -18655,7 +18124,7 @@
 	(symbol
 		(lib_name "+3V3_1")
 		(lib_id "power:+3V3")
-		(at 177.8 177.8 0)
+		(at 177.8 134.62 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -18664,7 +18133,7 @@
 		(fields_autoplaced yes)
 		(uuid "f555d234-25b9-4400-bfad-06ae07f3d05d")
 		(property "Reference" "#PWR060"
-			(at 177.8 181.61 0)
+			(at 177.8 138.43 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18673,7 +18142,7 @@
 			)
 		)
 		(property "Value" "+3V3"
-			(at 177.8 172.72 0)
+			(at 177.8 129.54 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18681,7 +18150,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 177.8 177.8 0)
+			(at 177.8 134.62 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18690,7 +18159,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 177.8 177.8 0)
+			(at 177.8 134.62 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18699,7 +18168,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+3V3\""
-			(at 177.8 177.8 0)
+			(at 177.8 134.62 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18711,7 +18180,7 @@
 			(uuid "e4b30543-09f9-4a24-ac34-14d244ee779d")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR060")
 					(unit 1)
@@ -18781,7 +18250,7 @@
 			(uuid "9ed6e933-7dff-4386-8a6f-c75c30b4f500")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "J4")
 					(unit 1)
@@ -18847,7 +18316,7 @@
 			(uuid "01e54483-0278-4df6-9952-977d6c3facdd")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR011")
 					(unit 1)
@@ -18912,7 +18381,7 @@
 			(uuid "f44c6b47-6c88-4cd3-98e3-df01c2cade60")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR040")
 					(unit 1)
@@ -18977,74 +18446,9 @@
 			(uuid "ab80acae-030f-4284-aa45-1c72401d07df")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "#PWR030")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND")
-		(at 175.26 153.67 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "fb88e4a9-6d47-44dd-8269-f2381e0bb260")
-		(property "Reference" "#PWR050"
-			(at 175.26 160.02 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "GND"
-			(at 175.387 158.0642 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 175.26 153.67 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 175.26 153.67 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 175.26 153.67 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "8fba8ba6-2fb7-4e7e-b849-4f36ab13fa82")
-		)
-		(instances
-			(project "Axis_V2"
-				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
-					(reference "#PWR050")
 					(unit 1)
 				)
 			)
@@ -19077,7 +18481,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 101.6 66.04 0)
 			(effects
 				(font
@@ -19111,9 +18515,133 @@
 			(uuid "5253a92d-b4a0-4ad3-b33f-3aa2c65794ab")
 		)
 		(instances
-			(project "Axis_V2"
+			(project "Axis_MCU_V3"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
 					(reference "R2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Interface_Expansion:PCA9544APW")
+		(at 257.81 128.27 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "fdb53cff-8d22-43b5-b685-4b326e5ae741")
+		(property "Reference" "U5"
+			(at 260.0041 102.87 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "PCA9544APWR"
+			(at 260.0041 105.41 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Package_SO:TSSOP-20_4.4x6.5mm_P0.65mm"
+			(at 285.75 149.86 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "http://www.nxp.com/docs/en/data-sheet/PCA9544A.pdf"
+			(at 252.73 156.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "4-channel I2C-bus multiplexer with interrupt logic, TSSOP-20"
+			(at 257.81 128.27 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "6"
+			(uuid "63854d44-58bb-4b68-9f7c-7643f3dcdd0c")
+		)
+		(pin "1"
+			(uuid "68916450-18cb-409d-8466-f00cbf5e9c52")
+		)
+		(pin "7"
+			(uuid "885806f0-e294-4b59-b42d-99f2d0a1ae6f")
+		)
+		(pin "12"
+			(uuid "dccfc5fb-857d-400f-b3aa-96c5fc9f0f68")
+		)
+		(pin "13"
+			(uuid "1c2e5d8d-e718-4ebf-9ca9-0b377ec914e9")
+		)
+		(pin "11"
+			(uuid "9345e686-e19f-43fc-b31e-b3cbe73fe95a")
+		)
+		(pin "15"
+			(uuid "a2c50b3d-203a-486b-b651-f6b777a94ff5")
+		)
+		(pin "16"
+			(uuid "0b7e672d-3c2c-446b-83e0-665e0b2e5b86")
+		)
+		(pin "20"
+			(uuid "0e6d0cce-5e43-40b8-8539-33167bf11bf7")
+		)
+		(pin "3"
+			(uuid "bb41e0fc-1b3d-405b-83e3-a1045dafbda0")
+		)
+		(pin "9"
+			(uuid "dc54072b-1f08-4498-9e24-44a6b109f93e")
+		)
+		(pin "19"
+			(uuid "8779f146-974a-43ea-916f-95fe84fd1296")
+		)
+		(pin "14"
+			(uuid "c5f144ac-597a-4e06-a694-c0c740e0f119")
+		)
+		(pin "4"
+			(uuid "003eb86d-b4b1-4c6d-8941-1d4b9206b1ba")
+		)
+		(pin "2"
+			(uuid "16af792f-9700-4a0d-a183-d9a2f751e030")
+		)
+		(pin "18"
+			(uuid "18fe4ac4-3273-493f-8abb-4b62570b782f")
+		)
+		(pin "5"
+			(uuid "16834c4f-6762-4a7a-a01e-a927bc838138")
+		)
+		(pin "17"
+			(uuid "d2d59795-947c-4fb1-b0cf-d75fc9d17f0d")
+		)
+		(pin "10"
+			(uuid "ef46cf81-14d3-4adb-baa9-6c86da16a278")
+		)
+		(pin "8"
+			(uuid "141219f3-35f5-4e85-a57b-138a31e0292d")
+		)
+		(instances
+			(project "Axis_MCU_V3"
+				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee"
+					(reference "U5")
 					(unit 1)
 				)
 			)
