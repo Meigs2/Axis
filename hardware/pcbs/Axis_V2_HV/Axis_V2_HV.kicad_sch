@@ -5311,6 +5311,17 @@
 		)
 		(uuid "11bcca51-d432-4ee7-94c9-034d3c79343f")
 	)
+	(label "~{ZC_SIG}"
+		(at 66.04 43.18 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "1ed07982-f005-4b9d-975f-ea09c3e7ffed")
+	)
 	(label "PUMP_L"
 		(at 226.06 77.47 0)
 		(fields_autoplaced yes)
@@ -5530,17 +5541,6 @@
 			(justify right bottom)
 		)
 		(uuid "c829bf6c-9bfa-474d-8460-33ea9c8200bb")
-	)
-	(label "ZC_SIG"
-		(at 66.04 43.18 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "c870856b-4bd1-4e24-b347-5d948161b1f2")
 	)
 	(label "3WAY_IN"
 		(at 66.04 50.8 180)
@@ -6766,7 +6766,7 @@
 				)
 			)
 		)
-		(property "Footprint" "LED_SMD:LED_1206_3216Metric"
+		(property "Footprint" "Resistor_SMD:R_1206_3216Metric"
 			(at 160.02 33.02 0)
 			(effects
 				(font
