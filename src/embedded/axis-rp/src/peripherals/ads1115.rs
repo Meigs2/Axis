@@ -2,6 +2,7 @@ use bitfield::bitfield;
 use cortex_m::prelude::_embedded_hal_blocking_i2c_Write;
 use defmt::debug;
 use embassy_rp::i2c::{Async, Error, Instance};
+use crate::systems::i2c_manager::I2cManager;
 
 bitfield! {
     // Define a new type `ConfigRegister` with base type u16 (as the ADS1115 config register is 16 bits)
@@ -96,31 +97,35 @@ pub struct Ads1115<'a, I>
 where
     I: Instance,
 {
-    i2c: embassy_rp::i2c::I2c<'a, I, Async>,
+    i2c: I2cManager<'a>,
     pub config: AdsConfig,
 }
 impl<'a, I> Ads1115<'a, I>
 where
     I: Instance,
 {
-    pub fn new(i2c: embassy_rp::i2c::I2c<'static, I, Async>, config: AdsConfig) -> Self {
+    pub fn new(i2c: I2cManager, config: AdsConfig) -> Self {
         Self { i2c, config }
     }
 
-    pub fn initialize(&mut self) -> Result<(), Error> {
-        self.i2c
-            .write(ADDR, write_config(ConfigRegister::initialize()).as_slice())?;
+    pub async fn initialize(&mut self) -> Result<(), Error> {
+        self.i2c.get_i2c0()
+            .await.write(ADDR, write_config(ConfigRegister::initialize()).as_slice())?;
         Ok(())
     }
 
-    pub fn read(&mut self) -> Result<f32, Error> {
+    pub async fn read(&mut self) -> Result<f32, Error> {
         let mut s = [0u8; 1];
         let buff = &mut [0u8; 2];
 
         s[0] = 0b00000000;
-        self.i2c.blocking_write(ADDR, s.as_slice())?;
 
-        self.i2c.blocking_read(ADDR, buff)?;
+        {
+            let mut i2c = self.i2c.get_i2c0().await;
+            i2c.blocking_write(ADDR, s.as_slice())?;
+            i2c.blocking_read(ADDR, buff)?;
+        }
+
 
         let raw_value = (buff[0] as i16) << 8 | (buff[1] as i16);
 
