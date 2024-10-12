@@ -346,7 +346,7 @@ fn main() -> ! {
         I2cIrqs,
         embassy_rp::i2c::Config::default(),
     );
-
+    
     let mut ads = Ads1115::new(i2c, ads_config);
     ads.initialize().unwrap();
 
