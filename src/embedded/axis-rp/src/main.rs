@@ -1,58 +1,38 @@
 #![no_std]
 #![no_main]
-#![feature(async_fn_in_trait)]
 #![feature(type_alias_impl_trait)]
 #![feature(async_closure)]
 #![feature(never_type)]
 
 mod client_communicator;
 mod systems;
-mod peripherals;
-mod pid;
+mod axis_peripherals;
 mod runtime;
+mod i2c;
+mod drivers;
+mod spi;
 
-use crate::client_communicator::ClientCommunicator;
+use {defmt_rtt as _, panic_probe as _};
 use core::future::Future;
 use core::ops::Deref;
-use defmt::unwrap;
+use core::panic::PanicInfo;
+use assign_resources::assign_resources;
+use cortex_m::prelude::_embedded_hal_blocking_i2c_Write;
+use defmt::{error, info, unwrap};
 use defmt::Format;
-use embassy_executor::{Executor, InterruptExecutor};
-use embassy_futures::select::select;
-use embassy_rp::gpio::{Input, Level, Output, Pull};
+use embassy_executor::{Executor, InterruptExecutor, Spawner};
 use embassy_rp::interrupt::{InterruptExt, Priority};
 use embassy_rp::multicore::{spawn_core1, Stack};
-use embassy_rp::peripherals::{I2C0, I2C1, PIN_16, PIN_17};
-
-use embassy_rp::spi::Spi;
-
-use embassy_rp::watchdog::Watchdog;
 use embassy_rp::{bind_interrupts, interrupt};
-use embassy_rp::i2c::I2c;
-use embassy_rp::interrupt::typelevel::I2C0_IRQ;
-use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_sync::channel::{Channel, Sender};
-use embassy_sync::signal::Signal;
+use embassy_rp::i2c::{Async, Config, Error, I2c};
 use embassy_time::{Duration, Instant, Timer};
-use embassy_usb::class::cdc_acm::State;
-use log::debug;
-
-use crate::peripherals::pump_dimmer::DimmerCommand;
 use serde::{Deserialize, Serialize};
 use serde_json_core::heapless::String;
 use static_cell::{make_static, StaticCell};
 use Message::*;
-use {defmt_rtt as _, panic_probe as _};
-
-use crate::systems::i2c_manager;
-use crate::systems::i2c_manager::{I2cManager, I2cMutex};
-
-bind_interrupts!(struct I2c0Irqs {
-    I2C0_IRQ => embassy_rp::i2c::InterruptHandler<I2C0>;
-});
-
-bind_interrupts!(struct I2c1Irqs {
-    I2C1_IRQ => embassy_rp::i2c::InterruptHandler<I2C1>;
-});
+use embassy_rp::peripherals;
+use embassy_rp::peripherals::{I2C0, I2C1};
+use crate::i2c::{I2c0Bus, I2cAddress, I2cBus};
 
 pub const MAX_STRING_SIZE: usize = 64;
 pub const MAX_PACKET_SIZE: usize = 64;
@@ -115,85 +95,69 @@ pub trait AxisPeripheral {
     fn initialize() -> Result<(), String<MAX_STRING_SIZE>>;
 }
 
-#[embassy_executor::task]
-async fn run_low(uart: &'static mut I2cManager) {
-    loop {
-        uart.get_i2c0().await;
+static I2C0_BUS: StaticCell<I2cBus<'static, I2C0>> = StaticCell::new();
+static I2C1_BUS: StaticCell<I2cBus<'static, I2C1>> = StaticCell::new();
 
-        // Spin-wait to simulate a long CPU computation
-        embassy_time::block_for(embassy_time::Duration::from_secs(2)); // ~2 seconds
-
-        let end = Instant::now();
-
-        Timer::after_ticks(82983).await;
+assign_resources! {
+    i2c0: I2c0Resources {
+        peripheral: I2C0,
+        sda: PIN_12,
+        scl: PIN_13,
+    }
+    i2c1: I2c1Resources {
+        peripheral: I2C1,
+        sda: PIN_26,
+        scl: PIN_27,
+    }
+    gpio: ExtraGpios {
+        gpio1: PIN_2,
+        gpio2: PIN_3,
+        gpio3: PIN_4,
+        gpio4: PIN_5,
+        gpio5: PIN_6,
+        gpio6: PIN_7,
+    }
+    spi0: Spi0Resources {
+        spi1_rx:  PIN_8,
+        spi1_cs0: PIN_9,
+        spi1_sck: PIN_10,
+        spi1_tx:  PIN_11,
     }
 }
 
-#[embassy_executor::task]
-async fn run_high(uart: &'static mut I2cManager) {
-    loop {
-        let start = Instant::now();
-
-        // Spin-wait to simulate a long CPU computation
-        embassy_time::block_for(embassy_time::Duration::from_secs(2)); // ~2 seconds
-
-        let end = Instant::now();
-
-        Timer::after_ticks(82983).await;
-    }
-}
-
-static MANAGER: StaticCell<I2cManager<'static>> =  StaticCell::new();
-
-#[cortex_m_rt::entry]
-fn main() -> ! {
+#[embassy_executor::main]
+async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
+    let r = split_resources!(p);
 
-    let blink_pin = Output::new(p.PIN_25, Level::Low);
 
-    let uart_tx = p.PIN_0;
-    let uart_rx = p.PIN_1;
+    let mut executor  = EXECUTOR_LOW.init(Executor::new());
 
-    let gpio2 = p.PIN_2;
-    let gpio3 = p.PIN_3;
-    let gpio4 = p.PIN_4;
-    let gpio5 = p.PIN_5;
-    let gpio6 = p.PIN_6;
-    let gpio7 = p.PIN_7;
 
-    let spi1_rx = p.PIN_8;
-    let spi1_cs0 = p.PIN_9;
-    let spi1_sck = p.PIN_10;
-    let spi1_tx = p.PIN_11;
+    let (i2c0, i2c1 ) = setup_i2c(r.i2c0, r.i2c1);
+    let thing = I2C0_BUS.init(I2c0Bus::new(i2c0));
 
-    let i2c0_sda = p.PIN_12;
-    let i2c0_scl = p.PIN_13;
 
-    let io_int = p.PIN_14;
+    let data: [u8; 1] = [0b1010_1010];
+    let addr1 = I2cAddress::U16(0b0101_0101);
+    loop {
+        info!("led on!");
+        Timer::after_secs(1).await;
 
-    let spi0_cs1 = p.PIN_15;
-    let spi0_cs0 = p.PIN_17;
-    let spi0_scp = p.PIN_18;
+        let value: u16 = 0xBABE;
 
-    let i2c1_sda = p.PIN_20;
-    let i2c1_scl = p.PIN_21;
+        let mut a = thing.lock().await;
+        a.write_async(addr1.clone(), value.to_be_bytes()).await.unwrap();
 
-    let mux_int = p.PIN_26;
+        info!("led off.");
+        a.write_async(addr1.clone(), value.to_be_bytes()).await.unwrap();
+        Timer::after_secs(1).await;
+    }
+}
 
-    let hv_io1 = p.PIN_27;
-    let zc_sig = p.PIN_28;
-    let hv_io2 = p.PIN_29;
+fn setup_i2c<'a>(i2c0: I2c0Resources, i2c1: I2c1Resources) -> (I2c<'a, I2C0, Async>, I2c<'a, I2C1, Async>) {
+    let mut i2c0 = I2c::new_async(i2c0.peripheral, i2c0.scl, i2c0.sda, i2c::I2c0Irqs, Config::default());
+    let mut i2c1 = I2c::new_async(i2c1.peripheral, i2c1.scl, i2c1.sda, i2c::I2c1Irqs, Config::default());
 
-    let manager = I2cManager::new(I2c::new_async(p.I2C0, i2c0_scl, i2c0_sda, I2c0Irqs, embassy_rp::i2c::Config::default()),
-                                  I2c::new_async(p.I2C1, i2c1_sda, i2c1_scl, I2c1Irqs, embassy_rp::i2c::Config::default()));
-
-    let manager = MANAGER.init(manager);
-
-    let executor = EXECUTOR_LOW.init(Executor::new());
-
-    executor.run(|spawner|
-        {
-            spawner.must_spawn(run_low(manager));
-            spawner.must_spawn(run_high(manager));
-        });
+    (i2c0, i2c1)
 }

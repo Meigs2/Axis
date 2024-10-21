@@ -121,7 +121,7 @@ impl<'a, const N: usize> ClientCommunicator<'a, N> {
         usb_receiver: &'b mut embassy_usb::class::cdc_acm::Receiver<'a, Driver<'a, USB>>,
         sender: Sender<'a, CriticalSectionRawMutex, Message, N>,
     ) {
-        let buff = make_static!([0u8; MAX_STRING_SIZE]);
+        let mut buff = [0u8; MAX_STRING_SIZE];
         debug!("Waiting for USB connection");
         usb_receiver.wait_connection().await;
         debug!("Connected to host");
