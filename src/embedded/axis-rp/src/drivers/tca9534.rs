@@ -1,7 +1,6 @@
 use bitfield::bitfield;
 use bitflags::bitflags;
 use embedded_hal_async::i2c::I2c;
-use num_traits::ToBytes;
 
 pub enum Error<E> {
     I2cError(E)

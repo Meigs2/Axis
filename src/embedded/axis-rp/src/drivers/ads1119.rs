@@ -1,4 +1,5 @@
 use bitfield::bitfield;
+use defmt::info;
 use embedded_hal_async::i2c::I2c;
 
 #[derive(Clone, Copy, Debug)]
@@ -27,12 +28,18 @@ impl<I2C: I2c> Ads1119<I2C> {
     pub async fn read_data(&mut self) -> Result<i16, I2C::Error> {
         const RDATA: u8 = 0b0001_0000;
         let buf = &mut [0u8; 2];
-        self.i2c.write_read(self.address, &RDATA.to_be_bytes()[..], buf).await?;
+        self.i2c.write(self.address, &[RDATA]).await?;
+        self.i2c.read(self.address, buf).await?;
+        info!("{:?}", buf);
         Ok(i16::from_be_bytes(*buf))
     }
 
     pub async fn configure(&mut self, config: ConfigRegister) -> Result<(), I2C::Error> {
-        self.i2c.write(self.address.clone(), &config.0.to_be_bytes()).await
+        self.i2c.write(self.address.clone(), &[0b0100_0000, config.0]).await
+    }
+    
+    pub async fn start_conversion(&mut self) -> Result<(), I2C::Error> {
+        self.i2c.write(self.address.clone(), &[0b0000_1000]).await
     }
 
 }

@@ -5,16 +5,16 @@ version = "0.1.0"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-embassy-embedded-hal = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt"] }
-embassy-sync = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt"] }
-embassy-executor = { git = "https://github.com/Meigs2/embassy.git", features = ["task-arena-size-98304", "arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers"] }
-embassy-time = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt", "defmt-timestamp-uptime"] }
-embassy-rp = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt", "unstable-pac", "time-driver", "critical-section-impl"] }
-embassy-usb = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt"] }
-embassy-futures = { git = "https://github.com/Meigs2/embassy.git" }
-embassy-usb-logger = { git = "https://github.com/Meigs2/embassy.git" }
-cyw43 = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt", "firmware-logs"] }
-cyw43-pio = { git = "https://github.com/Meigs2/embassy.git", features = ["defmt", "overclock"] }
+embassy-embedded-hal = { git = "https://github.com/Meigs2/embassy.git", branch = "embassy-rp-fix-spi-rx-only-dma", features = ["defmt"] }
+embassy-sync = { git = "https://github.com/Meigs2/embassy.git", branch = "embassy-rp-fix-spi-rx-only-dma", features = ["defmt"] }
+embassy-executor = { git = "https://github.com/Meigs2/embassy.git", branch = "embassy-rp-fix-spi-rx-only-dma", features = ["task-arena-size-98304", "arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers"] }
+embassy-time = { git = "https://github.com/Meigs2/embassy.git", branch = "embassy-rp-fix-spi-rx-only-dma", features = ["defmt", "defmt-timestamp-uptime"] }
+embassy-rp = { git = "https://github.com/Meigs2/embassy.git", branch = "embassy-rp-fix-spi-rx-only-dma", features = ["rp2040", "defmt", "unstable-pac", "time-driver", "critical-section-impl"] }
+embassy-usb = { git = "https://github.com/Meigs2/embassy.git", branch = "embassy-rp-fix-spi-rx-only-dma", features = ["defmt"] }
+embassy-futures = { git = "https://github.com/Meigs2/embassy.git", branch = "embassy-rp-fix-spi-rx-only-dma" }
+embassy-usb-logger = { git = "https://github.com/Meigs2/embassy.git", branch = "embassy-rp-fix-spi-rx-only-dma" }
+cyw43 = { git = "https://github.com/Meigs2/embassy.git", branch = "embassy-rp-fix-spi-rx-only-dma", features = ["defmt", "firmware-logs"] }
+cyw43-pio = { git = "https://github.com/Meigs2/embassy.git", branch = "embassy-rp-fix-spi-rx-only-dma", features = ["defmt", "overclock"] }
 
 defmt = "0.3"
 defmt-rtt = "0.4"

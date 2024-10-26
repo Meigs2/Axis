@@ -15,7 +15,7 @@ impl<I2C: I2c> Ds3231m<I2C> {
         }
     }
 
-    async fn read(&mut self) -> Result<TimekeepingRegisters, I2C::Error> {
+    async fn read(&mut self) -> Result<TimekeepingRegisters<[u8; 18]>, I2C::Error> {
         let buf = &mut [0u8; 18];
         self.i2c.read(self.address, buf).await.map(|_| TimekeepingRegisters(*buf))
     }
@@ -27,7 +27,7 @@ impl<I2C: I2c> Ds3231m<I2C> {
 
 bitfield! {
     #[derive(Clone, Copy, Debug)]
-    pub struct TimekeepingRegisters([u8; 18]);
+    pub struct TimekeepingRegisters([u8]);
     u8;
     seconds_10, set_seconds_10:                 6 +0x00, 4 +0x00;
     seconds, set_seconds:                       3 +0x00, 0 +0x00;
@@ -35,13 +35,12 @@ bitfield! {
     minutes_10, set_minutes_10:                 6 +0x01, 4 +0x01;
     minutes, set_minutes:                       3 +0x01, 4 +0x01;
 
-    hours_12_24, set_hours_12_24:               6 +0x02, 6 +0x02;
     hours_20, set_hours_20:                     5 +0x02, 5 +0x02;
     hours_am_pm, set_hours_am_pm:               5 +0x02, 5 +0x02;
     hours_10, set_hours_10:                     4 +0x02, 4 +0x02;
     hours, set_hours:                           3 +0x02, 0 +0x02;
 
-    day_day, set_day_day:                       2 +0x03, 0+0x03;
+    day_day, set_day_day:                       2 +0x03, 0 +0x03;
 
     date_10, set_date_10:                       5 +0x04, 4 +0x04;
     date, set_date:                             3 +0x04, 0 +0x04;
@@ -97,7 +96,7 @@ bitfield! {
     esoc, set_esoc:                             7 +0x0e, 7 +0x0e;
     bbsqw, set_bbsqw:                           6 +0x0e, 6 +0x0e;
     conv, set_conv:                             5 +0x0e, 5 +0x0e;
-    int_cn, set_int_cn:                         2 +0x0e, 2 +0x0e;
+    intcn, set_intcn:                           2 +0x0e, 2 +0x0e;
     a2ie, set_a2ie:                             1 +0x0e, 1 +0x0e;
     a1ie, set_a1ie:                             0 +0x0e, 0 +0x0e;
 
@@ -111,38 +110,43 @@ bitfield! {
     // aging register
     aging_reg, set_aging_reg:                   7 +0x10, 0 +0x10;
 
-    // temp data
-    temp_dat_upper, temp_dat_upper:             7 +0x11, 0 +0x11;
-    temp_dat_lower, temp_dat_lower:             7 +0x12, 0 +0x12;
 }
 
-impl TimekeepingRegisters {
+impl<T: AsRef<[u8]>> TimekeepingRegisters<T> {
     pub fn get_date_time(&self) -> DateTime {
-        let result = DateTime {
+        DateTime {
             time: self.get_time(),
-            day:
+            date: self.get_date(),
+            day: self.get_day(),
         }
     }
 
     pub fn get_time(&self) -> Time {
-        let use_am_pm = self.hours_12_24() > 0;
+        let use_am_pm = self.hours_am_pm() > 0;
 
         Time {
             second: self.seconds() + (10 * self.seconds_10()),
             minute: self.minutes() + (10 * self.minutes_10()),
             am_pm: use_am_pm,
-            hour: self.hours() + (10 * self.hours_10()) + (match use_am_pm {
-                true => 0
-                false => 20 * self.hours_20()
+            hour: self.hours() + (10 * self.hours_10()) +
+                (match use_am_pm {
+                    true => 0,
+                    false => 20 * self.hours_20()
             })
 
         }
     }
 
-
     pub fn get_day(&self) -> Day {
-        Day {
-            day: self.day_day()
+        match self.day_day() {
+            1 => Day::Monday,
+            2 => Day::Tuesday,
+            3 => Day::Wednesday,
+            4 => Day::Thursday,
+            5 => Day::Friday,
+            6 => Day::Saturday,
+            7 => Day::Sunday,
+            _ => Day::None,
         }
     }
 
