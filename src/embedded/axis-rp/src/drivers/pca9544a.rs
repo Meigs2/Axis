@@ -1,15 +1,10 @@
 use bitfield::bitfield;
 use core::marker::PhantomData;
+use bitflags::bitflags;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::mutex::{Mutex, MutexGuard};
 use embedded_hal_1::i2c::{ErrorType, Operation, SevenBitAddress};
 use embedded_hal_async::i2c::I2c;
-
-const ADDR: u8 = 0b111_0000;
-
-pub enum Error<E> {
-    I2cError(E)
-}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Channel {
@@ -18,6 +13,15 @@ pub enum Channel {
     Channel1,
     Channel2,
     Channel3
+}
+
+bitflags! {
+    pub struct InterruptFlags: u8 {
+        const INT0 = 0b0001;
+        const INT1 = 0b0010;
+        const INT2 = 0b0100;
+        const INT3 = 0b1000;
+    }
 }
 
 bitfield! {
@@ -60,13 +64,17 @@ impl ControlRegister {
 
     pub fn get_channel(&self) -> Channel {
         match (self.b2(), self.b1(), self.b0()) {
-            (0, _, _) => Channel::Channel0,
+            (0, _, _) => Channel::None,
             (1, 0, 0) => Channel::Channel0,
             (1, 0, 1) => Channel::Channel1,
             (1, 1, 0) => Channel::Channel2,
             (1, 1, 1) => Channel::Channel3,
             _ => {panic!("A channel bitfield for the pca9544a has a non-binary value somehow.")}
         }
+    }
+    
+    pub fn get_interrupt_flags(&self) -> InterruptFlags {
+        InterruptFlags::from_bits_truncate(self.0)
     }
 }
 
@@ -75,7 +83,6 @@ pub struct Pca9544a<'a, I2C: I2c> {
 }
 
 impl<'a, I2C: I2c> Pca9544a<'a, I2C> {
-
     pub fn new(i2c: I2C, address: u8) -> Self {
         let inner = Pca9544aInner {
             phantom_data: PhantomData,
@@ -98,20 +105,25 @@ impl<'a, I2C: I2c> Pca9544a<'a, I2C> {
 
     pub async fn set_channel(&self, channel: Channel) -> Result<(), I2C::Error> {
         let mut inner = self.mutex.lock().await;
-
         inner.set_channel(channel).await
     }
-
-    pub async fn get_current_channel(&self) -> Result<Channel, I2C::Error> {
+    
+    async fn read_register(&self) -> Result<ControlRegister, I2C::Error> {
         let mut inner = self.mutex.lock().await;
         let address = inner.address;
 
         let mut buf = [0u8; 1];
         inner.i2c.read(address, &mut buf).await?;
 
-        let res = ControlRegister(u8::from_be_bytes(buf));
+       Ok(ControlRegister(u8::from_be_bytes(buf)))
+    }
 
-        Ok(res.get_channel())
+    pub async fn get_current_channel(&self) -> Result<Channel, I2C::Error> {
+        self.read_register().await.map(|register| register.get_channel())
+    }
+
+    pub async fn get_interrupt_flags(&self) -> Result<InterruptFlags, I2C::Error> {
+        self.read_register().await.map(|register| register.get_interrupt_flags())
     }
 }
 
@@ -140,7 +152,7 @@ impl<'a, I2C: I2c> Pca9544aInner<'a, I2C> {
 }
 
 // Implement ErrorType for our device
-impl<'a, T: I2c> ErrorType for Pca9544aDevice<'a, T> {
+impl<T: I2c> ErrorType for Pca9544aDevice<'_, T> {
     type Error = T::Error;
 }
 

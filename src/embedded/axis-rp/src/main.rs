@@ -36,7 +36,6 @@ use embassy_rp::spi::Spi;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::mutex::Mutex;
 use crate::drivers::ads1119;
-use crate::drivers::ads1119::{Ads1119, ConfigRegister, ConversionMode, MuxConfig, VoltageReference};
 use crate::drivers::pca9544a::Channel;
 
 pub const MAX_STRING_SIZE: usize = 64;
@@ -200,9 +199,8 @@ async fn temp(cs: Output<'static>, spi_bus: &'static Spi0Bus) {
         let res = max.read_raw().await;
         match res {
             Ok(value) => {
-                //info!("Success");
-                //info!("Raw temp: {:?}", value.get_temp());
-                //info!("Raw value: {:?}", value.0)
+                info!("Success");
+                info!("Temp: {:?}", value.get_temp());
             },
             Err(e) => {
                 error!("Error or something :(")
@@ -230,31 +228,28 @@ async fn blink(other: OtherResources) {
 #[embassy_executor::task]
 async fn read_ads(bus: &'static I2c1Bus) {
     let mut pca_i2c_device = I2cDevice::new(bus);
-    let mut pca = drivers::pca9544a::Pca9544a::new(&mut pca_i2c_device, 0b111_0000);
+    let pca9544a = drivers::pca9544a::Pca9544a::new(&mut pca_i2c_device, 0b111_0000);
 
-    let ads_i2c = pca.create_device(Channel::Channel1);
+    let ads_i2c_device = pca9544a.create_device(Channel::Channel1);
+    let mut ads1119 = ads1119::Ads1119::new(ads_i2c_device, 0b100_0000);
 
-    let mut ads = Ads1119::new(ads_i2c, 0b100_0000);
-
-    let mut setup: bool = false;
+    let mut is_setup: bool = false;
 
     loop {
         Timer::after_secs(1).await;
-        if setup == false {
+        if !is_setup {
             let mut config = ads1119::ConfigRegister(0);
-            config.set_mux(MuxConfig::AIN0_AGND);
-            config.set_vref(VoltageReference::External);
-            config.set_conversion_mode(ConversionMode::Continuous);
-            ads.configure(config).await.unwrap();
-            ads.start_conversion().await.unwrap();
-            setup = true;
+            config.set_mux(ads1119::MuxConfig::AIN0_AGND);
+            config.set_vref(ads1119::VoltageReference::External);
+            config.set_conversion_mode(ads1119::ConversionMode::Continuous);
+            ads1119.configure(config).await.unwrap();
+            ads1119.start_conversion().await.unwrap();
+            is_setup = true;
         }
-        
-        pca.set_channel(Channel::Channel3).await.unwrap();
-        
+
         Timer::after_millis(500).await;
 
-        let value = ads.read_data().await.unwrap();
+        let value = ads1119.read_data().await.unwrap();
 
         info!("Ads Data: {:?}", value);
     }
