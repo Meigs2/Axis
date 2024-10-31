@@ -59,7 +59,6 @@ impl ControlRegister {
     }
 
     pub fn get_channel(&self) -> Channel {
-        // Otherwise check combination of b1 and b0. See datasheet.
         match (self.b2(), self.b1(), self.b0()) {
             (0, _, _) => Channel::Channel0,
             (1, 0, 0) => Channel::Channel0,
@@ -117,15 +116,12 @@ impl<'a, I2C: I2c> Pca9544a<'a, I2C> {
 }
 
 pub struct Pca9544aDevice<'a, I2C: I2c> {
-    // points to the `mutex` field in Pca9544a
     mutex: &'a Mutex<CriticalSectionRawMutex, Pca9544aInner<'a, I2C>>,
     channel: Channel,
 }
 
 struct Pca9544aInner<'a, I2C: I2c> {
     i2c: I2C,
-    // you can store extra state here. for example store last selected channel
-    // so you can skip selecting it every time if you use it multiple times in a row
     last_selected_channel: Channel,
     address: u8,
     phantom_data: PhantomData<&'a I2C>,
