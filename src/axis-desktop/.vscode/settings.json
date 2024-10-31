@@ -1,0 +1,11 @@
+{
+  "svelte.enable-ts-plugin": true,
+    "tailwindCSS.includeLanguages": {
+    "Svelte": "html",
+  },
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": true,
+    "strings": true
+  },
+}

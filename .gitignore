@@ -398,6 +398,8 @@ FodyWeavers.xsd
 *.sln.iml
 
 .idea/
+**/.idea
+
 
 # Rust
 
