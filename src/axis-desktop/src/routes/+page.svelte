@@ -1,6 +1,13 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import { goto } from "$app/navigation";
+  import { onMount } from 'svelte'
+  import Chart from "$lib/svelte-echarts/components/Chart.svelte"
+  import { init } from 'echarts'
+  import type { EChartsOption } from 'echarts'
+    import { draw } from "svelte/transition";
+
+
 
   let name = $state("");
   let greetMsg = $state("");
@@ -10,10 +17,52 @@
     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
     greetMsg = await invoke("greet", { name });
   }
+
+
+  const randomData = (length = 1, multiplier = 1) =>
+    Array.from({ length }, () => Math.floor(Math.random() * multiplier) )
+
+  let data = $state(randomData(7, 100))
+  let axis_data = $state(data.map((a, b) => 0))
+
+  let options = $derived({
+    title: {
+      text: 'Classic ECharts Example',
+    },
+    xAxis: {
+      type: 'category',
+      data: axis_data,
+      max: Math.max(100, axis_data.length),
+      min: axis_data.length < 100 ? 0 : axis_data.length - 100,
+    },
+    yAxis: {
+      type: 'value',
+    },
+    series: [
+      {
+        type: 'line',
+        data,
+      },
+    ],
+    animation: false
+  } as EChartsOption)
+
+  const updateData = () => {
+    data.push(randomData(1, 100)[0])
+    axis_data.push(0)
+  }
+
+  onMount(() => {
+    const interval = setInterval(updateData, 10)
+    return () => clearInterval(interval)
+  })
+
 </script>
 
 <main class="container">
   <h1>Welcome to Tauri + Svelte</h1>
+  <div class="w-fit h-fit">
+  </div>
 
   <div class="row">
     <a href="https://vitejs.dev" target="_blank">
@@ -35,6 +84,8 @@
   <p>{greetMsg}</p>
 
   <button onclick={() => goto("/test")}></button>
+
+  <Chart class="h-full" {init} {options}/>
 </main>
 
 <style>
