@@ -1,0 +1,11 @@
+
+[package]
+name = "axis-protocol"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bitfield = "0.17.0"
+postcard = "1.0.10"
+serde = { version = "1.0.214", default-features = false, features = ["derive"] }
+defmt = "0.3"
