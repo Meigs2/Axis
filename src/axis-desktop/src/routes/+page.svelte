@@ -11,6 +11,7 @@
 
   let name = $state("");
   let greetMsg = $state("");
+  let pause = $state(false);
 
   async function greet(event: Event) {
     event.preventDefault();
@@ -40,7 +41,7 @@
     },
     series: [
       {
-        type: 'line',
+        type: 'scatter',
         data,
       },
     ],
@@ -48,6 +49,9 @@
   } as EChartsOption)
 
   const updateData = () => {
+    if (pause) {
+      return;
+    }
     data.push(randomData(1, 100)[0])
     axis_data.push(0)
   }
@@ -77,11 +81,21 @@
   </div>
   <p>Click on the Tauri, Vite, and SvelteKit logos to learn more.</p>
 
-  <form class="row" onsubmit={greet}>
+  <div class="row">
+    <button class="w-40 h-20" onclick={() => pause = !pause}>
+      {#if pause}
+      Play
+      {:else}
+      Pause
+      {/if}
+    </button>
+  </div>
+  <form class="row max-h-9" onsubmit={greet}>
     <input id="greet-input" placeholder="Enter a name..." bind:value={name} />
     <button type="submit">Greet</button>
   </form>
   <p>{greetMsg}</p>
+
 
   <button onclick={() => goto("/test")}></button>
 

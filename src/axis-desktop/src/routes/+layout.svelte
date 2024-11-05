@@ -10,10 +10,10 @@
 </script>
 
 <Sidebar.Provider>
-	<AppSidebar />
+	<AppSidebar collapsible='icon' />
 	<Sidebar.Inset>
 		<header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-			<Sidebar.Trigger class="-ml-1" />
+			<Sidebar.Trigger class="ml-1" />
 		</header>
     <main class="flex h-full w-full">
       {@render children()}
