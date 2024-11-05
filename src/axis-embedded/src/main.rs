@@ -226,20 +226,18 @@ async fn read_ads(bus: &'static I2c1Bus) {
 
     let mut is_setup: bool = false;
 
+    let mut config = ads1119::ConfigRegister(0);
+    config.set_mux(ads1119::MuxConfig::AIN0_AGND);
+    config.set_vref(ads1119::VoltageReference::External);
+    config.set_conversion_mode(ads1119::ConversionMode::Continuous);
+    ads1119.configure(config).await.unwrap();
+    ads1119.start_conversion().await.unwrap();
+
     loop {
         Timer::after_secs(1).await;
-        if !is_setup {
-            let mut config = ads1119::ConfigRegister(0);
-            config.set_mux(ads1119::MuxConfig::AIN0_AGND);
-            config.set_vref(ads1119::VoltageReference::External);
-            config.set_conversion_mode(ads1119::ConversionMode::Continuous);
-            ads1119.configure(config).await.unwrap();
-            ads1119.start_conversion().await.unwrap();
-            is_setup = true;
-        }
 
         let value = ads1119.read_data().await.unwrap();
 
-        let a = ds3213.get_date_time().await.unwrap();
+        let a = ds3213.read_date_time().await.unwrap();
     }
 }

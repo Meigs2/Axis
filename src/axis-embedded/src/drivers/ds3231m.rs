@@ -22,7 +22,7 @@ impl<I2C: I2c> Ds3231m<I2C> {
         })
     }
 
-    pub async fn get_date_time(&mut self) -> Result<DateTime, I2C::Error> {
+    pub async fn read_date_time(&mut self) -> Result<DateTime, I2C::Error> {
         self.read().await.map(|reg| reg.get_date_time())
     }
 }
