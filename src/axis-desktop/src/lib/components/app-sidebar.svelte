@@ -7,7 +7,8 @@
 	import Map from "lucide-svelte/icons/map";
 	import Send from "lucide-svelte/icons/send";
 	import Settings2 from "lucide-svelte/icons/settings-2";
-	import SquareTerminal from "lucide-svelte/icons/square-terminal";
+	import HouseIcon from "lucide-svelte/icons/house";
+	import CircuitBoard from "lucide-svelte/icons/circuit-board";
 
 	const data = {
 		user: {
@@ -17,24 +18,16 @@
 		},
 		navMain: [
 			{
-				title: "Playground",
-				url: "#",
-				icon: SquareTerminal,
+				title: "Home",
+				url: "/",
+				icon: HouseIcon,
 				isActive: true,
-				items: [
-					{
-						title: "History",
-						url: "#",
-					},
-					{
-						title: "Starred",
-						url: "#",
-					},
-					{
-						title: "Settings",
-						url: "#",
-					},
-				],
+			},
+			{
+				title: "Sensors",
+				url: "/sensors",
+				icon: CircuitBoard,
+				isActive: true,
 			},
 			{
 				title: "Models",

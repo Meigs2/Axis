@@ -38,8 +38,8 @@ use crate::drivers::pca9544a::Channel;
 pub const MAX_PACKET_SIZE: usize = 64;
 pub const THERMOCOUPLE_SPI_FREQUENCY: u32 = 500_000;
 
-pub type SpiBus<'a, T: spi::Instance> = Mutex<CriticalSectionRawMutex, Spi<'a, T, spi::Async>>;
-pub type I2cBus<'a, T: i2c::Instance> = Mutex<CriticalSectionRawMutex, I2c<'a, T, i2c::Async>>;
+pub type SpiBus<'a, T> = Mutex<CriticalSectionRawMutex, Spi<'a, T, spi::Async>>;
+pub type I2cBus<'a, T> = Mutex<CriticalSectionRawMutex, I2c<'a, T, i2c::Async>>;
 
 bind_interrupts!(pub struct I2c0Irqs {
     I2C0_IRQ => embassy_rp::i2c::InterruptHandler<I2C0>;
@@ -123,6 +123,7 @@ assign_resources! {
         spi1_tx:  PIN_11,
         spi1:     SPI1,
         rx_dma0:   DMA_CH2,
+        rx_dma1:   DMA_CH3,
     }
     hv_breakout: HighVoltageBreakoutResources {
         hv_io1: PIN_20,
@@ -146,7 +147,12 @@ fn main() -> ! {
     let mut spi0_config = spi::Config::default();
     spi0_config.frequency = 1_000_000;
 
+    let spi0_cs1 = Output::new(r.spi1.spi1_cs0, Level::High);
+    let mut spi1_config = spi::Config::default();
+    spi1_config.frequency = 1_000_000;
+
     let spi0 = Spi::new_rxonly(r.spi0.spi0, r.spi0.spi0_sck, r.spi0.spi0_rx, r.spi0.rx_dma0, r.spi0.rx_dma1, spi0_config);
+    let spi1 = Spi::new_rxonly(r.spi1.spi1, r.spi1.spi1_sck, r.spi1.spi1_rx, r.spi1.rx_dma0, r.spi1.rx_dma1, spi1_config);
 
     static I2C0_BUS: StaticCell<I2c0Bus> = StaticCell::new();
     static I2C1_BUS: StaticCell<I2c1Bus> = StaticCell::new();
@@ -158,11 +164,12 @@ fn main() -> ! {
     let i2c1_bus = I2C1_BUS.init(I2c1Bus::new(i2c1));
 
     let spi0_bus = SPI0_BUS.init(Spi0Bus::new(spi0));
+    let spi1_bus = SPI1_BUS.init(Spi1Bus::new(spi1));
 
     // High-priority executor: SWI_IRQ_1, priority level 2
     interrupt::SWI_IRQ_1.set_priority(Priority::P2);
     let spawner = EXECUTOR_HIGH.start(interrupt::SWI_IRQ_1);
-    unwrap!(spawner.spawn(temp(spi0_cs0, spi0_bus)));
+    unwrap!(spawner.spawn(read_max31855(spi0_cs0, spi0_bus)));
 
     // Medium-priority executor: SWI_IRQ_0, priority level 3
     interrupt::SWI_IRQ_0.set_priority(Priority::P3);
@@ -177,7 +184,7 @@ fn main() -> ! {
 }
 
 #[embassy_executor::task]
-async fn temp(cs: Output<'static>, spi_bus: &'static Spi0Bus) {
+async fn read_max31855(cs: Output<'static>, spi_bus: &'static Spi0Bus) {
     let device = SpiDevice::new(spi_bus, cs);
 
     let mut max = drivers::max31855::Max31855::new(device);
@@ -223,8 +230,6 @@ async fn read_ads(bus: &'static I2c1Bus) {
     let ds3231_device = pca9544a.create_device(Channel::Channel0);
 
     let mut ds3213 = drivers::ds3231m::Ds3231m::new(ds3231_device, 0b1101000);
-
-    let mut is_setup: bool = false;
 
     let mut config = ads1119::ConfigRegister(0);
     config.set_mux(ads1119::MuxConfig::AIN0_AGND);

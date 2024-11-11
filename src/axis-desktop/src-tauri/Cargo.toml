@@ -18,10 +18,13 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
-tauri-plugin-shell = "2"
+tauri = { version = "2.1.0", features = [] }
+tauri-plugin-shell = "2.0.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 nusb = "0.1.11"
 
 axis-protocol = { path = "../../axis-protocol" }
+tokio = "1.41.1"
+futures-core = "0.3.31"
+futures-util = "0.3.31"

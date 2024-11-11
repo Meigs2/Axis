@@ -1,5 +1,6 @@
+use std::{thread::sleep, time::Duration};
+
 use tauri::AppHandle;
-use tokio;
 
 mod usb;
 
@@ -15,19 +16,17 @@ async fn test() -> String {
 }
 
 fn setup_app<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-
     // This one
     let handle = app.handle();
 
     tauri::async_runtime::spawn(async {
-        usb_task().await
+        loop {
+            usb::client::run().await;
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
     });
 
     Ok(())
-}
-
-pub async fn usb_task() {
-
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

@@ -56,8 +56,8 @@ impl<'a, const N: usize> UsbWrapperInner<'a, N> {
         let driver = Driver::new(usb, Irqs);
 
         let mut config = embassy_usb::Config::new(0xc0de, 0xcafe);
-        config.manufacturer = Some("Embassy");
-        config.product = Some("USB-serial logger");
+        config.manufacturer = Some("Axis");
+        config.product = Some("Axis MCU");
         config.serial_number = Some("12345678");
         config.max_power = 100;
         config.max_packet_size_0 = MAX_PACKET_SIZE as u8;
@@ -95,7 +95,7 @@ impl<'a, const N: usize> UsbWrapperInner<'a, N> {
         )
     }
 
-    pub async fn run(&'a mut self) {
+    pub async fn run(&'a mut self) -> ! {
         loop {
             select(
                 Self::read(&mut self.usb_receiver, self.channel.sender().clone()),
@@ -105,7 +105,7 @@ impl<'a, const N: usize> UsbWrapperInner<'a, N> {
     }
 
     async fn write_outgoing_packets<'b>(
-        usb_sender: &'b mut embassy_usb::class::cdc_acm::Sender<'a, Driver<'a, USB>>,
+        usb_sender: &'b mut UsbSender<'a>,
         receiver: Receiver<'a, CriticalSectionRawMutex, Messages, N>,
     ) {
         let mut buf = [0u8; N];
