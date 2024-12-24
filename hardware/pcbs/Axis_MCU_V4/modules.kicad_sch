@@ -7046,6 +7046,18 @@
 		)
 		(uuid "86cab133-8a24-423a-bfd1-48896edf6f64")
 	)
+	(hierarchical_label "MOD_I2C3_SCL"
+		(shape bidirectional)
+		(at 226.06 241.3 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "9befc067-bb81-4a2c-9a55-5eb7bdd3c6e3")
+	)
 	(hierarchical_label "SPI1_SCK"
 		(shape bidirectional)
 		(at 105.41 251.46 180)
@@ -7202,6 +7214,30 @@
 		)
 		(uuid "c9e8c1da-8f45-4b76-9895-a40d442cbefb")
 	)
+	(hierarchical_label "MOD_I2C3_SDA"
+		(shape bidirectional)
+		(at 226.06 238.76 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "cdc58028-bb6d-4380-9978-db9ff1c8126c")
+	)
+	(hierarchical_label "~{MOD_I2C3_INT}"
+		(shape bidirectional)
+		(at 226.06 243.84 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "d1a85ef2-a3dd-4b9a-b358-028002a02b01")
+	)
 	(hierarchical_label "SPI0_A0"
 		(shape bidirectional)
 		(at 38.1 50.8 180)
@@ -7343,7 +7379,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "006f8f18-1216-4fe3-9f4e-9d04b84dcd25")
-		(property "Reference" "#PWR0227"
+		(property "Reference" "#PWR0251"
 			(at 138.43 172.72 0)
 			(effects
 				(font
@@ -7393,7 +7429,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0227")
+					(reference "#PWR0251")
 					(unit 1)
 				)
 			)
@@ -7409,7 +7445,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "0210e32d-a2e3-44ce-898b-16577319faf6")
-		(property "Reference" "U16"
+		(property "Reference" "U210"
 			(at 129.032 152.146 0)
 			(effects
 				(font
@@ -7472,7 +7508,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U16")
+					(reference "U210")
 					(unit 1)
 				)
 			)
@@ -7487,7 +7523,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "027fdeb0-d766-4cbe-83b9-621599bffa9b")
-		(property "Reference" "U22"
+		(property "Reference" "U216"
 			(at 121.412 228.854 0)
 			(effects
 				(font
@@ -7595,7 +7631,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U22")
+					(reference "U216")
 					(unit 1)
 				)
 			)
@@ -7611,7 +7647,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "03a83a69-5d83-49f0-baf6-0a221f63eb26")
-		(property "Reference" "#PWR0237"
+		(property "Reference" "#PWR0204"
 			(at 166.37 36.83 0)
 			(effects
 				(font
@@ -7661,7 +7697,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0237")
+					(reference "#PWR0204")
 					(unit 1)
 				)
 			)
@@ -7678,7 +7714,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "05b5d376-d4cb-45c4-904f-7246ee1d4836")
-		(property "Reference" "#PWR0203"
+		(property "Reference" "#PWR0210"
 			(at 48.26 43.18 0)
 			(effects
 				(font
@@ -7728,7 +7764,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0203")
+					(reference "#PWR0210")
 					(unit 1)
 				)
 			)
@@ -7745,7 +7781,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "0952b97a-c44f-48e4-8f53-76a95487dcca")
-		(property "Reference" "#PWR0253"
+		(property "Reference" "#PWR0209"
 			(at 236.22 41.91 0)
 			(effects
 				(font
@@ -7795,7 +7831,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0253")
+					(reference "#PWR0209")
 					(unit 1)
 				)
 			)
@@ -7810,7 +7846,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "09c8d494-853c-44b6-a56d-e5a470e9a751")
-		(property "Reference" "U23"
+		(property "Reference" "U217"
 			(at 242.062 228.854 0)
 			(effects
 				(font
@@ -7918,7 +7954,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U23")
+					(reference "U217")
 					(unit 1)
 				)
 			)
@@ -7933,7 +7969,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "0bbb9688-3707-4987-b091-8732360bb4e9")
-		(property "Reference" "#PWR0244"
+		(property "Reference" "#PWR0234"
 			(at 209.55 109.22 0)
 			(effects
 				(font
@@ -7983,7 +8019,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0244")
+					(reference "#PWR0234")
 					(unit 1)
 				)
 			)
@@ -7999,7 +8035,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "0d73f6a8-bb29-498c-bcd7-5edb69ff3587")
-		(property "Reference" "C10"
+		(property "Reference" "C205"
 			(at 212.09 97.7962 0)
 			(effects
 				(font
@@ -8053,7 +8089,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "C10")
+					(reference "C205")
 					(unit 1)
 				)
 			)
@@ -8068,7 +8104,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "125cf6a4-f0ff-416b-b0ca-4d1374bf49db")
-		(property "Reference" "#PWR0236"
+		(property "Reference" "#PWR0273"
 			(at 162.56 273.05 0)
 			(effects
 				(font
@@ -8118,7 +8154,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0236")
+					(reference "#PWR0273")
 					(unit 1)
 				)
 			)
@@ -8133,7 +8169,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "136f9244-0ed6-4add-be67-33c9a8d435d2")
-		(property "Reference" "#PWR0250"
+		(property "Reference" "#PWR0235"
 			(at 219.71 109.22 0)
 			(effects
 				(font
@@ -8183,7 +8219,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0250")
+					(reference "#PWR0235")
 					(unit 1)
 				)
 			)
@@ -8199,7 +8235,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "1458bae3-2cc1-4007-99ee-fbb6ca927d7b")
-		(property "Reference" "MOD4"
+		(property "Reference" "MOD204"
 			(at 288.29 98.806 0)
 			(effects
 				(font
@@ -8280,7 +8316,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "MOD4")
+					(reference "MOD204")
 					(unit 1)
 				)
 			)
@@ -8296,7 +8332,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "1d0db837-fa32-4cd9-8ca1-cf1e06ca3fe7")
-		(property "Reference" "MOD8"
+		(property "Reference" "MOD208"
 			(at 288.29 225.806 0)
 			(effects
 				(font
@@ -8377,7 +8413,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "MOD8")
+					(reference "MOD208")
 					(unit 1)
 				)
 			)
@@ -8392,7 +8428,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "1d6f0ed9-d700-4155-a55d-514baeb7af98")
-		(property "Reference" "#PWR0242"
+		(property "Reference" "#PWR0214"
 			(at 209.55 45.72 0)
 			(effects
 				(font
@@ -8442,7 +8478,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0242")
+					(reference "#PWR0214")
 					(unit 1)
 				)
 			)
@@ -8458,7 +8494,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "210afe37-44ac-4245-b3f9-9baa5b765ba3")
-		(property "Reference" "C9"
+		(property "Reference" "C204"
 			(at 91.44 97.7962 0)
 			(effects
 				(font
@@ -8512,7 +8548,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "C9")
+					(reference "C204")
 					(unit 1)
 				)
 			)
@@ -8528,7 +8564,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "216b56ec-b400-4c0b-b090-1aeda8c56914")
-		(property "Reference" "MOD6"
+		(property "Reference" "MOD206"
 			(at 288.29 162.306 0)
 			(effects
 				(font
@@ -8609,7 +8645,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "MOD6")
+					(reference "MOD206")
 					(unit 1)
 				)
 			)
@@ -8625,7 +8661,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "288cd990-ddd9-4822-9209-602e78ba8907")
-		(property "Reference" "#PWR0273"
+		(property "Reference" "#PWR0206"
 			(at 287.02 36.83 0)
 			(effects
 				(font
@@ -8675,7 +8711,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0273")
+					(reference "#PWR0206")
 					(unit 1)
 				)
 			)
@@ -8692,7 +8728,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "2bd70655-1fcd-486d-b478-cddc254cbcfb")
-		(property "Reference" "#PWR0266"
+		(property "Reference" "#PWR0227"
 			(at 279.4 100.33 0)
 			(effects
 				(font
@@ -8742,7 +8778,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0266")
+					(reference "#PWR0227")
 					(unit 1)
 				)
 			)
@@ -8759,7 +8795,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "2cea1a0b-5ba9-404f-bde5-39c7f11f24e0")
-		(property "Reference" "#PWR0220"
+		(property "Reference" "#PWR0265"
 			(at 115.57 232.41 0)
 			(effects
 				(font
@@ -8809,7 +8845,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0220")
+					(reference "#PWR0265")
 					(unit 1)
 				)
 			)
@@ -8826,7 +8862,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "31dfd36d-2115-4c9d-9990-d6c5799a5a56")
-		(property "Reference" "#PWR0205"
+		(property "Reference" "#PWR0201"
 			(at 88.9 35.56 0)
 			(effects
 				(font
@@ -8876,7 +8912,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0205")
+					(reference "#PWR0201")
 					(unit 1)
 				)
 			)
@@ -8891,7 +8927,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "31faa20a-8bdb-4874-8032-fcd36094b0de")
-		(property "Reference" "#PWR0260"
+		(property "Reference" "#PWR0276"
 			(at 238.76 274.32 0)
 			(effects
 				(font
@@ -8941,7 +8977,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0260")
+					(reference "#PWR0276")
 					(unit 1)
 				)
 			)
@@ -8958,7 +8994,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "352c04f4-5611-4761-abf9-012ed0cd8b7c")
-		(property "Reference" "#PWR0254"
+		(property "Reference" "#PWR0230"
 			(at 236.22 105.41 0)
 			(effects
 				(font
@@ -9008,7 +9044,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0254")
+					(reference "#PWR0230")
 					(unit 1)
 				)
 			)
@@ -9023,7 +9059,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "38c078da-e06d-4696-8064-c8216bd2c580")
-		(property "Reference" "#PWR0210"
+		(property "Reference" "#PWR0249"
 			(at 88.9 172.72 0)
 			(effects
 				(font
@@ -9073,7 +9109,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0210")
+					(reference "#PWR0249")
 					(unit 1)
 				)
 			)
@@ -9089,7 +9125,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "390b9eec-4601-47d4-a524-b9cff41f3aed")
-		(property "Reference" "U13"
+		(property "Reference" "U207"
 			(at 249.682 88.9 0)
 			(effects
 				(font
@@ -9152,7 +9188,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U13")
+					(reference "U207")
 					(unit 1)
 				)
 			)
@@ -9167,7 +9203,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "3919da96-359d-489a-b364-d06ca60b4fa5")
-		(property "Reference" "R16"
+		(property "Reference" "R208"
 			(at 220.98 224.79 0)
 			(effects
 				(font
@@ -9221,7 +9257,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "R16")
+					(reference "R208")
 					(unit 1)
 				)
 			)
@@ -9238,7 +9274,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "3c73aca3-adc4-4de2-bf8c-9440672401f6")
-		(property "Reference" "#PWR0247"
+		(property "Reference" "#PWR0260"
 			(at 209.55 226.06 0)
 			(effects
 				(font
@@ -9288,7 +9324,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0247")
+					(reference "#PWR0260")
 					(unit 1)
 				)
 			)
@@ -9303,7 +9339,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "3f170873-2804-4f50-b369-cfb4b813965a")
-		(property "Reference" "#PWR0215"
+		(property "Reference" "#PWR0250"
 			(at 99.06 172.72 0)
 			(effects
 				(font
@@ -9353,7 +9389,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0215")
+					(reference "#PWR0250")
 					(unit 1)
 				)
 			)
@@ -9369,7 +9405,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "40181029-ec40-4533-9c10-a3874916a3cc")
-		(property "Reference" "MOD7"
+		(property "Reference" "MOD207"
 			(at 167.64 225.806 0)
 			(effects
 				(font
@@ -9450,7 +9486,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "MOD7")
+					(reference "MOD207")
 					(unit 1)
 				)
 			)
@@ -9466,7 +9502,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "40a6e3cb-4f96-49d7-8905-e10eb8f7010f")
-		(property "Reference" "C12"
+		(property "Reference" "C207"
 			(at 212.09 161.2962 0)
 			(effects
 				(font
@@ -9520,7 +9556,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "C12")
+					(reference "C207")
 					(unit 1)
 				)
 			)
@@ -9535,7 +9571,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "43a69cf7-8d07-47ef-9e75-c22438e6b0fc")
-		(property "Reference" "#PWR0226"
+		(property "Reference" "#PWR0233"
 			(at 138.43 109.22 0)
 			(effects
 				(font
@@ -9585,7 +9621,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0226")
+					(reference "#PWR0233")
 					(unit 1)
 				)
 			)
@@ -9667,7 +9703,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "471840e5-2554-4275-8319-e3fb392537fd")
-		(property "Reference" "#PWR0267"
+		(property "Reference" "#PWR0245"
 			(at 279.4 163.83 0)
 			(effects
 				(font
@@ -9717,7 +9753,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0267")
+					(reference "#PWR0245")
 					(unit 1)
 				)
 			)
@@ -9732,7 +9768,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "47e65a5a-0144-4db7-b76e-448b7d92c453")
-		(property "Reference" "#PWR0270"
+		(property "Reference" "#PWR0238"
 			(at 283.21 146.05 0)
 			(effects
 				(font
@@ -9782,7 +9818,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0270")
+					(reference "#PWR0238")
 					(unit 1)
 				)
 			)
@@ -9797,7 +9833,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "4ba87c04-90ad-4700-b0e0-70c8aeaa7a25")
-		(property "Reference" "#PWR0206"
+		(property "Reference" "#PWR0211"
 			(at 88.9 45.72 0)
 			(effects
 				(font
@@ -9847,7 +9883,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0206")
+					(reference "#PWR0211")
 					(unit 1)
 				)
 			)
@@ -9864,7 +9900,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "56cb9995-7388-4b88-8594-207c8533cecd")
-		(property "Reference" "#PWR0256"
+		(property "Reference" "#PWR0266"
 			(at 236.22 232.41 0)
 			(effects
 				(font
@@ -9914,7 +9950,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0256")
+					(reference "#PWR0266")
 					(unit 1)
 				)
 			)
@@ -9929,7 +9965,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "5877f6ba-a021-450c-9087-b182e9d2be36")
-		(property "Reference" "#PWR0272"
+		(property "Reference" "#PWR0274"
 			(at 283.21 273.05 0)
 			(effects
 				(font
@@ -9979,7 +10015,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0272")
+					(reference "#PWR0274")
 					(unit 1)
 				)
 			)
@@ -9994,7 +10030,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "5aeca3b9-f006-4c77-a6fb-7cbb69f7dce4")
-		(property "Reference" "#PWR0225"
+		(property "Reference" "#PWR0213"
 			(at 138.43 45.72 0)
 			(effects
 				(font
@@ -10044,7 +10080,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0225")
+					(reference "#PWR0213")
 					(unit 1)
 				)
 			)
@@ -10061,7 +10097,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "5e18972e-649f-41b7-a663-79dad6dde369")
-		(property "Reference" "#PWR0243"
+		(property "Reference" "#PWR0224"
 			(at 209.55 99.06 0)
 			(effects
 				(font
@@ -10111,7 +10147,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0243")
+					(reference "#PWR0224")
 					(unit 1)
 				)
 			)
@@ -10127,7 +10163,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "5f6e5759-96de-4b5a-ab81-31ae803d583b")
-		(property "Reference" "C13"
+		(property "Reference" "C208"
 			(at 91.44 224.7962 0)
 			(effects
 				(font
@@ -10181,7 +10217,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "C13")
+					(reference "C208")
 					(unit 1)
 				)
 			)
@@ -10198,7 +10234,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "61b322b1-2601-450b-8c71-aa172e664b3c")
-		(property "Reference" "#PWR0231"
+		(property "Reference" "#PWR0243"
 			(at 158.75 163.83 0)
 			(effects
 				(font
@@ -10248,7 +10284,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0231")
+					(reference "#PWR0243")
 					(unit 1)
 				)
 			)
@@ -10263,7 +10299,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "63500bd2-3802-4dd5-86a3-0d0e6603bcb5")
-		(property "Reference" "U15"
+		(property "Reference" "U209"
 			(at 242.062 101.854 0)
 			(effects
 				(font
@@ -10371,7 +10407,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U15")
+					(reference "U209")
 					(unit 1)
 				)
 			)
@@ -10386,7 +10422,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "64461be3-4d56-4649-9852-0721714408ca")
-		(property "Reference" "R13"
+		(property "Reference" "R205"
 			(at 100.33 161.29 0)
 			(effects
 				(font
@@ -10440,7 +10476,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "R13")
+					(reference "R205")
 					(unit 1)
 				)
 			)
@@ -10457,7 +10493,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "646bc839-2d23-4532-86b5-836f89c30c29")
-		(property "Reference" "#PWR0211"
+		(property "Reference" "#PWR0259"
 			(at 88.9 226.06 0)
 			(effects
 				(font
@@ -10507,7 +10543,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0211")
+					(reference "#PWR0259")
 					(unit 1)
 				)
 			)
@@ -10522,7 +10558,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "653a4fc9-5b87-43ac-8cb0-ef76c03af529")
-		(property "Reference" "#PWR0235"
+		(property "Reference" "#PWR0255"
 			(at 162.56 209.55 0)
 			(effects
 				(font
@@ -10572,7 +10608,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0235")
+					(reference "#PWR0255")
 					(unit 1)
 				)
 			)
@@ -10587,7 +10623,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "65af3828-c3e3-4f44-8788-00c87a33fadd")
-		(property "Reference" "#PWR0257"
+		(property "Reference" "#PWR0222"
 			(at 238.76 83.82 0)
 			(effects
 				(font
@@ -10637,7 +10673,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0257")
+					(reference "#PWR0222")
 					(unit 1)
 				)
 			)
@@ -10653,7 +10689,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "675f9418-6aae-44f9-96c1-ceb80058b934")
-		(property "Reference" "C14"
+		(property "Reference" "C209"
 			(at 212.09 224.7962 0)
 			(effects
 				(font
@@ -10707,7 +10743,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "C14")
+					(reference "C209")
 					(unit 1)
 				)
 			)
@@ -10722,7 +10758,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "67ce4934-0a75-4021-95f4-a41d159d9406")
-		(property "Reference" "#PWR0264"
+		(property "Reference" "#PWR0272"
 			(at 259.08 236.22 0)
 			(effects
 				(font
@@ -10772,7 +10808,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0264")
+					(reference "#PWR0272")
 					(unit 1)
 				)
 			)
@@ -10787,7 +10823,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "68285cc3-f80a-4322-8140-61d6e522303d")
-		(property "Reference" "#PWR0248"
+		(property "Reference" "#PWR0270"
 			(at 209.55 236.22 0)
 			(effects
 				(font
@@ -10837,7 +10873,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0248")
+					(reference "#PWR0270")
 					(unit 1)
 				)
 			)
@@ -10852,7 +10888,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "6881c460-2c2a-49e6-810b-afce183b10d6")
-		(property "Reference" "#PWR0233"
+		(property "Reference" "#PWR0219"
 			(at 162.56 82.55 0)
 			(effects
 				(font
@@ -10902,7 +10938,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0233")
+					(reference "#PWR0219")
 					(unit 1)
 				)
 			)
@@ -10918,7 +10954,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "68da0735-f4b7-4746-9e71-23c21267034f")
-		(property "Reference" "#PWR0238"
+		(property "Reference" "#PWR0226"
 			(at 166.37 100.33 0)
 			(effects
 				(font
@@ -10968,7 +11004,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0238")
+					(reference "#PWR0226")
 					(unit 1)
 				)
 			)
@@ -10984,7 +11020,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "696c3f86-3476-4b47-96b6-15c04c4dd3c0")
-		(property "Reference" "#PWR0240"
+		(property "Reference" "#PWR0262"
 			(at 166.37 227.33 0)
 			(effects
 				(font
@@ -11034,7 +11070,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0240")
+					(reference "#PWR0262")
 					(unit 1)
 				)
 			)
@@ -11049,7 +11085,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "699ddd08-5c76-4cd2-8cc7-e32ce8279cea")
-		(property "Reference" "#PWR0269"
+		(property "Reference" "#PWR0220"
 			(at 283.21 82.55 0)
 			(effects
 				(font
@@ -11099,7 +11135,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0269")
+					(reference "#PWR0220")
 					(unit 1)
 				)
 			)
@@ -11116,7 +11152,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "6c66f448-66d9-433d-a615-9552df109223")
-		(property "Reference" "#PWR0245"
+		(property "Reference" "#PWR0242"
 			(at 209.55 162.56 0)
 			(effects
 				(font
@@ -11166,7 +11202,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0245")
+					(reference "#PWR0242")
 					(unit 1)
 				)
 			)
@@ -11181,7 +11217,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "704338e0-ddcd-49c7-b49e-f96a553b286e")
-		(property "Reference" "U10"
+		(property "Reference" "U204"
 			(at 121.412 38.354 0)
 			(effects
 				(font
@@ -11289,7 +11325,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U10")
+					(reference "U204")
 					(unit 1)
 				)
 			)
@@ -11304,7 +11340,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "73c81c84-92c7-4c38-97bb-e0b363ae8856")
-		(property "Reference" "U18"
+		(property "Reference" "U212"
 			(at 121.412 165.354 0)
 			(effects
 				(font
@@ -11412,7 +11448,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U18")
+					(reference "U212")
 					(unit 1)
 				)
 			)
@@ -11427,7 +11463,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "73f29126-24e1-4f40-8302-1b49fd0a2ba0")
-		(property "Reference" "R9"
+		(property "Reference" "R201"
 			(at 100.33 34.29 0)
 			(effects
 				(font
@@ -11481,7 +11517,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "R9")
+					(reference "R201")
 					(unit 1)
 				)
 			)
@@ -11496,7 +11532,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "743a2700-797a-471d-9575-7309f00e7a14")
-		(property "Reference" "#PWR0259"
+		(property "Reference" "#PWR0258"
 			(at 238.76 210.82 0)
 			(effects
 				(font
@@ -11546,7 +11582,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0259")
+					(reference "#PWR0258")
 					(unit 1)
 				)
 			)
@@ -11561,7 +11597,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "77c08e00-f3eb-4a17-a402-c42e51bed420")
-		(property "Reference" "#PWR0208"
+		(property "Reference" "#PWR0231"
 			(at 88.9 109.22 0)
 			(effects
 				(font
@@ -11611,7 +11647,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0208")
+					(reference "#PWR0231")
 					(unit 1)
 				)
 			)
@@ -11626,7 +11662,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "77da388c-e4ba-4c4e-bfa8-3c788d387af9")
-		(property "Reference" "#PWR0228"
+		(property "Reference" "#PWR0269"
 			(at 138.43 236.22 0)
 			(effects
 				(font
@@ -11676,7 +11712,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0228")
+					(reference "#PWR0269")
 					(unit 1)
 				)
 			)
@@ -11692,7 +11728,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "80f5b8f6-ebcb-43b9-b400-8e69cb4d2a4c")
-		(property "Reference" "#PWR0275"
+		(property "Reference" "#PWR0246"
 			(at 287.02 163.83 0)
 			(effects
 				(font
@@ -11742,7 +11778,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0275")
+					(reference "#PWR0246")
 					(unit 1)
 				)
 			)
@@ -11758,7 +11794,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "84de7b94-6cd3-4497-bbdf-f951738af813")
-		(property "Reference" "U8"
+		(property "Reference" "U202"
 			(at 249.428 25.146 0)
 			(effects
 				(font
@@ -11821,7 +11857,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U8")
+					(reference "U202")
 					(unit 1)
 				)
 			)
@@ -11837,7 +11873,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "875664c2-b2bb-4037-9b3a-4adc7d8fc998")
-		(property "Reference" "C7"
+		(property "Reference" "C202"
 			(at 212.09 34.2962 0)
 			(effects
 				(font
@@ -11891,7 +11927,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "C7")
+					(reference "C202")
 					(unit 1)
 				)
 			)
@@ -11907,7 +11943,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "89ad010e-91ff-47ff-bc03-dd4b77fcb814")
-		(property "Reference" "U7"
+		(property "Reference" "U201"
 			(at 129.032 25.146 0)
 			(effects
 				(font
@@ -11970,7 +12006,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U7")
+					(reference "U201")
 					(unit 1)
 				)
 			)
@@ -11987,7 +12023,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "8b93395d-35f1-4635-bc65-e534a5d7d38f")
-		(property "Reference" "#PWR0201"
+		(property "Reference" "#PWR0207"
 			(at 20.32 38.1 0)
 			(effects
 				(font
@@ -12037,7 +12073,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0201")
+					(reference "#PWR0207")
 					(unit 1)
 				)
 			)
@@ -12052,7 +12088,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "95af1671-a6f1-418d-b3c0-4afc1e1ca191")
-		(property "Reference" "R15"
+		(property "Reference" "R207"
 			(at 100.33 224.79 0)
 			(effects
 				(font
@@ -12106,7 +12142,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "R15")
+					(reference "R207")
 					(unit 1)
 				)
 			)
@@ -12122,7 +12158,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "982f55ba-494f-42be-9528-cc9bb562e9f1")
-		(property "Reference" "#PWR0276"
+		(property "Reference" "#PWR0264"
 			(at 287.02 227.33 0)
 			(effects
 				(font
@@ -12172,7 +12208,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0276")
+					(reference "#PWR0264")
 					(unit 1)
 				)
 			)
@@ -12187,7 +12223,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "9b0eeb00-3f37-4013-a10e-47132ce91115")
-		(property "Reference" "#PWR0258"
+		(property "Reference" "#PWR0240"
 			(at 238.76 147.32 0)
 			(effects
 				(font
@@ -12237,7 +12273,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0258")
+					(reference "#PWR0240")
 					(unit 1)
 				)
 			)
@@ -12252,7 +12288,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "9cb4fd50-0838-4712-b6e9-73ac76c9b22d")
-		(property "Reference" "#PWR0214"
+		(property "Reference" "#PWR0232"
 			(at 99.06 109.22 0)
 			(effects
 				(font
@@ -12302,7 +12338,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0214")
+					(reference "#PWR0232")
 					(unit 1)
 				)
 			)
@@ -12319,7 +12355,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "9f70562a-0fad-45bd-8402-fe77fa268058")
-		(property "Reference" "#PWR0232"
+		(property "Reference" "#PWR0261"
 			(at 158.75 227.33 0)
 			(effects
 				(font
@@ -12369,7 +12405,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0232")
+					(reference "#PWR0261")
 					(unit 1)
 				)
 			)
@@ -12386,7 +12422,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "9f82359d-018d-4387-9511-35686f2d6366")
-		(property "Reference" "#PWR0268"
+		(property "Reference" "#PWR0263"
 			(at 279.4 227.33 0)
 			(effects
 				(font
@@ -12436,7 +12472,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0268")
+					(reference "#PWR0263")
 					(unit 1)
 				)
 			)
@@ -12453,7 +12489,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "a0958ea5-945d-4fef-ac8e-96604afb9575")
-		(property "Reference" "#PWR0219"
+		(property "Reference" "#PWR0247"
 			(at 115.57 168.91 0)
 			(effects
 				(font
@@ -12503,7 +12539,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0219")
+					(reference "#PWR0247")
 					(unit 1)
 				)
 			)
@@ -12518,7 +12554,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "a0e2d11a-1dd7-4af4-a880-1e7a127fe655")
-		(property "Reference" "#PWR0251"
+		(property "Reference" "#PWR0253"
 			(at 219.71 172.72 0)
 			(effects
 				(font
@@ -12568,7 +12604,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0251")
+					(reference "#PWR0253")
 					(unit 1)
 				)
 			)
@@ -12583,7 +12619,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "a5b1a293-de9e-4b91-932f-64f0fbbc1d33")
-		(property "Reference" "#PWR0234"
+		(property "Reference" "#PWR0237"
 			(at 162.56 146.05 0)
 			(effects
 				(font
@@ -12633,7 +12669,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0234")
+					(reference "#PWR0237")
 					(unit 1)
 				)
 			)
@@ -12649,7 +12685,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "a7cb20d3-1e69-4e67-bd8a-a1ef5bba68df")
-		(property "Reference" "MOD3"
+		(property "Reference" "MOD203"
 			(at 167.64 98.806 0)
 			(effects
 				(font
@@ -12730,7 +12766,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "MOD3")
+					(reference "MOD203")
 					(unit 1)
 				)
 			)
@@ -12745,7 +12781,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "a84388e6-8fd9-40d6-83cf-178c6abf4e64")
-		(property "Reference" "#PWR0212"
+		(property "Reference" "#PWR0267"
 			(at 88.9 236.22 0)
 			(effects
 				(font
@@ -12795,7 +12831,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0212")
+					(reference "#PWR0267")
 					(unit 1)
 				)
 			)
@@ -12811,7 +12847,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "a9236025-4067-4791-bbe1-b5f8ee24ab4a")
-		(property "Reference" "C6"
+		(property "Reference" "C201"
 			(at 91.44 34.2962 0)
 			(effects
 				(font
@@ -12865,7 +12901,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "C6")
+					(reference "C201")
 					(unit 1)
 				)
 			)
@@ -12880,7 +12916,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "aa885f81-1409-4697-abe3-4c7a2c7ad63e")
-		(property "Reference" "#PWR0213"
+		(property "Reference" "#PWR0212"
 			(at 99.06 45.72 0)
 			(effects
 				(font
@@ -12930,7 +12966,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0213")
+					(reference "#PWR0212")
 					(unit 1)
 				)
 			)
@@ -12946,7 +12982,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "aacddaa8-bca8-4fe5-b0eb-190bdd9b6c0a")
-		(property "Reference" "#PWR0239"
+		(property "Reference" "#PWR0244"
 			(at 166.37 163.83 0)
 			(effects
 				(font
@@ -12996,7 +13032,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0239")
+					(reference "#PWR0244")
 					(unit 1)
 				)
 			)
@@ -13011,7 +13047,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "ab1f58ef-8767-419c-bfc2-1a86d7e3b981")
-		(property "Reference" "#PWR0261"
+		(property "Reference" "#PWR0216"
 			(at 259.08 45.72 0)
 			(effects
 				(font
@@ -13061,7 +13097,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0261")
+					(reference "#PWR0216")
 					(unit 1)
 				)
 			)
@@ -13076,7 +13112,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "abf26aba-a87b-47c9-8d87-ec2accbbe8b0")
-		(property "Reference" "#PWR0216"
+		(property "Reference" "#PWR0268"
 			(at 99.06 236.22 0)
 			(effects
 				(font
@@ -13126,7 +13162,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0216")
+					(reference "#PWR0268")
 					(unit 1)
 				)
 			)
@@ -13141,7 +13177,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "abf81a6e-5b62-43de-9189-498c3b988869")
-		(property "Reference" "#PWR0262"
+		(property "Reference" "#PWR0236"
 			(at 259.08 109.22 0)
 			(effects
 				(font
@@ -13191,7 +13227,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0262")
+					(reference "#PWR0236")
 					(unit 1)
 				)
 			)
@@ -13207,7 +13243,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "ac30f391-edb3-411a-992b-7561ebc0f8e5")
-		(property "Reference" "#PWR0274"
+		(property "Reference" "#PWR0228"
 			(at 287.02 100.33 0)
 			(effects
 				(font
@@ -13257,7 +13293,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0274")
+					(reference "#PWR0228")
 					(unit 1)
 				)
 			)
@@ -13273,7 +13309,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "ad98db35-a9a4-4d04-a5a5-729f93fe9781")
-		(property "Reference" "U12"
+		(property "Reference" "U206"
 			(at 129.032 88.646 0)
 			(effects
 				(font
@@ -13336,7 +13372,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U12")
+					(reference "U206")
 					(unit 1)
 				)
 			)
@@ -13353,7 +13389,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "b018bde1-5b28-4369-a352-361150029ac2")
-		(property "Reference" "#PWR0229"
+		(property "Reference" "#PWR0203"
 			(at 158.75 36.83 0)
 			(effects
 				(font
@@ -13403,7 +13439,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0229")
+					(reference "#PWR0203")
 					(unit 1)
 				)
 			)
@@ -13418,7 +13454,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "b200541a-4c5d-472b-998a-d7197c113e59")
-		(property "Reference" "#PWR0246"
+		(property "Reference" "#PWR0252"
 			(at 209.55 172.72 0)
 			(effects
 				(font
@@ -13468,7 +13504,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0246")
+					(reference "#PWR0252")
 					(unit 1)
 				)
 			)
@@ -13483,7 +13519,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "b3b14d59-0d06-4f56-870c-7c804955d11c")
-		(property "Reference" "#PWR0202"
+		(property "Reference" "#PWR0217"
 			(at 20.32 48.26 0)
 			(effects
 				(font
@@ -13533,7 +13569,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0202")
+					(reference "#PWR0217")
 					(unit 1)
 				)
 			)
@@ -13548,7 +13584,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "b407d90f-33c6-4445-8c15-4ddbe76622c2")
-		(property "Reference" "R12"
+		(property "Reference" "R204"
 			(at 220.98 97.79 0)
 			(effects
 				(font
@@ -13602,7 +13638,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "R12")
+					(reference "R204")
 					(unit 1)
 				)
 			)
@@ -13619,7 +13655,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "b819a0b7-1194-428b-98ac-134f14d3f85f")
-		(property "Reference" "#PWR0218"
+		(property "Reference" "#PWR0229"
 			(at 115.57 105.41 0)
 			(effects
 				(font
@@ -13669,7 +13705,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0218")
+					(reference "#PWR0229")
 					(unit 1)
 				)
 			)
@@ -13686,7 +13722,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "bb4dc56e-1ce9-4cf4-872e-0dde21b4fc88")
-		(property "Reference" "#PWR0255"
+		(property "Reference" "#PWR0248"
 			(at 236.22 168.91 0)
 			(effects
 				(font
@@ -13736,7 +13772,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0255")
+					(reference "#PWR0248")
 					(unit 1)
 				)
 			)
@@ -13751,7 +13787,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "bd29a975-8175-4a40-89cd-f3a529568370")
-		(property "Reference" "#PWR0263"
+		(property "Reference" "#PWR0254"
 			(at 259.08 172.72 0)
 			(effects
 				(font
@@ -13801,7 +13837,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0263")
+					(reference "#PWR0254")
 					(unit 1)
 				)
 			)
@@ -13816,7 +13852,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "bebb1f5b-8266-4026-8b0c-eb7e180a23b6")
-		(property "Reference" "R11"
+		(property "Reference" "R203"
 			(at 100.33 97.79 0)
 			(effects
 				(font
@@ -13870,7 +13906,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "R11")
+					(reference "R203")
 					(unit 1)
 				)
 			)
@@ -13885,7 +13921,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "befc0458-9e2c-414c-8ccb-0c926a3b2b4e")
-		(property "Reference" "U11"
+		(property "Reference" "U205"
 			(at 242.062 38.354 0)
 			(effects
 				(font
@@ -13993,7 +14029,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U11")
+					(reference "U205")
 					(unit 1)
 				)
 			)
@@ -14008,7 +14044,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "c2246418-2868-4d8a-a68a-0c3038a9f9cd")
-		(property "Reference" "#PWR0271"
+		(property "Reference" "#PWR0256"
 			(at 283.21 209.55 0)
 			(effects
 				(font
@@ -14058,7 +14094,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0271")
+					(reference "#PWR0256")
 					(unit 1)
 				)
 			)
@@ -14075,7 +14111,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "c279c110-8eba-45ba-90d6-518ad664c5cd")
-		(property "Reference" "#PWR0241"
+		(property "Reference" "#PWR0202"
 			(at 209.55 35.56 0)
 			(effects
 				(font
@@ -14125,7 +14161,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0241")
+					(reference "#PWR0202")
 					(unit 1)
 				)
 			)
@@ -14142,7 +14178,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "c3e1fd8c-c16a-4bf5-9f40-46e60f3f0e68")
-		(property "Reference" "#PWR0265"
+		(property "Reference" "#PWR0205"
 			(at 279.4 36.83 0)
 			(effects
 				(font
@@ -14192,7 +14228,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0265")
+					(reference "#PWR0205")
 					(unit 1)
 				)
 			)
@@ -14207,7 +14243,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "c4e3801c-19a0-4405-a68c-1ba148d401fc")
-		(property "Reference" "U14"
+		(property "Reference" "U208"
 			(at 121.412 101.854 0)
 			(effects
 				(font
@@ -14315,7 +14351,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U14")
+					(reference "U208")
 					(unit 1)
 				)
 			)
@@ -14330,7 +14366,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "c61f176c-40b5-4794-8e32-809c871750c8")
-		(property "Reference" "U19"
+		(property "Reference" "U213"
 			(at 242.062 165.354 0)
 			(effects
 				(font
@@ -14438,7 +14474,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U19")
+					(reference "U213")
 					(unit 1)
 				)
 			)
@@ -14455,7 +14491,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "c8a54807-9f3a-4403-a9a4-1106e395aa97")
-		(property "Reference" "#PWR0217"
+		(property "Reference" "#PWR0208"
 			(at 115.57 41.91 0)
 			(effects
 				(font
@@ -14505,7 +14541,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0217")
+					(reference "#PWR0208")
 					(unit 1)
 				)
 			)
@@ -14522,7 +14558,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "ce210e6b-0a63-4203-b546-d4a7f2bae4a9")
-		(property "Reference" "#PWR0230"
+		(property "Reference" "#PWR0225"
 			(at 158.75 100.33 0)
 			(effects
 				(font
@@ -14572,7 +14608,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0230")
+					(reference "#PWR0225")
 					(unit 1)
 				)
 			)
@@ -14587,7 +14623,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "ce6f10e7-be3b-4fb5-aa89-022d92c77c75")
-		(property "Reference" "#PWR0249"
+		(property "Reference" "#PWR0215"
 			(at 219.71 45.72 0)
 			(effects
 				(font
@@ -14637,7 +14673,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0249")
+					(reference "#PWR0215")
 					(unit 1)
 				)
 			)
@@ -14654,7 +14690,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "ce9a91b9-ff0c-46f5-95f4-6b1ececd9d11")
-		(property "Reference" "#PWR0209"
+		(property "Reference" "#PWR0241"
 			(at 88.9 162.56 0)
 			(effects
 				(font
@@ -14704,7 +14740,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0209")
+					(reference "#PWR0241")
 					(unit 1)
 				)
 			)
@@ -14719,7 +14755,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "d28ff63a-9504-4b1a-9b72-159c12c51ff2")
-		(property "Reference" "#PWR0224"
+		(property "Reference" "#PWR0275"
 			(at 118.11 274.32 0)
 			(effects
 				(font
@@ -14769,7 +14805,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0224")
+					(reference "#PWR0275")
 					(unit 1)
 				)
 			)
@@ -14785,7 +14821,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "d3d3d26a-d98d-478c-8264-5c092ecd2920")
-		(property "Reference" "C11"
+		(property "Reference" "C206"
 			(at 91.44 161.2962 0)
 			(effects
 				(font
@@ -14839,7 +14875,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "C11")
+					(reference "C206")
 					(unit 1)
 				)
 			)
@@ -14854,7 +14890,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "d5ee8de1-ceb5-4b4e-91ff-235ce6dde992")
-		(property "Reference" "#PWR0223"
+		(property "Reference" "#PWR0257"
 			(at 118.11 210.82 0)
 			(effects
 				(font
@@ -14904,7 +14940,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0223")
+					(reference "#PWR0257")
 					(unit 1)
 				)
 			)
@@ -14920,7 +14956,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "d7d89823-761d-4894-929a-553faebe6406")
-		(property "Reference" "C8"
+		(property "Reference" "C203"
 			(at 22.86 36.8362 0)
 			(effects
 				(font
@@ -14974,7 +15010,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "C8")
+					(reference "C203")
 					(unit 1)
 				)
 			)
@@ -14989,7 +15025,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "dd4f9a87-1a02-4c41-a1e6-8513bc79e531")
-		(property "Reference" "R14"
+		(property "Reference" "R206"
 			(at 220.98 161.29 0)
 			(effects
 				(font
@@ -15043,7 +15079,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "R14")
+					(reference "R206")
 					(unit 1)
 				)
 			)
@@ -15058,7 +15094,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "dfab6e84-e32f-4eda-8bf6-e7a562852d4e")
-		(property "Reference" "#PWR0252"
+		(property "Reference" "#PWR0271"
 			(at 219.71 236.22 0)
 			(effects
 				(font
@@ -15108,7 +15144,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0252")
+					(reference "#PWR0271")
 					(unit 1)
 				)
 			)
@@ -15124,7 +15160,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "e3dba4b7-6d16-483c-899a-6fbad27b04f7")
-		(property "Reference" "MOD2"
+		(property "Reference" "MOD202"
 			(at 288.29 35.306 0)
 			(effects
 				(font
@@ -15205,7 +15241,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "MOD2")
+					(reference "MOD202")
 					(unit 1)
 				)
 			)
@@ -15221,7 +15257,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "e44a0616-ffd8-4d6d-97b8-d59684b74824")
-		(property "Reference" "U17"
+		(property "Reference" "U211"
 			(at 249.682 152.146 0)
 			(effects
 				(font
@@ -15284,7 +15320,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U17")
+					(reference "U211")
 					(unit 1)
 				)
 			)
@@ -15300,7 +15336,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "e54e5ece-72c1-42b6-95aa-76b46e5ec780")
-		(property "Reference" "U9"
+		(property "Reference" "U203"
 			(at 50.4541 38.1 0)
 			(effects
 				(font
@@ -15396,7 +15432,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U9")
+					(reference "U203")
 					(unit 1)
 				)
 			)
@@ -15412,7 +15448,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "e6616741-b2cf-4556-85d4-4708edce116b")
-		(property "Reference" "MOD5"
+		(property "Reference" "MOD205"
 			(at 167.64 162.306 0)
 			(effects
 				(font
@@ -15493,7 +15529,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "MOD5")
+					(reference "MOD205")
 					(unit 1)
 				)
 			)
@@ -15509,7 +15545,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "eb4ba260-1443-4230-a14d-11309155350c")
-		(property "Reference" "U20"
+		(property "Reference" "U214"
 			(at 129.032 215.646 0)
 			(effects
 				(font
@@ -15572,7 +15608,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U20")
+					(reference "U214")
 					(unit 1)
 				)
 			)
@@ -15589,7 +15625,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "ee140d0c-53a5-40f2-8bcd-35f31500c7b1")
-		(property "Reference" "#PWR0207"
+		(property "Reference" "#PWR0223"
 			(at 88.9 99.06 0)
 			(effects
 				(font
@@ -15639,7 +15675,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0207")
+					(reference "#PWR0223")
 					(unit 1)
 				)
 			)
@@ -15654,7 +15690,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "eeec1532-2539-4574-8ef2-aca60270ef43")
-		(property "Reference" "#PWR0204"
+		(property "Reference" "#PWR0218"
 			(at 48.26 78.74 0)
 			(effects
 				(font
@@ -15704,7 +15740,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0204")
+					(reference "#PWR0218")
 					(unit 1)
 				)
 			)
@@ -15719,7 +15755,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "f228b4bb-393f-4a5a-8b69-96c11af0b9c1")
-		(property "Reference" "#PWR0222"
+		(property "Reference" "#PWR0239"
 			(at 118.11 147.32 0)
 			(effects
 				(font
@@ -15769,7 +15805,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "#PWR0222")
+					(reference "#PWR0239")
 					(unit 1)
 				)
 			)
@@ -15784,7 +15820,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "f65f383a-9a94-4cdb-b0fa-e575e055ec1b")
-		(property "Reference" "R10"
+		(property "Reference" "R202"
 			(at 220.98 34.29 0)
 			(effects
 				(font
@@ -15838,7 +15874,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "R10")
+					(reference "R202")
 					(unit 1)
 				)
 			)
@@ -15854,7 +15890,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "fcfe00cc-b8bf-4705-a79c-008ed5123aca")
-		(property "Reference" "MOD1"
+		(property "Reference" "MOD201"
 			(at 167.64 35.306 0)
 			(effects
 				(font
@@ -15935,7 +15971,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "MOD1")
+					(reference "MOD201")
 					(unit 1)
 				)
 			)
@@ -15951,7 +15987,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "fd83a68a-5ab5-4c38-b6ac-3a5f8dec6b5b")
-		(property "Reference" "U21"
+		(property "Reference" "U215"
 			(at 249.428 215.646 0)
 			(effects
 				(font
@@ -16014,7 +16050,7 @@
 		(instances
 			(project "Axis_MCU_V4"
 				(path "/73e46140-01b8-4ec1-93bb-0d72bea0e0ee/0a01c55f-de05-4b09-84e1-bce4f2911934"
-					(reference "U21")
+					(reference "U215")
 					(unit 1)
 				)
 			)
