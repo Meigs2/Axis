@@ -4,6 +4,8 @@
 #![feature(async_closure)]
 #![feature(never_type)]
 
+extern crate alloc;
+
 mod client_communicator;
 mod systems;
 mod drivers;
@@ -35,6 +37,12 @@ use embassy_sync::mutex::Mutex;
 use crate::drivers::ads1119;
 use crate::drivers::pca9544a::Channel;
 
+use cortex_m_rt::entry;
+use embedded_alloc::LlffHeap as Heap;
+
+use alloc::{format, vec, vec::Vec};
+use deku::prelude::*;
+
 pub const MAX_PACKET_SIZE: usize = 64;
 pub const THERMOCOUPLE_SPI_FREQUENCY: u32 = 500_000;
 
@@ -48,6 +56,9 @@ bind_interrupts!(pub struct I2c0Irqs {
 bind_interrupts!(pub struct I2c1Irqs {
     I2C1_IRQ => embassy_rp::i2c::InterruptHandler<I2C1>;
 });
+
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
 
 #[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum MessageType {}
@@ -73,6 +84,20 @@ unsafe fn SWI_IRQ_1() {
 #[interrupt]
 unsafe fn SWI_IRQ_0() {
     EXECUTOR_MED.on_interrupt()
+}
+
+
+#[derive(Debug, DekuRead, DekuWrite, PartialEq, Eq, Clone)]
+struct DekuTest {
+    #[deku(bits = 5)]
+    field_a: u8,
+    #[deku(bits = 3)]
+    field_b: u8,
+    count: u8,
+    #[deku(count = "2")]
+    after: Vec<u8>,
+    #[deku(count = "2")]
+    data: [u8; 8],
 }
 
 pub async fn wait_with_timeout<F: Future>(
@@ -137,6 +162,14 @@ assign_resources! {
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
+    // Initialize the allocator BEFORE you use it
+    {
+        use core::mem::MaybeUninit;
+        const HEAP_SIZE: usize = 1024;
+        static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
+        unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
+    }
+
     let p = embassy_rp::init(Default::default());
     let r = split_resources!(p);
 

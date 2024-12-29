@@ -55,13 +55,15 @@ postcard = "1.0.10"
 # build behavior match release builds. To enable unwinding panics
 # during development, simply remove this line.
 # panic = "abort"
+deku = { version = "0.18.1", default-features = false, features = ["alloc", "bits"] }
+embedded-alloc = "0.6.0"
+
 
 [profile.release]
+panic = "abort"
 debug = 2
 lto = true
 opt-level = 'z'
 
 [profile.dev]
-debug = 2
-lto = true
-opt-level = "z"
+panic = "abort"
