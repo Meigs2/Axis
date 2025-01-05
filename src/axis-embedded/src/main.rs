@@ -24,7 +24,7 @@ use embassy_executor::{Executor, InterruptExecutor, Spawner};
 use embassy_rp::interrupt::{InterruptExt, Priority};
 use embassy_rp::multicore::{spawn_core1, Stack};
 use embassy_rp::{bind_interrupts, i2c, spi, interrupt};
-use embassy_rp::gpio::{AnyPin, Level, Output};
+use embassy_rp::gpio::{AnyPin, Input, Level, Output, Pull};
 use embassy_rp::i2c::{Config, Error, I2c};
 use embassy_time::{Duration, Instant, Timer};
 use serde::{Deserialize, Serialize};
@@ -97,7 +97,7 @@ struct DekuTest {
     #[deku(count = "2")]
     after: Vec<u8>,
     #[deku(count = "2")]
-    data: [u8; 8],
+    data: Vec<u8>,
 }
 
 pub async fn wait_with_timeout<F: Future>(

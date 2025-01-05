@@ -63,14 +63,7 @@
           "width": 0.22
         }
       ],
-      "drc_exclusions": [
-        "items_not_allowed|143000000|55940000|ae0a54c2-4205-4ec4-a057-358d22e5871b|00000000-0000-0000-0000-000000000000",
-        "items_not_allowed|143000000|61020000|cac274eb-53cd-49bb-b7af-007436bbb2d1|00000000-0000-0000-0000-000000000000",
-        "items_not_allowed|143000000|69465000|c038688a-16ef-4bca-8062-34f8b30988c0|00000000-0000-0000-0000-000000000000",
-        "items_not_allowed|143000000|74545000|f619e1c9-12d4-470b-b9f8-b2517c76be9a|00000000-0000-0000-0000-000000000000",
-        "items_not_allowed|143347294|50937176|d436ee23-3d2a-4e92-bff8-7f2d20fefb60|00000000-0000-0000-0000-000000000000",
-        "items_not_allowed|145000000|85000000|198fee51-019f-480b-b8eb-f17886f4b0de|00000000-0000-0000-0000-000000000000"
-      ],
+      "drc_exclusions": [],
       "meta": {
         "version": 2
       },
@@ -466,7 +459,9 @@
     }
   },
   "libraries": {
-    "pinned_footprint_libs": [],
+    "pinned_footprint_libs": [
+      "Footprints"
+    ],
     "pinned_symbol_libs": []
   },
   "meta": {
